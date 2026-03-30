@@ -46,7 +46,7 @@ function renderList(liste) {
 
     const displayList = liste.slice(0, 100);
 
-    // 1. Zuerst die HTML-Elemente für die Liste erzeugen und einhängen
+    // 1. create list items
     displayList.forEach((s, index) => {
         const item = document.createElement("div");
         item.className = "group p-3 hover:bg-slate-50 dark:hover:bg-zinc-900 cursor-pointer flex justify-between items-center transition-colors border-b border-transparent";
@@ -103,7 +103,7 @@ function renderList(liste) {
         container.appendChild(more);
     }
 
-    // 2. Map-Marker updaten NACHDEM die Listeneinträge im DOM sind (verhindert Race Condition)
+    // 2. Map-Marker update after list
     updateMapMarkers(liste);
 
     if (typeof onOverlayListOrMapChanged === 'function') {
