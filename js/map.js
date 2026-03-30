@@ -3,6 +3,41 @@
 // ==========================================
 
 let osmLayer, cartoDBPositronLayer;
+const RADAR_MAX_NATIVE_ZOOM = 10;
+const RAINVIEWER_COLOR_SCHEME = 8;
+const ACTIVE_OVERLAYS_STORAGE_KEY = 'activeOverlayLayers';
+const RAINVIEWER_LAYER_NAME = 'Regenradar';
+
+function loadActiveOverlayLayerNames() {
+    try {
+        const raw = localStorage.getItem(ACTIVE_OVERLAYS_STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+    } catch {
+        return [];
+    }
+}
+
+function saveActiveOverlayLayerNames(overlayLayers) {
+    if (!leafletMap || !overlayLayers) return;
+    const activeNames = Object.keys(overlayLayers).filter(name => leafletMap.hasLayer(overlayLayers[name]));
+    localStorage.setItem(ACTIVE_OVERLAYS_STORAGE_KEY, JSON.stringify(activeNames));
+}
+
+function restoreActiveOverlayLayers(overlayLayers) {
+    const names = loadActiveOverlayLayerNames();
+    names.forEach(name => {
+        const normalizedName = name === 'Regenradar + Vorhersage' ? RAINVIEWER_LAYER_NAME : name;
+        const layer = overlayLayers[normalizedName];
+        if (!layer || leafletMap.hasLayer(layer)) return;
+        layer.addTo(leafletMap);
+        if (normalizedName === RAINVIEWER_LAYER_NAME) {
+            loadRadarFrames();
+            showRadarTimeline();
+        }
+    });
+    saveActiveOverlayLayerNames(overlayLayers);
+}
 
 function getThemeAwareOsmUrl(isDarkMode) {
     return isDarkMode
@@ -82,10 +117,45 @@ function initLeafletMap() {
         }
     }
 
-    L.control.layers(baseLayers, {}, { position: 'topright' }).addTo(leafletMap);
+    // DWD Warning Zones (WMS)
+    const dwdWarningsLayer = L.tileLayer.wms('https://maps.dwd.de/geoserver/dwd/wms', {
+        layers: 'dwd:Warnungen_Gemeinden_vereinigt',
+        format: 'image/png',
+        transparent: true,
+        opacity: 0.65,
+        attribution: '© Deutscher Wetterdienst (DWD)',
+        className: 'no-filter dwd-warn-tile',
+        zIndex: 150
+    });
+
+    // Rain radar overlay group (populated on demand by loadRadarFrames)
+    radarOverlayGroup = L.layerGroup();
+
+    const overlayLayers = {
+        'DWD Warnzonen': dwdWarningsLayer,
+        [RAINVIEWER_LAYER_NAME]: radarOverlayGroup
+    };
+
+    L.control.layers(baseLayers, overlayLayers, { position: 'topright' }).addTo(leafletMap);
+    restoreActiveOverlayLayers(overlayLayers);
 
     leafletMap.on('baselayerchange', function(e) {
         localStorage.setItem('selectedMapLayer', e.name);
+    });
+
+    // Overlay state + radar timeline
+    leafletMap.on('overlayadd', function(e) {
+        saveActiveOverlayLayerNames(overlayLayers);
+        if (e.name === RAINVIEWER_LAYER_NAME) {
+            loadRadarFrames();
+            showRadarTimeline();
+        }
+    });
+    leafletMap.on('overlayremove', function(e) {
+        saveActiveOverlayLayerNames(overlayLayers);
+        if (e.name === RAINVIEWER_LAYER_NAME) {
+            hideRadarTimeline();
+        }
     });
 }
 
@@ -208,11 +278,19 @@ function updateMapMarkers(liste) {
             leafletMap.fitBounds(markerClusterGroup.getBounds(), { padding: [30, 30], maxZoom: 12, animate: true });
         }
     }
+
+    if (typeof onOverlayListOrMapChanged === 'function') {
+        onOverlayListOrMapChanged();
+    }
 }
 
 function focusMapOnStandort(nummer) {
     const standort = standorte.find(s => String(s.nummer) === String(nummer));
     if (!standort || !standort.lat || !standort.lon || !leafletMap) return;
+
+    if (typeof onOverlayTargetStandortChanged === 'function') {
+        onOverlayTargetStandortChanged(standort.nummer);
+    }
 
     if (currentZufahrtLayer) {
         leafletMap.removeLayer(currentZufahrtLayer);
@@ -235,4 +313,112 @@ function focusMapOnStandort(nummer) {
     } else {
         leafletMap.setView([standort.lat, standort.lon], 13, { animate: true });
     }
+}
+// ==========================================
+// Rain Radar (RainViewer)
+// ==========================================
+
+async function loadRadarFrames() {
+    radarFrames = [];
+    radarLayerCache = {};
+    radarCurrentFrameIndex = 0;
+    updateRadarTimeline();
+    try {
+        const res = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+        const data = await res.json();
+        radarHost = data.host || 'https://tilecache.rainviewer.com';
+        radarFrames = [...(data.radar?.past || []), ...(data.radar?.nowcast || [])];
+        updateRadarTimeline();
+        setRadarFrame(radarFrames.length - 1);
+    } catch (e) {
+        console.error('Regenradar-Daten konnten nicht geladen werden:', e);
+    }
+}
+
+function getRadarTileLayer(index) {
+    if (radarLayerCache[index]) return radarLayerCache[index];
+    const frame = radarFrames[index];
+    if (!frame) return null;
+    const url = `${radarHost}${frame.path}/256/{z}/{x}/{y}/${RAINVIEWER_COLOR_SCHEME}/1_1.png`;
+    const layer = L.tileLayer(url, {
+        tileSize: 256,
+        opacity: 0.72,
+        maxNativeZoom: RADAR_MAX_NATIVE_ZOOM,
+        maxZoom: 22,
+        attribution: '© RainViewer',
+        className: 'no-filter',
+        zIndex: 200
+    });
+    radarLayerCache[index] = layer;
+    return layer;
+}
+
+function setRadarFrame(index) {
+    if (!leafletMap || !radarOverlayGroup) return;
+    radarCurrentFrameIndex = Math.max(0, Math.min(index, Math.max(0, radarFrames.length - 1)));
+    radarOverlayGroup.clearLayers();
+    const layer = getRadarTileLayer(radarCurrentFrameIndex);
+    if (layer) radarOverlayGroup.addLayer(layer);
+    updateRadarTimeLabel();
+    const slider = document.getElementById('radarSlider');
+    if (slider) slider.value = radarCurrentFrameIndex;
+}
+
+function updateRadarTimeline() {
+    const slider = document.getElementById('radarSlider');
+    if (!slider) return;
+    slider.min = 0;
+    slider.max = Math.max(0, radarFrames.length - 1);
+    slider.value = radarCurrentFrameIndex;
+    updateRadarTimeLabel();
+}
+
+function updateRadarTimeLabel() {
+    const label = document.getElementById('radarTimeLabel');
+    if (!label) return;
+    const frame = radarFrames[radarCurrentFrameIndex];
+    if (!frame) { label.textContent = '--:--'; return; }
+    const d = new Date(frame.time * 1000);
+    label.textContent = d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    label.title = d.toLocaleString('de-DE');
+}
+
+function toggleRadarPlay() {
+    radarIsPlaying ? stopRadarPlay() : startRadarPlay();
+}
+
+function startRadarPlay() {
+    if (radarFrames.length === 0) return;
+    radarIsPlaying = true;
+    const btn = document.getElementById('radarPlayBtn');
+    if (btn) btn.innerHTML = '<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+    radarPlayTimer = setInterval(() => {
+        setRadarFrame((radarCurrentFrameIndex + 1) % radarFrames.length);
+    }, 500);
+}
+
+function stopRadarPlay() {
+    radarIsPlaying = false;
+    if (radarPlayTimer) { clearInterval(radarPlayTimer); radarPlayTimer = null; }
+    const btn = document.getElementById('radarPlayBtn');
+    if (btn) btn.innerHTML = '<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+}
+
+function showRadarTimeline() {
+    const el = document.getElementById('radarTimeline');
+    if (el) el.classList.remove('hidden');
+}
+
+function hideRadarTimeline() {
+    stopRadarPlay();
+    const el = document.getElementById('radarTimeline');
+    if (el) el.classList.add('hidden');
+    if (radarOverlayGroup) radarOverlayGroup.clearLayers();
+    radarFrames = [];
+    radarLayerCache = {};
+}
+
+function jumpToLatestRadarFrame() {
+    if (!radarFrames || radarFrames.length === 0) return;
+    setRadarFrame(radarFrames.length - 1);
 }

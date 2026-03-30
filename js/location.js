@@ -2,6 +2,31 @@
 // Start Location Logic
 // ==========================================
 
+let gpsWatchId = null;
+
+function stopGPSWatch() {
+    if (gpsWatchId !== null && navigator.geolocation) {
+        navigator.geolocation.clearWatch(gpsWatchId);
+        gpsWatchId = null;
+    }
+}
+
+function resumeGPSWatch() {
+    if (!navigator.geolocation || gpsWatchId !== null) return;
+    gpsWatchId = navigator.geolocation.watchPosition(
+        (pos) => {
+            userLat = pos.coords.latitude;
+            userLon = pos.coords.longitude;
+            localStorage.setItem('userCoords', JSON.stringify({
+                lat: userLat, lon: userLon, name: 'Aktueller Standort', gps: true
+            }));
+            filterStandorte();
+        },
+        () => { stopGPSWatch(); },
+        { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 }
+    );
+}
+
 function updateLocationStatus(filteredCount = standorte.length) {
     const statusEl = document.getElementById("locationStatus");
     if (!statusEl) return;
@@ -23,6 +48,9 @@ function loadSavedLocation() {
         userLat = data.lat;
         userLon = data.lon;
         document.getElementById("userLocLabel").innerText = data.name;
+        if (data.gps) {
+            resumeGPSWatch();
+        }
         filterStandorte();
     } else {
         promptLocation();
@@ -64,19 +92,38 @@ async function searchCity() {
 }
 
 function useAutoGPS() {
-    if (navigator.geolocation) {
-        document.getElementById('citySearchResults').innerHTML = '<p class="text-sm">GPS wird abgefragt...</p>';
-        navigator.geolocation.getCurrentPosition(
-            (pos) => saveLocation(pos.coords.latitude, pos.coords.longitude, "Aktueller Standort"),
-            () => document.getElementById('citySearchResults').innerHTML = '<p class="text-sm text-red-500">Zugriff verweigert.</p>'
-        );
+    if (!navigator.geolocation) {
+        document.getElementById('citySearchResults').innerHTML = '<p class="text-sm text-red-500">GPS nicht verfügbar.</p>';
+        return;
     }
+    document.getElementById('citySearchResults').innerHTML = '<p class="text-sm text-slate-500">GPS-Tracking wird aktiviert...</p>';
+    stopGPSWatch();
+    gpsWatchId = navigator.geolocation.watchPosition(
+        (pos) => {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+            const name = 'Aktueller Standort';
+            userLat = lat;
+            userLon = lon;
+            localStorage.setItem('userCoords', JSON.stringify({ lat, lon, name, gps: true }));
+            const label = document.getElementById('userLocLabel');
+            if (label) label.innerText = name;
+            closeLocationModal();
+            filterStandorte();
+        },
+        () => {
+            document.getElementById('citySearchResults').innerHTML = '<p class="text-sm text-red-500">GPS-Zugriff verweigert oder Fehler.</p>';
+            stopGPSWatch();
+        },
+        { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 }
+    );
 }
 
 function saveLocation(lat, lon, name) {
+    stopGPSWatch(); // Stop continuous GPS when a manual city is selected
     userLat = lat;
     userLon = lon;
-    localStorage.setItem('userCoords', JSON.stringify({ lat, lon, name }));
+    localStorage.setItem('userCoords', JSON.stringify({ lat, lon, name, gps: false }));
     document.getElementById("userLocLabel").innerText = name;
     closeLocationModal();
     filterStandorte();

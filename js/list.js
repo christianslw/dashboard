@@ -13,6 +13,15 @@ function filterStandorte() {
         clearBtn.classList.add('opacity-0', 'pointer-events-none');
     }
 
+    // Pre-compute distances so sorting by distance works correctly
+    if (userLat && userLon) {
+        standorte.forEach(s => {
+            if (s.lat && s.lon) {
+                s.distance = calcDistance(userLat, userLon, s.lat, s.lon);
+            }
+        });
+    }
+
     const filtered = getFilteredStandorte();
     updateLocationStatus(filtered.length);
     renderList(filtered);
@@ -93,6 +102,10 @@ function renderList(liste) {
         more.className = "p-3 text-center text-xs text-slate-400";
         more.innerText = `...und ${liste.length - 100} weitere (Bitte Suche nutzen)`;
         container.appendChild(more);
+    }
+
+    if (typeof onOverlayListOrMapChanged === 'function') {
+        onOverlayListOrMapChanged();
     }
 }
 

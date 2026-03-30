@@ -15,6 +15,13 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 
+    <!-- Leaflet.Draw plugin -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+
+    <!-- Optional Supabase Sync (set window.__SUPABASE_CONFIG__ to activate) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -76,7 +83,8 @@
                 </button>
             </div>
 
-            <div class="mt-3 relative" id="filterMenuWrapper">
+            <div class="mt-3 flex items-start justify-between gap-2">
+                <div class="relative" id="filterMenuWrapper">
                 <button id="filterMenuButton" type="button" onclick="toggleFilterMenu()" class="w-full md:w-auto inline-flex items-center gap-2 px-3 py-2 text-sm border border-slate-300 dark:border-zinc-700 rounded-md bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 01.8 1.6L14 13.5V19a1 1 0 01-1.447.894l-2-1A1 1 0 0110 18v-4.5L3.2 4.6A1 1 0 013 4z"></path></svg>
                     <span>Filter</span>
@@ -104,6 +112,29 @@
                         <button type="button" onclick="resetAllFilters()" class="text-xs px-2.5 py-1.5 border border-slate-300 dark:border-zinc-700 rounded hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors">Filter zurücksetzen</button>
                     </div>
                 </div>
+                </div>
+
+                <!-- Sort button -->
+                <div class="relative" id="sortMenuWrapper">
+                    <button id="sortMenuButton" type="button" onclick="toggleSortMenu()"
+                        class="inline-flex items-center gap-1.5 px-3 py-2 text-sm border border-slate-300 dark:border-zinc-700 rounded-md bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors">
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"/>
+                        </svg>
+                        <span id="sortMenuLabel">Sortieren</span>
+                    </button>
+                    <div id="sortMenuPanel" class="hidden z-[50] rounded-md border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl p-3" onclick="event.stopPropagation()">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-zinc-400">Sortierung</p>
+                            <button type="button" onclick="closeSortMenu()" class="text-slate-400 hover:text-slate-700 dark:hover:text-zinc-300 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+                        <div id="sortOptionsContainer" class="flex flex-col gap-0.5">
+                            <!-- Rendered by JS -->
+                        </div>
+                    </div>
+                </div>
             </div>
             
             <div class="mt-2 text-xs text-slate-500 dark:text-zinc-400 font-medium" id="locationStatus">
@@ -119,8 +150,33 @@
             </div>
             
             <!-- Main map -->
-            <div id="mainMap" class="hidden md:block flex-1 bg-slate-100 dark:bg-zinc-900 relative z-0">
-                <!-- Leaflet renders here -->
+            <div class="hidden md:flex flex-1 flex-col overflow-hidden">
+                <div id="mainMap" class="flex-1 bg-slate-100 dark:bg-zinc-900 relative z-0">
+                    <!-- Leaflet renders here -->
+                </div>
+                <!-- Rain Radar Timeline (shown when radar overlay is active) -->
+                <div id="radarTimeline" class="hidden shrink-0 border-t border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2">
+                    <div class="flex items-center gap-2">
+                        <button id="radarPlayBtn" type="button" onclick="toggleRadarPlay()"
+                            title="Abspielen / Pause"
+                            class="w-7 h-7 shrink-0 flex items-center justify-center rounded border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-700 transition-colors">
+                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        </button>
+                        <input type="range" id="radarSlider" min="0" max="0" value="0"
+                            oninput="setRadarFrame(parseInt(this.value))"
+                            class="flex-1 h-1.5 accent-blue-500 cursor-pointer">
+                        <span id="radarTimeLabel" class="text-xs font-mono text-slate-500 dark:text-zinc-400 min-w-[52px] text-right shrink-0">--:--</span>
+                        <button type="button" onclick="jumpToLatestRadarFrame()"
+                            title="Aktuellster Frame"
+                            class="text-xs px-2 py-1 shrink-0 border border-slate-300 dark:border-zinc-700 rounded bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors">
+                            Jetzt
+                        </button>
+                    </div>
+                    <div class="mt-1 flex items-center justify-between">
+                        <span class="text-[10px] text-slate-400 dark:text-zinc-500">← Vergangenheit</span>
+                        <span class="text-[10px] text-blue-500 dark:text-blue-400">Nowcast ▶</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -429,6 +485,7 @@
     <script src="js/map.js"></script>
     <script src="js/list.js"></script>
     <script src="js/dashboard.js"></script>
+    <script src="js/overlays.js"></script>
     <script src="js/tutorial.js"></script>
     <script src="js/init.js"></script>
 </body>

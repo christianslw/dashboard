@@ -19,19 +19,71 @@ async function fetchDWD(lat, lon) {
     }
 }
 
-function getDwdLevelBox(severity) {
-    const normalizedSeverity = typeof severity === 'string' ? severity.toLowerCase() : '';
-    const baseClass = "rounded-[4px] px-1.5 py-[2px] text-[10px] uppercase font-bold tracking-wide border";
-    if (normalizedSeverity === 'minor')
-        return `<span class="${baseClass} border-yellow-500 bg-yellow-500/20 text-yellow-700 dark:text-yellow-400">Stufe 1</span>`;
-    if (normalizedSeverity === 'moderate')
-        return `<span class="${baseClass} border-orange-500 bg-orange-500/20 text-orange-700 dark:text-orange-400">Stufe 2</span>`;
-    if (normalizedSeverity === 'severe')
-        return `<span class="${baseClass} border-red-500 bg-red-500/20 text-red-700 dark:text-red-400">Stufe 3</span>`;
-    if (normalizedSeverity === 'extreme')
-        return `<span class="${baseClass} border-purple-600 bg-purple-600/20 text-purple-700 dark:text-purple-400">Stufe 4</span>`;
-    return '';
+function getDwdSeverityColor(severity) {
+    const s = typeof severity === 'string' ? severity.toLowerCase() : '';
+    if (s === 'extreme') return '#9333ea';
+    if (s === 'severe')  return '#ef4444';
+    if (s === 'moderate') return '#f97316';
+    if (s === 'minor')   return '#eab308';
+    return '#eab308';
 }
+
+function getDwdEventIconSvg(eventDe, eventEn, color) {
+    const ed = typeof eventDe === 'string' ? eventDe.toLowerCase() : '';
+    const ee = typeof eventEn === 'string' ? eventEn.toLowerCase() : '';
+
+    const isThunder = ed.includes('gewitter') || ee.includes('thunder') || ee.includes('lightning');
+    const isWind    = !isThunder && (ed.includes('wind') || ed.includes('böen') || ed.includes('boen') || ed.includes('sturm') || ed.includes('orkan')
+                        || ee.includes('wind') || ee.includes('gust') || ee.includes('squall') || ee.includes('storm'));
+    const isFog     = ed.includes('nebel') || ee.includes('fog') || ee.includes('mist');
+    const isSnow    = ed.includes('schnee') || ed.includes('graupel') || ee.includes('snow') || ee.includes('sleet') || ee.includes('hail');
+    const isFrost   = ed.includes('frost') || ed.includes('glatt') || ed.includes('eis') || ee.includes('frost') || ee.includes('ice') || ee.includes('glaze');
+    const isRain    = !isThunder && !isSnow && (ed.includes('regen') || ed.includes('niederschlag') || ee.includes('rain') || ee.includes('shower') || ee.includes('drizzle'));
+    const isHeat    = ed.includes('hitze') || ed.includes('wärme') || ee.includes('heat');
+
+    const style = `style="color:${color}"`;
+    const cls   = `class="w-4 h-4 inline-block shrink-0"`;
+    const base  = `<svg ${cls} ${style} fill="none" stroke="currentColor" viewBox="0 0 24 24">`;
+
+    if (isThunder) {
+        // Lightning bolt
+        return `${base}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`;
+    }
+    if (isWind) {
+        // Wind / storm gusts — flag-like lines
+        return `${base}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h14a2 2 0 010 4H4m0 0V4m0 6v4m0-4h10a2 2 0 010 4H4"/></svg>`;
+    }
+    if (isFog) {
+        // Horizontal fog lines
+        return `${base}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 12h12M4 16h8"/></svg>`;
+    }
+    if (isSnow) {
+        // Snowflake (cross + diagonals)
+        return `${base}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v20M2 12h20M5.636 5.636l12.728 12.728M18.364 5.636L5.636 18.364"/></svg>`;
+    }
+    if (isRain) {
+        // Cloud + rain drops
+        return `${base}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14v2m-4-2v2m8-2v2M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>`;
+    }
+    if (isFrost) {
+        // Ice / thermometer cold
+        return `${base}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v20M7 7l5 5 5-5M7 17l5-5 5 5"/></svg>`;
+    }
+    if (isHeat) {
+        // Sun / heat
+        return `${base}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>`;
+    }
+    // Default: warning triangle
+    return `${base}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>`;
+}
+
+function getDwdLevelBox(severity, eventDe, eventEn) {
+    const color = getDwdSeverityColor(severity);
+    const svg   = getDwdEventIconSvg(eventDe, eventEn, color);
+    const label = (eventDe || eventEn || severity || 'Warnung').replace(/"/g, '&quot;');
+    return `<span class="inline-flex items-center" title="${label}">${svg}</span>`;
+}
+
 
 function getDwdSeverityRank(severity) {
     const normalizedSeverity = typeof severity === 'string' ? severity.toLowerCase() : '';
@@ -58,7 +110,9 @@ async function checkDWDWarningForList(lat, lon, boxId) {
         const highestAlert = getHighestDwdAlert(alerts);
 
         if (box) {
-            box.innerHTML = highestAlert ? getDwdLevelBox(highestAlert.severity) : '';
+            box.innerHTML = highestAlert
+                ? getDwdLevelBox(highestAlert.severity, highestAlert.event_de, highestAlert.event_en)
+                : '';
         }
     } catch (e) {}
 }

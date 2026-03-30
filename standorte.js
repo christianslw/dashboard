@@ -3640,46 +3640,6 @@ const standorteDaten = [
     "zufahrt": []
   },
   {
-    "nummer": "83xx",
-    "name": "LANGENBURG",
-    "lat": null,
-    "lon": null,
-    "link": "https://suedwestrundfunk.sharepoint.com/sites/SWR_T_PV-Standorte/Freigegebene Dokumente/8000_Bereich Stuttgart/8321_LANGENBURG/_standortinfo/Vorlagen/83xx_00000000_Tagebuch.xlsx",
-    "zufahrt": []
-  },
-  {
-    "nummer": "4521",
-    "name": "BADEN-BADEN_FBG_IPOC",
-    "lat": null,
-    "lon": null,
-    "link": "https://suedwestrundfunk.sharepoint.com/sites/SWR_T_PV-Standorte/Freigegebene Dokumente/4000_Bereich Hornisgrinde/4528_BADEN-BADEN_FBG_IPOC/_standortinfo/4521_20130903_FBG_DVB-T_Tagebuch.xlsx",
-    "zufahrt": []
-  },
-  {
-    "nummer": "8028",
-    "name": "MURRHARDT",
-    "lat": 48.97611111,
-    "lon": 9.575277778,
-    "link": "https://suedwestrundfunk.sharepoint.com/sites/SWR_T_PV-Standorte/Freigegebene Dokumente/8000_Bereich Stuttgart/8028_MURRHARDT/_standortinfo/Vorlagen/8028_00000000_Tagebuch.xlsx",
-    "zufahrt": []
-  },
-  {
-    "nummer": "5063",
-    "name": "umzug_2012",
-    "lat": 48.49555556,
-    "lon": 9.231666667,
-    "link": "https://suedwestrundfunk.sharepoint.com/sites/SWR_T_PV-Standorte/Freigegebene Dokumente/5000_Bereich Bodensee/5063_REUTLINGEN-SCHEIBENGIPFEL/_umzug_2012/_standortinfo/5063_00000000_Tagebuch.xlsx",
-    "zufahrt": []
-  },
-  {
-    "nummer": "8006",
-    "name": "BEILSTEIN",
-    "lat": 49.04555556,
-    "lon": 9.3025,
-    "link": "https://suedwestrundfunk.sharepoint.com/sites/SWR_T_PV-Standorte/Freigegebene Dokumente/8000_Bereich Stuttgart/8006_BEILSTEIN/_standortinfo/Vordruck/8006_00000000_Tagebuch.xlsx",
-    "zufahrt": []
-  },
-  {
     "nummer": "8317",
     "name": "WESTHEIM-OTTENDORF",
     "lat": 49.04111111,
@@ -3688,27 +3648,11 @@ const standorteDaten = [
     "zufahrt": []
   },
   {
-    "nummer": "8070",
-    "name": "MURRHARDT-AUENWALD",
-    "lat": null,
-    "lon": null,
-    "link": "https://suedwestrundfunk.sharepoint.com/sites/SWR_T_PV-Standorte/Freigegebene Dokumente/8000_Bereich Stuttgart/8070_MURRHARDT-AUENWALD/_standortinfo/Vorlagen/8070_00000000_Tagebuch.xlsx",
-    "zufahrt": []
-  },
-  {
-    "nummer": "8113",
+    "nummer": "5066",
     "name": "KONSTANZ",
     "lat": 48.62111111,
     "lon": 10.18027778,
     "link": "https://suedwestrundfunk.sharepoint.com/sites/SWR_T_PV-Standorte/Freigegebene Dokumente/5000_Bereich Bodensee/5066_KONSTANZ/_standortinfo/Vorlagen/8113_00000000_Tagebuch.xlsx",
-    "zufahrt": []
-  },
-  {
-    "nummer": "8317",
-    "name": "WESTHEIM-OTTENDORF",
-    "lat": 49.04111111,
-    "lon": 9.744444444,
-    "link": "https://suedwestrundfunk.sharepoint.com/sites/SWR_T_PV-Standorte/Freigegebene Dokumente/8000_Bereich Stuttgart/8317_WESTHEIM-OTTENDORF/_standortinfo/Vorlagen/8317_00000000_Tagebuch.xlsx",
     "zufahrt": []
   },
   {

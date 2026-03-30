@@ -12,6 +12,10 @@ function openDashboard(nummer) {
     if (!standort) return;
     currentStandort = standort;
 
+    if (typeof onOverlayTargetStandortChanged === 'function') {
+        onOverlayTargetStandortChanged(standort.nummer);
+    }
+
     focusMapOnStandort(standort.nummer);
     highlightListItem(nummer);
 
@@ -118,6 +122,10 @@ function setupMobileMap(standort) {
 }
 
 function closeDashboard() {
+    if (typeof closeOverlayEditMode === 'function') {
+        closeOverlayEditMode();
+    }
+
     const modal = document.getElementById("dashboardModal");
     modal.classList.remove("modal-enter-active");
     document.getElementById("windyIframe").src = "";

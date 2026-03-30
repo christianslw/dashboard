@@ -178,10 +178,20 @@ function initFilterMenu() {
     renderAreaChips();
     updateFavoriteModeButton();
     updateActiveFilterCount();
+    updateSortButtonLabel();
 
     document.addEventListener('click', (event) => {
         const panel = document.getElementById('filterMenuPanel');
         const wrapper = document.getElementById('filterMenuWrapper');
+        if (!panel || !wrapper) return;
+        if (!panel.classList.contains('hidden') && !wrapper.contains(event.target)) {
+            panel.classList.add('hidden');
+        }
+    });
+
+    document.addEventListener('click', (event) => {
+        const panel = document.getElementById('sortMenuPanel');
+        const wrapper = document.getElementById('sortMenuWrapper');
         if (!panel || !wrapper) return;
         if (!panel.classList.contains('hidden') && !wrapper.contains(event.target)) {
             panel.classList.add('hidden');
@@ -193,8 +203,13 @@ function getFilteredStandorte() {
     const searchInput = document.getElementById('searchInput');
     const query = searchInput ? searchInput.value.toLowerCase() : '';
 
-    return standorte.filter(s => {
-        const matchesSearch = String(s.nummer).toLowerCase().includes(query) ||
+    const seen = new Set();
+    const filtered = standorte.filter(s => {
+        const key = String(s.nummer);
+        if (seen.has(key)) return false;
+        seen.add(key);
+
+        const matchesSearch = key.toLowerCase().includes(query) ||
             String(s.name).toLowerCase().includes(query);
 
         const areaCode = getStandortAreaCode(s.nummer);
@@ -208,4 +223,101 @@ function getFilteredStandorte() {
 
         return matchesSearch && matchesIncludedAreas && matchesExcludedAreas && matchesFavorite;
     });
+
+    return applySorting(filtered);
+}
+
+// ==========================================
+// Sort Menu
+// ==========================================
+
+const SORT_OPTIONS = [
+    { field: 'default',  dir: 'asc',  label: 'Standard' },
+    { field: 'distance', dir: 'asc',  label: '↑ Distanz (nah → fern)' },
+    { field: 'distance', dir: 'desc', label: '↓ Distanz (fern → nah)' },
+    { field: 'numeric',  dir: 'asc',  label: '↑ Numerisch (0 → 9)' },
+    { field: 'numeric',  dir: 'desc', label: '↓ Numerisch (9 → 0)' },
+    { field: 'alpha',    dir: 'asc',  label: '↑ Alphabetisch (A → Z)' },
+    { field: 'alpha',    dir: 'desc', label: '↓ Alphabetisch (Z → A)' },
+];
+
+function applySorting(liste) {
+    if (!sortField || sortField === 'default') return liste;
+    return [...liste].sort((a, b) => {
+        let cmp = 0;
+        if (sortField === 'distance') {
+            const da = (userLat && userLon && a.distance != null) ? a.distance : Infinity;
+            const db = (userLat && userLon && b.distance != null) ? b.distance : Infinity;
+            cmp = da - db;
+        } else if (sortField === 'numeric') {
+            cmp = parseFloat(a.nummer) - parseFloat(b.nummer);
+        } else if (sortField === 'alpha') {
+            cmp = String(a.name).localeCompare(String(b.name), 'de', { sensitivity: 'base' });
+        }
+        return sortDir === 'asc' ? cmp : -cmp;
+    });
+}
+
+function toggleSortMenu() {
+    const panel = document.getElementById('sortMenuPanel');
+    const btn   = document.getElementById('sortMenuButton');
+    if (!panel || !btn) return;
+    if (panel.classList.contains('hidden')) {
+        renderSortOptions();
+        const rect = btn.getBoundingClientRect();
+        panel.style.position = 'fixed';
+        panel.style.top  = (rect.bottom + 4) + 'px';
+        const panelWidth = 230;
+        let left = rect.right - panelWidth;
+        if (left < 8) left = 8;
+        panel.style.left  = left + 'px';
+        panel.style.width = panelWidth + 'px';
+        panel.classList.remove('hidden');
+    } else {
+        panel.classList.add('hidden');
+    }
+}
+
+function closeSortMenu() {
+    const panel = document.getElementById('sortMenuPanel');
+    if (panel) panel.classList.add('hidden');
+}
+
+function renderSortOptions() {
+    const container = document.getElementById('sortOptionsContainer');
+    if (!container) return;
+    container.innerHTML = '';
+    SORT_OPTIONS.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        const isActive = sortField === opt.field && sortDir === opt.dir;
+        btn.className = 'w-full text-left px-3 py-1.5 text-sm rounded transition-colors ' +
+            (isActive
+                ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-semibold'
+                : 'text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800');
+        btn.textContent = opt.label;
+        btn.onclick = () => setSortOption(opt.field, opt.dir);
+        container.appendChild(btn);
+    });
+}
+
+function setSortOption(field, dir) {
+    sortField = field;
+    sortDir   = dir;
+    localStorage.setItem('sortField', field);
+    localStorage.setItem('sortDir',   dir);
+    updateSortButtonLabel();
+    closeSortMenu();
+    filterStandorte();
+}
+
+function updateSortButtonLabel() {
+    const label = document.getElementById('sortMenuLabel');
+    if (!label) return;
+    if (!sortField || sortField === 'default') {
+        label.textContent = 'Sortieren';
+        return;
+    }
+    const opt = SORT_OPTIONS.find(o => o.field === sortField && o.dir === sortDir);
+    if (opt) label.textContent = opt.label;
 }

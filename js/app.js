@@ -17,7 +17,24 @@ let favoriteStationNumbers = new Set();
 let includedAreaCodes = new Set();
 let excludedAreaCodes = new Set();
 let favoriteFilterMode = 'all';
+let sortField = localStorage.getItem('sortField') || 'default'; // 'default' | 'distance' | 'numeric' | 'alpha'
+let sortDir = localStorage.getItem('sortDir') || 'asc';         // 'asc' | 'desc'
+let radarOverlayGroup = null;
+let radarFrames = [];
+let radarLayerCache = {};
+let radarCurrentFrameIndex = 0;
+let radarIsPlaying = false;
+let radarPlayTimer = null;
+let radarHost = 'https://tilecache.rainviewer.com';
 const warningsCache = {}, routeCache = {};
+
+if (typeof window.__SUPABASE_CONFIG__ === 'undefined') {
+    window.__SUPABASE_CONFIG__ = {
+        url: '',
+        anonKey: '',
+        table: 'standort_overlays'
+    };
+}
 
 // ==========================================
 // Theme and Appearance
