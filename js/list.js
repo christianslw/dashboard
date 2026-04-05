@@ -125,7 +125,7 @@ function openRouteNavigation(nummer) {
 function openTagebuch(nummer) {
     const standort = standorte.find(s => String(s.nummer) === String(nummer));
     if (standort && standort.link) {
-        window.open(`${standort.link}?web=1`, '_blank');
+        window.open(getTagebuchLink(standort), '_blank');
     }
 }
 

@@ -2,29 +2,55 @@
 // Start Location Logic
 // ==========================================
 
-let gpsWatchId = null;
+const GPS_UPDATE_INTERVAL = 5 * 60 * 1000; // every 5 minutes
+const GPS_MOVE_THRESHOLD_KM = 0.15;         // only re-filter if moved > 150 m
+let gpsIntervalId = null;
 
 function stopGPSWatch() {
-    if (gpsWatchId !== null && navigator.geolocation) {
-        navigator.geolocation.clearWatch(gpsWatchId);
-        gpsWatchId = null;
+    if (gpsIntervalId !== null) {
+        clearInterval(gpsIntervalId);
+        gpsIntervalId = null;
+    }
+}
+
+function _doGPSPositionFetch(onSuccess, onError) {
+    if (!navigator.geolocation) { if (onError) onError(); return; }
+    navigator.geolocation.getCurrentPosition(onSuccess, onError || (() => {}), {
+        enableHighAccuracy: false,
+        maximumAge: 300000,
+        timeout: 15000
+    });
+}
+
+function _applyNewPosition(lat, lon) {
+    const prevLat = userLat, prevLon = userLon;
+    userLat = lat;
+    userLon = lon;
+    localStorage.setItem('userCoords', JSON.stringify({ lat, lon, name: 'Aktueller Standort', gps: true }));
+    const label = document.getElementById('userLocLabel');
+    if (label) label.innerText = 'Aktueller Standort';
+    const movedFar = !prevLat || !prevLon || calcDistance(prevLat, prevLon, lat, lon) > GPS_MOVE_THRESHOLD_KM;
+    if (movedFar) {
+        filterStandorte();
+    } else {
+        updateLocationStatus();
     }
 }
 
 function resumeGPSWatch() {
-    if (!navigator.geolocation || gpsWatchId !== null) return;
-    gpsWatchId = navigator.geolocation.watchPosition(
-        (pos) => {
-            userLat = pos.coords.latitude;
-            userLon = pos.coords.longitude;
-            localStorage.setItem('userCoords', JSON.stringify({
-                lat: userLat, lon: userLon, name: 'Aktueller Standort', gps: true
-            }));
-            filterStandorte();
-        },
-        () => { stopGPSWatch(); },
-        { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 }
+    if (!navigator.geolocation || gpsIntervalId !== null) return;
+    // immediate first fetch
+    _doGPSPositionFetch(
+        pos => _applyNewPosition(pos.coords.latitude, pos.coords.longitude),
+        stopGPSWatch
     );
+    // then every 5 minutes
+    gpsIntervalId = setInterval(() => {
+        _doGPSPositionFetch(
+            pos => _applyNewPosition(pos.coords.latitude, pos.coords.longitude),
+            stopGPSWatch
+        );
+    }, GPS_UPDATE_INTERVAL);
 }
 
 function updateLocationStatus(filteredCount = standorte.length) {
@@ -96,26 +122,24 @@ function useAutoGPS() {
         document.getElementById('citySearchResults').innerHTML = '<p class="text-sm text-red-500">GPS nicht verfügbar.</p>';
         return;
     }
-    document.getElementById('citySearchResults').innerHTML = '<p class="text-sm text-slate-500">GPS-Tracking wird aktiviert...</p>';
+    document.getElementById('citySearchResults').innerHTML = '<p class="text-sm text-slate-500">GPS wird ermittelt…</p>';
     stopGPSWatch();
-    gpsWatchId = navigator.geolocation.watchPosition(
+    navigator.geolocation.getCurrentPosition(
         (pos) => {
-            const lat = pos.coords.latitude;
-            const lon = pos.coords.longitude;
-            const name = 'Aktueller Standort';
-            userLat = lat;
-            userLon = lon;
-            localStorage.setItem('userCoords', JSON.stringify({ lat, lon, name, gps: true }));
-            const label = document.getElementById('userLocLabel');
-            if (label) label.innerText = name;
+            _applyNewPosition(pos.coords.latitude, pos.coords.longitude);
             closeLocationModal();
-            filterStandorte();
+            // start periodic interval after initial fix
+            gpsIntervalId = setInterval(() => {
+                _doGPSPositionFetch(
+                    pos2 => _applyNewPosition(pos2.coords.latitude, pos2.coords.longitude),
+                    stopGPSWatch
+                );
+            }, GPS_UPDATE_INTERVAL);
         },
         () => {
             document.getElementById('citySearchResults').innerHTML = '<p class="text-sm text-red-500">GPS-Zugriff verweigert oder Fehler.</p>';
-            stopGPSWatch();
         },
-        { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 }
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
     );
 }
 

@@ -133,3 +133,67 @@ function openSettingsModal() {
 function closeSettingsModal() {
     document.getElementById('settingsModal').classList.add('hidden');
 }
+// ==========================================
+// App Settings (Tagebuch & Navigation Preferences)
+// ==========================================
+
+let tagebuchMode = localStorage.getItem('tagebuchMode') || 'web';   // 'web' | 'excel'
+let navMode      = localStorage.getItem('navMode')      || 'google'; // 'google' | 'apple'
+
+function getTagebuchLink(standort) {
+    return tagebuchMode === 'excel'
+        ? `ms-excel:ofv|u|${standort.link}`
+        : `${standort.link}?web=1`;
+}
+
+function getNavLink(lat, lon) {
+    return navMode === 'apple'
+        ? `https://maps.apple.com/?daddr=${lat},${lon}`
+        : `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
+}
+
+function changeTagebuchMode(mode) {
+    tagebuchMode = mode;
+    localStorage.setItem('tagebuchMode', mode);
+    updateAppSettingsUI();
+}
+
+function changeNavMode(mode) {
+    navMode = mode;
+    localStorage.setItem('navMode', mode);
+    updateAppSettingsUI();
+}
+
+function updateAppSettingsUI() {
+    ['web', 'excel'].forEach(m => {
+        const btn = document.getElementById(`btn-tagebuch-${m}`);
+        if (!btn) return;
+        if (m === tagebuchMode) {
+            btn.classList.add('bg-blue-100', 'text-blue-700', 'border-blue-500', 'dark:bg-blue-900/50', 'dark:text-blue-300');
+            btn.classList.remove('bg-white', 'text-slate-700', 'border-slate-300', 'dark:bg-zinc-900', 'dark:text-zinc-300');
+        } else {
+            btn.classList.remove('bg-blue-100', 'text-blue-700', 'border-blue-500', 'dark:bg-blue-900/50', 'dark:text-blue-300');
+            btn.classList.add('bg-white', 'text-slate-700', 'border-slate-300', 'dark:bg-zinc-900', 'dark:text-zinc-300');
+        }
+    });
+    ['google', 'apple'].forEach(m => {
+        const btn = document.getElementById(`btn-nav-${m}`);
+        if (!btn) return;
+        if (m === navMode) {
+            btn.classList.add('bg-blue-100', 'text-blue-700', 'border-blue-500', 'dark:bg-blue-900/50', 'dark:text-blue-300');
+            btn.classList.remove('bg-white', 'text-slate-700', 'border-slate-300', 'dark:bg-zinc-900', 'dark:text-zinc-300');
+        } else {
+            btn.classList.remove('bg-blue-100', 'text-blue-700', 'border-blue-500', 'dark:bg-blue-900/50', 'dark:text-blue-300');
+            btn.classList.add('bg-white', 'text-slate-700', 'border-slate-300', 'dark:bg-zinc-900', 'dark:text-zinc-300');
+        }
+    });
+}
+
+function openAppSettingsModal() {
+    updateAppSettingsUI();
+    document.getElementById('appSettingsModal').classList.remove('hidden');
+}
+
+function closeAppSettingsModal() {
+    document.getElementById('appSettingsModal').classList.add('hidden');
+}

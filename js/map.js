@@ -260,20 +260,53 @@ function updateMapMarkers(liste) {
     leafletMap.addLayer(markerClusterGroup);
 
     if (liste.length > 0) {
-        if (liste.length === 1 && liste[0].zufahrt && liste[0].zufahrt.length > 0) {
-            const routeLatLngs = liste[0].zufahrt.map(coord => [coord[1], coord[0]]);
+        if (liste.length === 1) {
+            const s = liste[0];
+            let bounds = L.latLngBounds([[s.lat, s.lon]]);
 
-            currentZufahrtLayer = L.polyline(routeLatLngs, {
-                color: '#ef4444',
-                weight: 5,
-                dashArray: '10, 10',
-                opacity: 0.9,
-                lineCap: 'round'
-            }).addTo(leafletMap);
+            if (s.zufahrt && s.zufahrt.length > 0) {
+                const routeLatLngs = s.zufahrt.map(coord => [coord[1], coord[0]]);
+                currentZufahrtLayer = L.polyline(routeLatLngs, {
+                    color: '#ef4444',
+                    weight: 5,
+                    dashArray: '10, 10',
+                    opacity: 0.9,
+                    lineCap: 'round'
+                }).addTo(leafletMap);
+                bounds.extend(currentZufahrtLayer.getBounds());
+            }
 
-            const bounds = currentZufahrtLayer.getBounds();
-            bounds.extend([liste[0].lat, liste[0].lon]);
-            leafletMap.fitBounds(bounds, { padding: [40, 40], maxZoom: 20, animate: true });
+            if (typeof getOverlayPayloadForStandort === 'function') {
+                const payload = getOverlayPayloadForStandort(s.nummer);
+                if (payload && payload.features) {
+                    payload.features.forEach(f => {
+                        if (f.geometry && f.geometry.coordinates) {
+                            if (f.geometry.type === 'Point') {
+                                const lat = f.geometry.coordinates[1];
+                                const lng = f.geometry.coordinates[0];
+                                bounds.extend([lat, lng]);
+                                if (f.properties && f.properties.overlayType === 'kreis') {
+                                    const radius = f.properties.radius || 100;
+                                    const rLat = radius / 111320;
+                                    const rLng = radius / (40075 * Math.cos(lat * Math.PI / 180));
+                                    bounds.extend([lat + rLat, lng + rLng]);
+                                    bounds.extend([lat - rLat, lng - rLng]);
+                                }
+                            } else if (f.geometry.type === 'LineString') {
+                                f.geometry.coordinates.forEach(c => bounds.extend([c[1], c[0]]));
+                            } else if (f.geometry.type === 'Polygon' && f.geometry.coordinates[0]) {
+                                f.geometry.coordinates[0].forEach(c => bounds.extend([c[1], c[0]]));
+                            }
+                        }
+                    });
+                }
+            }
+
+            if (bounds.isValid() && !bounds.getNorthEast().equals(bounds.getSouthWest())) {
+                leafletMap.fitBounds(bounds, { padding: [40, 40], maxZoom: 17, animate: true });
+            } else {
+                leafletMap.setView([s.lat, s.lon], 17, { animate: true });
+            }
         } else {
             leafletMap.fitBounds(markerClusterGroup.getBounds(), { padding: [30, 30], maxZoom: 12, animate: true });
         }
@@ -297,6 +330,8 @@ function focusMapOnStandort(nummer) {
         currentZufahrtLayer = null;
     }
 
+    let bounds = L.latLngBounds([[standort.lat, standort.lon]]);
+
     if (standort.zufahrt && standort.zufahrt.length > 0) {
         const routeLatLngs = standort.zufahrt.map(coord => [coord[1], coord[0]]);
         currentZufahrtLayer = L.polyline(routeLatLngs, {
@@ -307,8 +342,37 @@ function focusMapOnStandort(nummer) {
             lineCap: 'round'
         }).addTo(leafletMap);
 
-        const bounds = currentZufahrtLayer.getBounds();
-        bounds.extend([standort.lat, standort.lon]);
+        bounds.extend(currentZufahrtLayer.getBounds());
+    }
+    
+    // Extend bounds with overlay elements
+    if (typeof getOverlayPayloadForStandort === 'function') {
+        const payload = getOverlayPayloadForStandort(standort.nummer);
+        if (payload && payload.features) {
+            payload.features.forEach(f => {
+                if (f.geometry && f.geometry.coordinates) {
+                    if (f.geometry.type === 'Point') {
+                        const lat = f.geometry.coordinates[1];
+                        const lng = f.geometry.coordinates[0];
+                        bounds.extend([lat, lng]);
+                        if (f.properties && f.properties.overlayType === 'kreis') {
+                            const radius = f.properties.radius || 100;
+                            const rLat = radius / 111320;
+                            const rLng = radius / (40075 * Math.cos(lat * Math.PI / 180));
+                            bounds.extend([lat + rLat, lng + rLng]);
+                            bounds.extend([lat - rLat, lng - rLng]);
+                        }
+                    } else if (f.geometry.type === 'LineString') {
+                        f.geometry.coordinates.forEach(c => bounds.extend([c[1], c[0]]));
+                    } else if (f.geometry.type === 'Polygon' && f.geometry.coordinates[0]) {
+                        f.geometry.coordinates[0].forEach(c => bounds.extend([c[1], c[0]]));
+                    }
+                }
+            });
+        }
+    }
+
+    if (bounds.isValid() && !bounds.getNorthEast().equals(bounds.getSouthWest())) {
         leafletMap.fitBounds(bounds, { padding: [40, 40], maxZoom: 17, animate: true });
     } else {
         leafletMap.setView([standort.lat, standort.lon], 13, { animate: true });

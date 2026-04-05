@@ -38,10 +38,10 @@ function openDashboard(nummer) {
 
     document.getElementById("windyIframe").src = `https://embed.windy.com/embed.html?type=map&location=coordinates&lat=${standort.lat}&lon=${standort.lon}&zoom=11&overlay=wind&marker=true&metricWind=m/s`;
 
-    document.getElementById("btnTagebuch").href = `${standort.link}?web=1`;
+    document.getElementById("btnTagebuch").href = getTagebuchLink(standort);
     const ordnerLink = standort.link.includes("/_standortinfo") ? standort.link.split("/_standortinfo")[0] : standort.link;
     document.getElementById("btnOrdner").href = ordnerLink;
-    document.getElementById("btnRoute").href = `https://www.google.com/maps/dir/?api=1&destination=${standort.lat},${standort.lon}`;
+    document.getElementById("btnRoute").href = getNavLink(standort.lat, standort.lon);
 
     fetchWeather(standort.lat, standort.lon);
     updateDWDDetailBox(standort.lat, standort.lon);
@@ -97,6 +97,8 @@ function setupMobileMap(standort) {
     dashMobileMarker = L.marker([standort.lat, standort.lon], { icon: mobileIcon }).addTo(dashMobileMapInstance);
 
     // Zufahrtsroute anzeigen, sofern vorhanden
+    let bounds = L.latLngBounds([[standort.lat, standort.lon]]);
+
     if (standort.zufahrt && standort.zufahrt.length > 0) {
         const routeLatLngs = standort.zufahrt.map(coord => [coord[1], coord[0]]);
         dashMobileRouteLayer = L.polyline(routeLatLngs, {
@@ -105,9 +107,37 @@ function setupMobileMap(standort) {
             dashArray: '8, 8'
         }).addTo(dashMobileMapInstance);
         
-        // Karte so heranzoomen, dass Route und Marker reinpassen
-        const bounds = dashMobileRouteLayer.getBounds();
-        bounds.extend([standort.lat, standort.lon]);
+        bounds.extend(dashMobileRouteLayer.getBounds());
+    }
+
+    // Extend bounds with overlay elements
+    if (typeof getOverlayPayloadForStandort === 'function') {
+        const payload = getOverlayPayloadForStandort(standort.nummer);
+        if (payload && payload.features) {
+            payload.features.forEach(f => {
+                if (f.geometry && f.geometry.coordinates) {
+                    if (f.geometry.type === 'Point') {
+                        const lat = f.geometry.coordinates[1];
+                        const lng = f.geometry.coordinates[0];
+                        bounds.extend([lat, lng]);
+                        if (f.properties && f.properties.overlayType === 'kreis') {
+                            const radius = f.properties.radius || 100;
+                            const rLat = radius / 111320;
+                            const rLng = radius / (40075 * Math.cos(lat * Math.PI / 180));
+                            bounds.extend([lat + rLat, lng + rLng]);
+                            bounds.extend([lat - rLat, lng - rLng]);
+                        }
+                    } else if (f.geometry.type === 'LineString') {
+                        f.geometry.coordinates.forEach(c => bounds.extend([c[1], c[0]]));
+                    } else if (f.geometry.type === 'Polygon' && f.geometry.coordinates[0]) {
+                        f.geometry.coordinates[0].forEach(c => bounds.extend([c[1], c[0]]));
+                    }
+                }
+            });
+        }
+    }
+
+    if (bounds.isValid() && !bounds.getNorthEast().equals(bounds.getSouthWest())) {
         dashMobileMapInstance.fitBounds(bounds, { padding: [20, 20], maxZoom: 16 });
     } else {
         dashMobileMapInstance.setView([standort.lat, standort.lon], 13);

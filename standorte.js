@@ -1190,8 +1190,8 @@ const standorteDaten = [
   {
     "nummer": "8321",
     "name": "LANGENBURG",
-    "lat": null,
-    "lon": null,
+    "lat": 49.26386665667883,
+    "lon": 9.87342483068852,
     "link": "https://suedwestrundfunk.sharepoint.com/sites/SWR_T_PV-Standorte/Freigegebene Dokumente/8000_Bereich Stuttgart/8321_LANGENBURG/_standortinfo/8321_2023xxxx_Tagebuch.xlsx",
     "zufahrt": []
   },
@@ -2062,8 +2062,8 @@ const standorteDaten = [
   {
     "nummer": "3709",
     "name": "SAARBRÜCKEN-FUNKHAUS",
-    "lat": null,
-    "lon": null,
+    "lat": 49.22238175332325,
+    "lon": 7.032800388460154,
     "link": "https://suedwestrundfunk.sharepoint.com/sites/SWR_T_PV-Standorte/Freigegebene Dokumente/3000_Bereich Donnersberg/3709_SAARBRÜCKEN-FUNKHAUS/_standortinfo/3709_00000000_Tagebuch.xlsx",
     "zufahrt": []
   },
@@ -2601,8 +2601,8 @@ const standorteDaten = [
   {
     "nummer": "4521",
     "name": "BADEN-BADEN_Funkhaus",
-    "lat": null,
-    "lon": null,
+    "lat": 48.76083333,
+    "lon": 8.239444444,
     "link": "https://suedwestrundfunk.sharepoint.com/sites/SWR_T_PV-Standorte/Freigegebene Dokumente/4000_Bereich Hornisgrinde/4521_BADEN-BADEN_Funkhaus/_standortinfo/4521_20130903_HBB_Tagebuch.xlsx",
     "zufahrt": []
   },

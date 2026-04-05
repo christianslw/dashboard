@@ -24,6 +24,14 @@ html.dracula-laser:not(.dark) {
 	--yellow: #d4af00;
 	--blue: #09b4bd;
 	--lavender: #8080a0;
+	--dwd-level-1: #d4ae00;
+	--dwd-level-2: #f08018;
+	--dwd-level-3: #e84568;
+	--dwd-level-4: #8c55f0;
+	--dwd-level-1-filter: brightness(0) saturate(100%) invert(72%) sepia(80%) saturate(950%) hue-rotate(2deg) brightness(88%) contrast(92%);
+	--dwd-level-2-filter: brightness(0) saturate(100%) invert(60%) sepia(90%) saturate(2000%) hue-rotate(355deg) brightness(97%) contrast(93%);
+	--dwd-level-3-filter: brightness(0) saturate(100%) invert(48%) sepia(85%) saturate(1600%) hue-rotate(325deg) brightness(95%) contrast(88%);
+	--dwd-level-4-filter: brightness(0) saturate(100%) invert(44%) sepia(95%) saturate(2600%) hue-rotate(246deg) brightness(96%) contrast(98%);
 }
 
 html.dracula-laser.dark {
@@ -47,6 +55,14 @@ html.dracula-laser.dark {
 	--blue: #09b4bd;          /* Cyan: CSS Properties */
 	--lavender: #d1d1fe;      /* Lavendel: Klassen/Typen */
 	--green: #b4fb73;         /* Hellgrün: Strings */
+	--dwd-level-1: #fed300;
+	--dwd-level-2: #ff9020;
+	--dwd-level-3: #ff6a60;
+	--dwd-level-4: #c088ff;
+	--dwd-level-1-filter: brightness(0) saturate(100%) invert(88%) sepia(61%) saturate(970%) hue-rotate(350deg) brightness(100%) contrast(99%);
+	--dwd-level-2-filter: brightness(0) saturate(100%) invert(72%) sepia(85%) saturate(1700%) hue-rotate(336deg) brightness(101%) contrast(103%);
+	--dwd-level-3-filter: brightness(0) saturate(100%) invert(66%) sepia(70%) saturate(1800%) hue-rotate(326deg) brightness(105%) contrast(104%);
+	--dwd-level-4-filter: brightness(0) saturate(100%) invert(72%) sepia(26%) saturate(3200%) hue-rotate(224deg) brightness(110%) contrast(102%);
 }
 
 /* --- Body --- */

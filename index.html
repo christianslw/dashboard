@@ -190,10 +190,16 @@
                 Hilfe
             </button>
         </div>
+        <div class="flex items-center gap-3">
         <button id="settingsBtn" onclick="openSettingsModal()" class="text-[11px] font-medium text-slate-400 hover:text-slate-600 dark:hover:text-zinc-400 transition-colors flex items-center gap-1">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3a9 9 0 100 18 9 9 0 000-18zM7.5 10.5a1 1 0 110-2 1 1 0 010 2zm4-2a1 1 0 110-2 1 1 0 010 2zm4 2a1 1 0 110-2 1 1 0 010 2z"/></svg>
             Darstellung
         </button>
+        <button id="appSettingsBtn" onclick="openAppSettingsModal()" class="text-[11px] font-medium text-slate-400 hover:text-slate-600 dark:hover:text-zinc-400 transition-colors flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            Einstellungen
+        </button>
+        </div>
     </div>
 
     <!-- SETTINGS MODAL -->
@@ -293,7 +299,7 @@
                             </div>
                             <div id="dwdAlertBox" class="hidden p-3 border-t">
                                 <div class="flex items-start gap-2">
-                                    <svg class="w-5 h-5 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                    <svg id="dwdAlertIcon" class="w-6 h-6 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                                     <div>
                                         <h4 id="dwdAlertTitle" class="text-sm font-bold"></h4>
                                         <p id="dwdAlertText" class="text-xs mt-1"></p>
@@ -468,6 +474,93 @@
                     <button onclick="saveWayInstructions()" class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition-colors">Speichern</button>
                     <button onclick="deleteWayInstructions()" class="flex-1 px-4 py-2 border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md font-medium transition-colors">Löschen</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- APP SETTINGS MODAL (Tagebuch & Navigation modes) -->
+    <div id="appSettingsModal" class="fixed inset-0 bg-slate-900/50 dark:bg-black/80 z-[60] hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-zinc-900 rounded-md shadow-xl w-full max-w-md border border-slate-200 dark:border-zinc-700 overflow-hidden">
+            <div class="p-4 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center bg-slate-50 dark:bg-zinc-900/50">
+                <h3 class="font-semibold text-slate-800 dark:text-zinc-100 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-slate-500 dark:text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    Einstellungen
+                </h3>
+                <button onclick="closeAppSettingsModal()" class="text-slate-400 hover:text-slate-800 dark:hover:text-zinc-200"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            </div>
+            <div class="p-5 space-y-6">
+                <!-- Tagebuch Link Mode -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-zinc-400 mb-1">Tagebuch öffnen mit</label>
+                    <p class="text-xs text-slate-400 dark:text-zinc-500 mb-3">Bestimmt, ob der Tagebuch-Link im Browser oder in Desktop-Excel geöffnet wird.</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="btn-tagebuch-web" onclick="changeTagebuchMode('web')" class="py-2 px-3 text-sm font-medium rounded border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+                            Browser (Web)
+                        </button>
+                        <button id="btn-tagebuch-excel" onclick="changeTagebuchMode('excel')" class="py-2 px-3 text-sm font-medium rounded border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M10 3v18M6 3h12a1 1 0 011 1v16a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg>
+                            Desktop Excel
+                        </button>
+                    </div>
+                </div>
+                <!-- Navigation App -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-zinc-400 mb-1">Navigations-App</label>
+                    <p class="text-xs text-slate-400 dark:text-zinc-500 mb-3">Bestimmt, welche Karten-App für Navigationslinks verwendet wird.</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="btn-nav-google" onclick="changeNavMode('google')" class="py-2 px-3 text-sm font-medium rounded border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                            Google Maps
+                        </button>
+                        <button id="btn-nav-apple" onclick="changeNavMode('apple')" class="py-2 px-3 text-sm font-medium rounded border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            Apple Maps
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 border-t border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/50 flex justify-end">
+                <button onclick="closeAppSettingsModal()" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition-colors">Fertig</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- OVERLAY INPUT MODAL (Hinweis + Zone Name) -->
+    <div id="overlayInputModal" class="fixed inset-0 bg-slate-900/50 dark:bg-black/80 z-[70] hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-zinc-900 rounded-lg shadow-xl w-full max-w-sm border border-slate-200 dark:border-zinc-700 overflow-hidden">
+            <div class="p-4 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center">
+                <h3 id="ovModalTitle" class="font-semibold text-slate-800 dark:text-zinc-100 flex items-center gap-2">Eingabe</h3>
+                <button onclick="cancelOverlayInput()" class="text-slate-400 hover:text-slate-800 dark:hover:text-zinc-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-4 space-y-3">
+                <!-- Zone preset dropdown (hidden for hinweis) -->
+                <div id="ovModalPresetRow" class="hidden">
+                    <label class="block text-xs font-medium mb-1 text-slate-600 dark:text-zinc-400">Vorlage:</label>
+                    <select id="ovModalPreset" onchange="onOverlayPresetChange()"
+                        class="w-full p-2 rounded-md border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-sm focus:border-blue-500 outline-none">
+                        <option value="custom" selected>Benutzerdefiniert</option>
+                        <option value="eisabfall">⚠️ Eisabfallzone</option>
+                    </select>
+                </div>
+                <!-- Text input -->
+                <div>
+                    <label id="ovModalInputLabel" class="block text-xs font-medium mb-1 text-slate-600 dark:text-zinc-400">Text:</label>
+                    <textarea id="ovModalInput" rows="3" oninput="updateOverlayInputPreview()"
+                        class="w-full p-2.5 rounded-md border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 focus:border-blue-500 outline-none resize-none text-sm"
+                        placeholder="Text eingeben..."></textarea>
+                </div>
+                <!-- Preview -->
+                <div class="p-2.5 rounded-md bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/40 text-xs text-blue-800 dark:text-blue-300">
+                    <span class="font-semibold block mb-0.5">Vorschau:</span>
+                    <span id="ovModalPreview" class="whitespace-pre-wrap">(kein Text)</span>
+                </div>
+            </div>
+            <div class="p-4 border-t border-slate-100 dark:border-zinc-800 flex gap-2">
+                <button onclick="cancelOverlayInput()" class="flex-1 px-3 py-2 text-sm border border-slate-300 dark:border-zinc-700 rounded hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors">Abbrechen</button>
+                <button onclick="confirmOverlayInput()" class="flex-1 px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors font-medium">Speichern</button>
             </div>
         </div>
     </div>

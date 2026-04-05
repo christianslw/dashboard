@@ -3,6 +3,28 @@
    CSS class: "swr-ms" on <html>
    =================================================================== */
 
+html.swr-ms:not(.dark) {
+    --dwd-level-1: #c09800;
+    --dwd-level-2: #d47015;
+    --dwd-level-3: #c83535;
+    --dwd-level-4: #5e44b4;
+    --dwd-level-1-filter: brightness(0) saturate(100%) invert(62%) sepia(88%) saturate(900%) hue-rotate(5deg) brightness(86%) contrast(104%);
+    --dwd-level-2-filter: brightness(0) saturate(100%) invert(52%) sepia(80%) saturate(1200%) hue-rotate(350deg) brightness(91%) contrast(93%);
+    --dwd-level-3-filter: brightness(0) saturate(100%) invert(38%) sepia(90%) saturate(1100%) hue-rotate(332deg) brightness(90%) contrast(86%);
+    --dwd-level-4-filter: brightness(0) saturate(100%) invert(30%) sepia(22%) saturate(1600%) hue-rotate(240deg) brightness(88%) contrast(96%);
+}
+
+html.swr-ms.dark {
+    --dwd-level-1: #f0ca48;
+    --dwd-level-2: #ff9840;
+    --dwd-level-3: #ff5c5c;
+    --dwd-level-4: #9070ec;
+    --dwd-level-1-filter: brightness(0) saturate(100%) invert(83%) sepia(43%) saturate(1296%) hue-rotate(345deg) brightness(99%) contrast(91%);
+    --dwd-level-2-filter: brightness(0) saturate(100%) invert(73%) sepia(47%) saturate(2494%) hue-rotate(339deg) brightness(103%) contrast(102%);
+    --dwd-level-3-filter: brightness(0) saturate(100%) invert(68%) sepia(65%) saturate(2000%) hue-rotate(323deg) brightness(105%) contrast(103%);
+    --dwd-level-4-filter: brightness(0) saturate(100%) invert(56%) sepia(36%) saturate(2500%) hue-rotate(236deg) brightness(99%) contrast(96%);
+}
+
 /* Light Mode Base Context */
 html.swr-ms body { background-color: #f4f6f9 !important; }
 

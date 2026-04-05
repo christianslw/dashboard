@@ -20,15 +20,43 @@ async function fetchDWD(lat, lon) {
 }
 
 function getDwdSeverityColor(severity) {
-    const s = typeof severity === 'string' ? severity.toLowerCase() : '';
-    if (s === 'extreme') return '#9333ea';
-    if (s === 'severe')  return '#ef4444';
-    if (s === 'moderate') return '#f97316';
-    if (s === 'minor')   return '#eab308';
-    return '#eab308';
+    const level = getDwdSeverityRank(severity);
+    if (level === 4) return getCssVariableValue('--dwd-level-4', '#9333ea');
+    if (level === 3) return getCssVariableValue('--dwd-level-3', '#ef4444');
+    if (level === 2) return getCssVariableValue('--dwd-level-2', '#f97316');
+    if (level === 1) return getCssVariableValue('--dwd-level-1', '#eab308');
+    return getCssVariableValue('--dwd-level-1', '#eab308');
 }
 
-function getDwdEventIconSvg(eventDe, eventEn, color) {
+function getDwdSeverityFilter(severity) {
+    const level = getDwdSeverityRank(severity);
+    if (level === 4) return getCssVariableValue('--dwd-level-4-filter', 'brightness(0) saturate(100%) invert(28%) sepia(76%) saturate(2050%) hue-rotate(252deg) brightness(94%) contrast(96%)');
+    if (level === 3) return getCssVariableValue('--dwd-level-3-filter', 'brightness(0) saturate(100%) invert(46%) sepia(96%) saturate(2553%) hue-rotate(336deg) brightness(99%) contrast(89%)');
+    if (level === 2) return getCssVariableValue('--dwd-level-2-filter', 'brightness(0) saturate(100%) invert(61%) sepia(70%) saturate(4063%) hue-rotate(357deg) brightness(101%) contrast(96%)');
+    if (level === 1) return getCssVariableValue('--dwd-level-1-filter', 'brightness(0) saturate(100%) invert(67%) sepia(77%) saturate(803%) hue-rotate(1deg) brightness(101%) contrast(90%)');
+    return 'brightness(0) saturate(100%)';
+}
+
+function getCssVariableValue(name, fallback) {
+    const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return value || fallback;
+}
+
+function hexToRgba(hexColor, alpha) {
+    if (typeof hexColor !== 'string') return `rgba(234,179,8,${alpha})`;
+    let hex = hexColor.trim().replace('#', '');
+    if (hex.length === 3) {
+        hex = hex.split('').map(c => c + c).join('');
+    }
+    if (hex.length !== 6) return `rgba(234,179,8,${alpha})`;
+
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function getDwdEventIconPath(eventDe, eventEn) {
     const ed = typeof eventDe === 'string' ? eventDe.toLowerCase() : '';
     const ee = typeof eventEn === 'string' ? eventEn.toLowerCase() : '';
 
@@ -36,52 +64,37 @@ function getDwdEventIconSvg(eventDe, eventEn, color) {
     const isWind    = !isThunder && (ed.includes('wind') || ed.includes('böen') || ed.includes('boen') || ed.includes('sturm') || ed.includes('orkan')
                         || ee.includes('wind') || ee.includes('gust') || ee.includes('squall') || ee.includes('storm'));
     const isFog     = ed.includes('nebel') || ee.includes('fog') || ee.includes('mist');
+    const isFlood   = ed.includes('hochwasser') || ed.includes('überflutung') || ed.includes('ueberflutung')
+                    || ee.includes('flood') || ee.includes('inundation');
     const isSnow    = ed.includes('schnee') || ed.includes('graupel') || ee.includes('snow') || ee.includes('sleet') || ee.includes('hail');
+    const isLowTemp = ed.includes('kälte') || ed.includes('kaelte') || ed.includes('kalt') || ee.includes('cold') || ee.includes('low temperature');
+    const isSlippery = ed.includes('glätte') || ed.includes('glaette') || ed.includes('glatt') || ed.includes('eis') || ee.includes('slippery') || ee.includes('black ice');
     const isFrost   = ed.includes('frost') || ed.includes('glatt') || ed.includes('eis') || ee.includes('frost') || ee.includes('ice') || ee.includes('glaze');
     const isRain    = !isThunder && !isSnow && (ed.includes('regen') || ed.includes('niederschlag') || ee.includes('rain') || ee.includes('shower') || ee.includes('drizzle'));
     const isHeat    = ed.includes('hitze') || ed.includes('wärme') || ee.includes('heat');
 
-    const style = `style="color:${color}"`;
-    const cls   = `class="w-4 h-4 inline-block shrink-0"`;
-    const base  = `<svg ${cls} ${style} fill="none" stroke="currentColor" viewBox="0 0 24 24">`;
-
-    if (isThunder) {
-        // Lightning bolt
-        return `${base}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`;
-    }
-    if (isWind) {
-        // Wind / storm gusts — flag-like lines
-        return `${base}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h14a2 2 0 010 4H4m0 0V4m0 6v4m0-4h10a2 2 0 010 4H4"/></svg>`;
-    }
-    if (isFog) {
-        // Horizontal fog lines
-        return `${base}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 12h12M4 16h8"/></svg>`;
-    }
-    if (isSnow) {
-        // Snowflake (cross + diagonals)
-        return `${base}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v20M2 12h20M5.636 5.636l12.728 12.728M18.364 5.636L5.636 18.364"/></svg>`;
-    }
-    if (isRain) {
-        // Cloud + rain drops
-        return `${base}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14v2m-4-2v2m8-2v2M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>`;
-    }
-    if (isFrost) {
-        // Ice / thermometer cold
-        return `${base}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v20M7 7l5 5 5-5M7 17l5-5 5 5"/></svg>`;
-    }
-    if (isHeat) {
-        // Sun / heat
-        return `${base}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>`;
-    }
-    // Default: warning triangle
-    return `${base}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>`;
+    if (isThunder) return 'res/icons/mdi_thunder.svg';
+    if (isWind) return 'res/icons/mdi_wind.svg';
+    if (isFog) return 'res/icons/mdi_fog.svg';
+    if (isFlood || isRain) return 'res/icons/mdi_flood.svg';
+    if (isSnow) return 'res/icons/mdi_snow.svg';
+    if (isHeat) return 'res/icons/mdi_heat.svg';
+    if (isLowTemp) return 'res/icons/mdi_lowtemp.svg';
+    if (isSlippery) return 'res/icons/mdi_slippery.svg';
+    if (isFrost) return 'res/icons/mdi_frost.svg';
+    return 'res/icons/mdi_thunder.svg';
 }
 
 function getDwdLevelBox(severity, eventDe, eventEn) {
-    const color = getDwdSeverityColor(severity);
-    const svg   = getDwdEventIconSvg(eventDe, eventEn, color);
+    const iconPath = getDwdEventIconPath(eventDe, eventEn);
+    const iconFilter = getDwdSeverityFilter(severity);
     const label = (eventDe || eventEn || severity || 'Warnung').replace(/"/g, '&quot;');
-    return `<span class="inline-flex items-center" title="${label}">${svg}</span>`;
+    const sizeClass = iconPath.includes('slippery') ? 'w-7 h-7' : 'w-5 h-5';
+    return `
+        <span class="inline-flex items-center" title="${label}">
+            <img src="${iconPath}" alt="DWD Warnsymbol" class="${sizeClass} shrink-0" style="filter:${iconFilter};" />
+        </span>
+    `;
 }
 
 
@@ -121,26 +134,48 @@ async function updateDWDDetailBox(lat, lon) {
     const box = document.getElementById("dwdAlertBox");
     const title = document.getElementById("dwdAlertTitle");
     const text = document.getElementById("dwdAlertText");
+    const icon = document.getElementById("dwdAlertIcon");
 
     box.classList.remove("hidden");
-    box.className = "p-3 border-t border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900";
+    box.className = "p-3 border-t";
+    box.style.backgroundColor = '';
+    box.style.borderColor = '';
     title.innerText = "Prüfe DWD...";
     text.innerText = "";
-    title.className = "text-sm font-semibold text-slate-500";
+    title.className = "text-sm font-semibold";
+    title.style.color = '';
+    text.style.color = '';
+    if (icon) icon.style.color = '';
 
     const alerts = await fetchDWD(lat, lon);
     const mainAlert = getHighestDwdAlert(alerts);
 
     if (!mainAlert) {
         title.innerText = "Keine amtlichen Warnungen";
-        title.className = "text-sm font-semibold text-green-600 dark:text-green-500";
+        title.className = "text-sm font-semibold";
+        title.style.color = '';
+        box.style.backgroundColor = '';
+        box.style.borderColor = '';
+        if (icon) icon.style.color = '';
     } else {
-        const isSevere = getDwdSeverityRank(mainAlert.severity) >= 3;
-        box.className = `p-3 border-t ${isSevere ? 'bg-red-50/50 dark:bg-red-900/20 border-red-200 dark:border-red-900/50' : 'bg-orange-50/50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-900/50'}`;
+        const severityColor = getDwdSeverityColor(mainAlert.severity);
+        const level = getDwdSeverityRank(mainAlert.severity);
+        const bgAlpha = level >= 3 ? 0.16 : 0.12;
+        const borderAlpha = level >= 3 ? 0.45 : 0.35;
+
+        box.className = "p-3 border-t";
+        box.style.backgroundColor = hexToRgba(severityColor, bgAlpha);
+        box.style.borderColor = hexToRgba(severityColor, borderAlpha);
+
         title.innerText = mainAlert.headline_de || "Wetterwarnung";
-        title.className = `text-sm font-bold ${isSevere ? 'text-red-700 dark:text-red-400' : 'text-orange-700 dark:text-orange-400'}`;
+        title.className = "text-sm font-bold";
+        title.style.color = severityColor;
+
         text.innerText = mainAlert.description_de || "";
-        text.className = `text-xs mt-1 ${isSevere ? 'text-red-600 dark:text-red-300' : 'text-orange-600 dark:text-orange-300'}`;
+        text.className = "text-xs mt-1";
+        text.style.color = severityColor;
+
+        if (icon) icon.style.color = severityColor;
     }
 }
 
