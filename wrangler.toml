@@ -16,21 +16,15 @@ compatibility_date = "2024-09-23"
 
 [[kv_namespaces]]
 binding  = "OVERLAYS_KV"
-id       = "180667bb90344f3c89e66e8b5c05e12d"
+id       = "660381d7f93e42a887c203b0e89a1e4a"
 
 [[kv_namespaces]]
 binding  = "SETTINGS_KV"
-id       = "00b32b0a1719409b9cf4e16b7677ca39"
+id       = "2ed469f119304a8f8a204f5ec8b61252"
 
 [[kv_namespaces]]
 binding  = "STANDORTE_KV"
-id       = "48192c7570644df69f609de64f081f54"
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Environment Variables (set in CF Dashboard for production; use .dev.vars locally)
-# Create a .dev.vars file (gitignored) with:
-#   ADMIN_SECRET=your-secret-token-here
-# ──────────────────────────────────────────────────────────────────────────────
+id       = "e87705c3c7524995a4ccfe3c60b21b7a"
 
 # [vars]
-# ADMIN_SECRET is intentionally NOT set here — use .dev.vars or CF Dashboard secrets
+# ADMIN_SECRET is hidden, find it
