@@ -5,8 +5,5 @@
   "scripts": {
     "build": "echo 'No build step required'",
     "dev": "npx wrangler pages dev . --compatibility-date=2024-09-23"
-  },
-  "dependencies": {
-    "@mdi/font": "^7.4.47"
   }
 }
