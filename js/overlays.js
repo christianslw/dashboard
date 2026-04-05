@@ -1301,8 +1301,9 @@ function renderElementList() {
                 return;
             }
             const idx = parseInt(span.dataset.idx, 10);
+            // Only collect layers that have features — must match renderElementList indexing
             const layers = [];
-            overlayEditGroup.eachLayer(l => layers.push(l));
+            overlayEditGroup.eachLayer(l => { if (l.feature) layers.push(l); });
             const layer = layers[idx];
             if (!layer?.feature) return;
             layer.feature.properties.label = newLabel;
