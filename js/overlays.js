@@ -518,6 +518,9 @@ function createLayerFromFeature(feature) {
 function updateFeatureFromLayer(layer) {
     if (!layer) return null;
 
+    // Preserve any custom label the user has set via inline rename
+    const existingLabel = layer.feature?.properties?.label || '';
+
     if (layer instanceof L.Marker) {
         const ll = layer.getLatLng();
         const iconType = layer.feature?.properties?.iconType || 'schranke';
@@ -526,7 +529,7 @@ function updateFeatureFromLayer(layer) {
         layer.feature = {
             type: 'Feature',
             geometry: { type: 'Point', coordinates: [ll.lng, ll.lat] },
-            properties: { overlayType: 'icon', iconType, color, ...(note ? { note } : {}) }
+            properties: { overlayType: 'icon', iconType, color, ...(note ? { note } : {}), ...(existingLabel ? { label: existingLabel } : {}) }
         };
         layer.setIcon(getOverlayMarkerIcon(iconType, color, note));
         return layer.feature;
@@ -540,7 +543,7 @@ function updateFeatureFromLayer(layer) {
         layer.feature = {
             type: 'Feature',
             geometry: { type: 'Point', coordinates: [ll.lng, ll.lat] },
-            properties: { overlayType: 'kreis', zoneType, radius: layer.getRadius(), color, ...(note ? { note } : {}) }
+            properties: { overlayType: 'kreis', zoneType, radius: layer.getRadius(), color, ...(note ? { note } : {}), ...(existingLabel ? { label: existingLabel } : {}) }
         };
         if (typeof layer.setStyle === 'function') layer.setStyle({ color, fillColor: color });
         return layer.feature;
@@ -555,7 +558,7 @@ function updateFeatureFromLayer(layer) {
         layer.feature = {
             type: 'Feature',
             geometry: { type: 'Polygon', coordinates: [coords] },
-            properties: { overlayType: ot === 'gefahrenzone' ? 'zone' : ot, zoneType, color, ...(note ? { note } : {}) }
+            properties: { overlayType: ot === 'gefahrenzone' ? 'zone' : ot, zoneType, color, ...(note ? { note } : {}), ...(existingLabel ? { label: existingLabel } : {}) }
         };
         if (typeof layer.setStyle === 'function') layer.setStyle({ color, fillColor: color });
         return layer.feature;
@@ -570,7 +573,7 @@ function updateFeatureFromLayer(layer) {
             layer.feature = {
                 type: 'Feature',
                 geometry: { type: 'LineString', coordinates: coords },
-                properties: { overlayType: 'pfad', strokeStyle, color }
+                properties: { overlayType: 'pfad', strokeStyle, color, ...(existingLabel ? { label: existingLabel } : {}) }
             };
             const styleOpts = PFAD_STROKE_STYLES[strokeStyle] || PFAD_STROKE_STYLES.solid;
             if (typeof layer.setStyle === 'function') layer.setStyle({ color, ...styleOpts });
@@ -581,7 +584,7 @@ function updateFeatureFromLayer(layer) {
         layer.feature = {
             type: 'Feature',
             geometry: { type: 'LineString', coordinates: coords },
-            properties: { overlayType: 'anfahrt', routeType, color }
+            properties: { overlayType: 'anfahrt', routeType, color, ...(existingLabel ? { label: existingLabel } : {}) }
         };
         if (typeof layer.setStyle === 'function') layer.setStyle({ color });
         return layer.feature;
