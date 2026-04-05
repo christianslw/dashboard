@@ -1,9 +1,1 @@
 /.ignore
-node_modules/
-
-# Cloudflare local dev secrets — never commit
-.dev.vars
-
-# Wrangler local KV / cache
-.wrangler/
-
