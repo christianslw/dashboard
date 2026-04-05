@@ -231,7 +231,7 @@ function updateMapMarkers(liste) {
 
         const smallMarker = isFav
             ? L.divIcon({
-                html: `<div style="width:${starSize}px;height:${starSize}px;display:flex;align-items:center;justify-content:center;color:${markerColor};font-size:${starSize}px;line-height:1;text-shadow:-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff,1px 1px 0 #fff,0 2px 4px rgba(0,0,0,0.3);">★</div>`,
+                html: `<div style="width:${starSize}px;height:${starSize}px;display:flex;align-items:center;justify-content:center;color:${markerColor};font-size:${starSize}px;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3))"><i class="mdi mdi-star" style="font-size:${starSize}px"></i></div>`,
                 className: 'custom-small-marker',
                 iconSize: [starSize, starSize],
                 iconAnchor: [Math.round(starSize / 2), Math.round(starSize / 2)]

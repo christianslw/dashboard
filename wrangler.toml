@@ -1,0 +1,36 @@
+# Cloudflare Pages / Workers configuration
+# Used by: wrangler pages dev  (local development)
+# Production bindings are configured in the Cloudflare Dashboard:
+#  Pages > <project> > Settings > Functions > KV namespace bindings
+
+name = "swr-dashboard"
+pages_build_output_dir = "."
+compatibility_date = "2024-09-23"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# KV Namespace Bindings
+# Replace the 'id' values with your actual KV namespace IDs from the dashboard.
+# For local dev, wrangler creates ephemeral local KV stores automatically when
+# the IDs are set to any placeholder string.
+# ──────────────────────────────────────────────────────────────────────────────
+
+[[kv_namespaces]]
+binding  = "OVERLAYS_KV"
+id       = "180667bb90344f3c89e66e8b5c05e12d"
+
+[[kv_namespaces]]
+binding  = "SETTINGS_KV"
+id       = "00b32b0a1719409b9cf4e16b7677ca39"
+
+[[kv_namespaces]]
+binding  = "STANDORTE_KV"
+id       = "48192c7570644df69f609de64f081f54"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Environment Variables (set in CF Dashboard for production; use .dev.vars locally)
+# Create a .dev.vars file (gitignored) with:
+#   ADMIN_SECRET=your-secret-token-here
+# ──────────────────────────────────────────────────────────────────────────────
+
+# [vars]
+# ADMIN_SECRET is intentionally NOT set here — use .dev.vars or CF Dashboard secrets

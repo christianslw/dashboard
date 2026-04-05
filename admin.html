@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="de" class="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin — SWR Standort Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+    tailwind.config = {
+        darkMode: 'class',
+        theme: { extend: { fontFamily: { sans: ['Segoe UI', 'system-ui', 'sans-serif'] } } }
+    };
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+<style>
+    [x-cloak] { display: none; }
+    .cell { @apply px-3 py-2 text-sm; }
+    details > summary { list-style: none; cursor: pointer; }
+    details > summary::-webkit-details-marker { display: none; }
+</style>
+</head>
+<body class="bg-slate-100 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 min-h-screen font-sans">
+
+<!-- ───────────────────────────── AUTH GATE ───────────────────────────────── -->
+<div id="authGate" class="fixed inset-0 bg-black/60 backdrop-blur flex items-center justify-center z-50">
+    <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-2xl p-8 w-full max-w-sm">
+        <h2 class="text-lg font-bold mb-1">Admin-Zugang</h2>
+        <p class="text-xs text-slate-500 dark:text-zinc-400 mb-5">Gib den Admin-Token ein (entspricht <code class="font-mono bg-slate-100 dark:bg-zinc-800 px-1 rounded">ADMIN_SECRET</code>).</p>
+        <input id="tokenInput" type="password" placeholder="Admin-Token" autocomplete="current-password"
+            class="w-full border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <button onclick="submitToken()"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 text-sm font-medium transition-colors">
+            Anmelden
+        </button>
+        <p id="authError" class="text-xs text-red-500 mt-2 hidden">Token ungültig oder Backend nicht erreichbar.</p>
+    </div>
+</div>
+
+<!-- ───────────────────────────── MAIN ────────────────────────────────────── -->
+<div id="adminMain" class="hidden max-w-7xl mx-auto px-4 py-6">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6 gap-4 flex-wrap">
+        <div>
+            <h1 class="text-xl font-bold">Standort-Verwaltung</h1>
+            <p class="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">Backend: Cloudflare KV — Änderungen sind sofort für alle Nutzer sichtbar.</p>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+            <button onclick="openAddForm()"
+                class="px-3 py-1.5 text-sm bg-green-600 hover:bg-green-700 text-white rounded-md font-medium transition-colors flex items-center gap-1.5">
+                + Neuer Standort
+            </button>
+            <button onclick="seedFromStandorteJs()"
+                class="px-3 py-1.5 text-sm border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 rounded-md font-medium transition-colors flex items-center gap-1.5">
+                ↑ Seed von standorte.js
+            </button>
+            <button onclick="loadAll()"
+                class="px-3 py-1.5 text-sm border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 rounded-md font-medium transition-colors">
+                ↺ Neu laden
+            </button>
+            <button onclick="logout()"
+                class="px-3 py-1.5 text-sm text-slate-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 rounded-md transition-colors">
+                Abmelden
+            </button>
+        </div>
+    </div>
+
+    <!-- Status bar -->
+    <div id="statusBar" class="text-xs text-slate-500 dark:text-zinc-400 mb-4"></div>
+
+    <!-- Seed progress -->
+    <div id="seedProgress" class="hidden mb-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-sm text-blue-700 dark:text-blue-300"></div>
+
+    <!-- Tabs -->
+    <div class="flex gap-1 mb-4 border-b border-slate-200 dark:border-zinc-800">
+        <button onclick="switchTab('standorte')" id="tab-standorte" class="tab-btn px-4 py-2 text-sm font-medium border-b-2 border-blue-500 text-blue-600 dark:text-blue-400">Standorte</button>
+        <button onclick="switchTab('overlays')" id="tab-overlays" class="tab-btn px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100">Overlay-Übersicht</button>
+    </div>
+
+    <!-- ─── TAB: Standorte ─────────────────────────────────────────────────── -->
+    <div id="pane-standorte">
+        <!-- Search -->
+        <div class="mb-3">
+            <input id="searchInput" type="text" placeholder="Suchen (Nummer, Name)…"
+                oninput="filterTable()" class="w-full max-w-md border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
+            <table class="w-full text-sm" id="standorteTable">
+                <thead>
+                    <tr class="border-b border-slate-200 dark:border-zinc-800 text-left text-xs text-slate-500 dark:text-zinc-400 uppercase tracking-wide">
+                        <th class="cell w-24">Nr.</th>
+                        <th class="cell">Name</th>
+                        <th class="cell w-28">Lat</th>
+                        <th class="cell w-28">Lon</th>
+                        <th class="cell w-20 text-center">Zufahrt</th>
+                        <th class="cell w-20 text-center">Overlays</th>
+                        <th class="cell w-28 text-right">Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody id="standorteBody">
+                    <tr><td colspan="7" class="cell text-center text-slate-400 py-8">Lädt…</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <p id="tableCount" class="text-xs text-slate-400 dark:text-zinc-500 mt-2"></p>
+    </div>
+
+    <!-- ─── TAB: Overlay-Übersicht ─────────────────────────────────────────── -->
+    <div id="pane-overlays" class="hidden">
+        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
+            <table class="w-full text-sm" id="overlaysTable">
+                <thead>
+                    <tr class="border-b border-slate-200 dark:border-zinc-800 text-left text-xs text-slate-500 dark:text-zinc-400 uppercase tracking-wide">
+                        <th class="cell w-24">Nr.</th>
+                        <th class="cell">Name</th>
+                        <th class="cell w-28 text-center">Elemente</th>
+                        <th class="cell w-44">Letzte Änderung</th>
+                        <th class="cell w-36">Geändert von</th>
+                        <th class="cell w-24 text-right">Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody id="overlaysBody">
+                    <tr><td colspan="6" class="cell text-center text-slate-400 py-8">Lädt…</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- ───────────────────────────── EDIT MODAL ──────────────────────────────── -->
+<div id="editModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 hidden flex items-start justify-center pt-16 px-4">
+    <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+        <div class="p-5 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between sticky top-0 bg-white dark:bg-zinc-900 z-10">
+            <h2 id="editModalTitle" class="text-base font-bold">Standort bearbeiten</h2>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 text-xl leading-none transition-colors">&times;</button>
+        </div>
+        <form id="editForm" onsubmit="submitForm(event)" class="p-5 space-y-4">
+            <input type="hidden" id="fOriginalNummer" />
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">Nummer *</label>
+                    <input id="fNummer" type="text" required class="form-input" />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">Name</label>
+                    <input id="fName" type="text" class="form-input" />
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">Latitude *</label>
+                    <input id="fLat" type="number" step="any" required class="form-input" />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">Longitude *</label>
+                    <input id="fLon" type="number" step="any" required class="form-input" />
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">Tagebuch-Link</label>
+                <input id="fLink" type="url" class="form-input" placeholder="https://…" />
+            </div>
+            <div>
+                <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">
+                    Zufahrt (JSON-Array von [lon, lat]-Paaren)
+                </label>
+                <textarea id="fZufahrt" rows="6"
+                    class="form-input font-mono text-xs resize-y"
+                    placeholder='[[10.12, 48.86], [10.13, 48.87], …]'></textarea>
+                <p class="text-xs text-slate-400 dark:text-zinc-500 mt-1">Format: <code class="font-mono">[ [lon, lat], [lon, lat], … ]</code></p>
+            </div>
+            <div id="formError" class="hidden text-sm text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2"></div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" onclick="closeModal()"
+                    class="px-4 py-2 text-sm border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors">
+                    Abbrechen
+                </button>
+                <button type="submit" id="submitBtn"
+                    class="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
+                    Speichern
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.form-input {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    background: white;
+    outline: none;
+    transition: box-shadow 0.15s;
+}
+.dark .form-input {
+    border-color: #3f3f46;
+    background: #18181b;
+    color: #f4f4f5;
+}
+.form-input:focus { box-shadow: 0 0 0 2px #3b82f6; }
+</style>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────────
+
+let adminToken   = sessionStorage.getItem('adminToken') || '';
+let standorte    = [];
+let overlayData  = {};
+let editMode     = 'add'; // 'add' | 'edit'
+let currentTab   = 'standorte';
+
+// ─── AUTH ─────────────────────────────────────────────────────────────────────
+
+async function submitToken() {
+    const token = document.getElementById('tokenInput').value.trim();
+    if (!token) return;
+    // Verify via the dedicated admin status endpoint
+    const res = await fetch('/api/admin/status', {
+        headers: { 'Authorization': `Bearer ${token}` }
+    }).catch(() => null);
+    if (!res || res.status === 401) {
+        document.getElementById('authError').classList.remove('hidden');
+        return;
+    }
+    adminToken = token;
+    sessionStorage.setItem('adminToken', token);
+    document.getElementById('authGate').classList.add('hidden');
+    document.getElementById('adminMain').classList.remove('hidden');
+    loadAll();
+}
+
+document.getElementById('tokenInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitToken();
+});
+
+// Auto-login if token already in session
+if (adminToken) {
+    submitToken();
+} else {
+    // Activate auth gate
+    setTimeout(() => document.getElementById('tokenInput').focus(), 100);
+}
+
+function logout() {
+    sessionStorage.removeItem('adminToken');
+    adminToken = '';
+    document.getElementById('authGate').classList.remove('hidden');
+    document.getElementById('adminMain').classList.add('hidden');
+}
+
+// ─── TABS ─────────────────────────────────────────────────────────────────────
+
+function switchTab(tab) {
+    currentTab = tab;
+    ['standorte', 'overlays'].forEach(t => {
+        document.getElementById(`tab-${t}`).className =
+            t === tab
+            ? 'tab-btn px-4 py-2 text-sm font-medium border-b-2 border-blue-500 text-blue-600 dark:text-blue-400'
+            : 'tab-btn px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100';
+        document.getElementById(`pane-${t}`).classList.toggle('hidden', t !== tab);
+    });
+    if (tab === 'overlays' && Object.keys(overlayData).length === 0) loadOverlays();
+}
+
+// ─── DATA LOADING ─────────────────────────────────────────────────────────────
+
+async function loadAll() {
+    setStatus('Lade…');
+    await Promise.all([loadStandorte(), loadOverlays()]);
+    setStatus(`${standorte.length} Standorte · ${Object.keys(overlayData).length} Overlay-Einträge — ${new Date().toLocaleTimeString()}`);
+}
+
+async function loadStandorte() {
+    try {
+        const res = await fetch('/api/standorte');
+        const raw = await res.json();
+        standorte = Array.isArray(raw) ? raw : [];
+        renderStandorteTable(standorte);
+    } catch (err) {
+        setStatus('Fehler beim Laden der Standorte: ' + err.message);
+    }
+}
+
+async function loadOverlays() {
+    try {
+        const res = await fetch('/api/overlays');
+        overlayData = await res.json();
+        renderOverlaysTable();
+    } catch { overlayData = {}; }
+}
+
+// ─── TABLE RENDERING ──────────────────────────────────────────────────────────
+
+function renderStandorteTable(data) {
+    const tbody = document.getElementById('standorteBody');
+    if (!data.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="cell text-center text-slate-400 py-10">
+            Keine Standorte im Backend. Klicke "Seed von standorte.js" um die statischen Daten zu importieren.
+        </td></tr>`;
+        document.getElementById('tableCount').textContent = '';
+        return;
+    }
+    const sorted = [...data].sort((a, b) => String(a.nummer).localeCompare(String(b.nummer)));
+    tbody.innerHTML = sorted.map(s => {
+        const ovCount = (overlayData[String(s.nummer)]?.features?.length) ?? '—';
+        const zufahrtLen = Array.isArray(s.zufahrt) ? s.zufahrt.length : 0;
+        return `<tr class="border-b border-slate-100 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors" data-nummer="${s.nummer}" data-name="${(s.name||'').toLowerCase()}">
+            <td class="cell font-mono font-semibold">${esc(s.nummer)}</td>
+            <td class="cell">${esc(s.name || '—')}</td>
+            <td class="cell font-mono text-xs text-slate-500 dark:text-zinc-400">${s.lat?.toFixed(6) ?? '—'}</td>
+            <td class="cell font-mono text-xs text-slate-500 dark:text-zinc-400">${s.lon?.toFixed(6) ?? '—'}</td>
+            <td class="cell text-center text-xs">${zufahrtLen > 0 ? `<span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300">${zufahrtLen} Pkt.</span>` : '<span class="text-slate-300 dark:text-zinc-600">—</span>'}</td>
+            <td class="cell text-center text-xs">${typeof ovCount === 'number' && ovCount > 0 ? `<span class="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">${ovCount}</span>` : '<span class="text-slate-300 dark:text-zinc-600">—</span>'}</td>
+            <td class="cell text-right">
+                <button onclick="editStandort('${esc(s.nummer)}')"
+                    class="text-xs px-2 py-1 rounded border border-slate-300 dark:border-zinc-600 hover:bg-slate-100 dark:hover:bg-zinc-700 transition-colors mr-1">
+                    Bearbeiten
+                </button>
+                <button onclick="deleteStandort('${esc(s.nummer)}')"
+                    class="text-xs px-2 py-1 rounded border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                    Löschen
+                </button>
+            </td>
+        </tr>`;
+    }).join('');
+    document.getElementById('tableCount').textContent = `${data.length} Standorte`;
+}
+
+function renderOverlaysTable() {
+    const tbody = document.getElementById('overlaysBody');
+    const entries = Object.entries(overlayData);
+    if (!entries.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="cell text-center text-slate-400 py-8">Keine Overlay-Einträge vorhanden.</td></tr>';
+        return;
+    }
+    const sorted = entries.sort(([a], [b]) => a.localeCompare(b));
+    tbody.innerHTML = sorted.map(([nummer, payload]) => {
+        const s = standorte.find(x => String(x.nummer) === String(nummer));
+        const name = s ? s.name : '—';
+        const count = Array.isArray(payload.features) ? payload.features.length : 0;
+        const updAt = payload.updatedAt ? new Date(payload.updatedAt).toLocaleString('de-DE') : '—';
+        return `<tr class="border-b border-slate-100 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
+            <td class="cell font-mono font-semibold">${esc(nummer)}</td>
+            <td class="cell">${esc(name)}</td>
+            <td class="cell text-center"><span class="px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-medium">${count}</span></td>
+            <td class="cell text-xs text-slate-500 dark:text-zinc-400">${updAt}</td>
+            <td class="cell text-xs text-slate-500 dark:text-zinc-400">${esc(payload.updatedBy || '—')}</td>
+            <td class="cell text-right">
+                <button onclick="deleteOverlay('${esc(nummer)}')"
+                    class="text-xs px-2 py-1 rounded border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                    Löschen
+                </button>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+// ─── SEARCH FILTER ────────────────────────────────────────────────────────────
+
+function filterTable() {
+    const q = document.getElementById('searchInput').value.toLowerCase().trim();
+    const rows = document.querySelectorAll('#standorteBody tr[data-nummer]');
+    let visible = 0;
+    rows.forEach(row => {
+        const match = !q || row.dataset.nummer.toLowerCase().includes(q) || row.dataset.name.includes(q);
+        row.classList.toggle('hidden', !match);
+        if (match) visible++;
+    });
+    document.getElementById('tableCount').textContent = `${visible} von ${standorte.length} Standorten`;
+}
+
+// ─── CRUD ─────────────────────────────────────────────────────────────────────
+
+function openAddForm() {
+    editMode = 'add';
+    document.getElementById('editModalTitle').textContent = 'Neuer Standort';
+    document.getElementById('fOriginalNummer').value = '';
+    document.getElementById('fNummer').value = '';
+    document.getElementById('fName').value = '';
+    document.getElementById('fLat').value = '';
+    document.getElementById('fLon').value = '';
+    document.getElementById('fLink').value = '';
+    document.getElementById('fZufahrt').value = '[]';
+    hideFormError();
+    document.getElementById('editModal').classList.remove('hidden');
+    setTimeout(() => document.getElementById('fNummer').focus(), 50);
+}
+
+function editStandort(nummer) {
+    const s = standorte.find(x => String(x.nummer) === String(nummer));
+    if (!s) return;
+    editMode = 'edit';
+    document.getElementById('editModalTitle').textContent = `Standort ${s.nummer} bearbeiten`;
+    document.getElementById('fOriginalNummer').value = s.nummer;
+    document.getElementById('fNummer').value = s.nummer;
+    document.getElementById('fName').value = s.name || '';
+    document.getElementById('fLat').value = s.lat ?? '';
+    document.getElementById('fLon').value = s.lon ?? '';
+    document.getElementById('fLink').value = s.link || '';
+    document.getElementById('fZufahrt').value = JSON.stringify(s.zufahrt ?? [], null, 2);
+    hideFormError();
+    document.getElementById('editModal').classList.remove('hidden');
+    setTimeout(() => document.getElementById('fNummer').focus(), 50);
+}
+
+async function submitForm(event) {
+    event.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Speichere…';
+    hideFormError();
+
+    const nummer = document.getElementById('fNummer').value.trim();
+    const originalNummer = document.getElementById('fOriginalNummer').value.trim();
+
+    let zufahrt = [];
+    const zufahrtRaw = document.getElementById('fZufahrt').value.trim();
+    if (zufahrtRaw && zufahrtRaw !== '[]') {
+        try { zufahrt = JSON.parse(zufahrtRaw); }
+        catch { showFormError('Zufahrt ist kein gültiges JSON-Array.'); btn.disabled = false; btn.textContent = 'Speichern'; return; }
+    }
+
+    const body = {
+        nummer,
+        name:    document.getElementById('fName').value.trim(),
+        lat:     parseFloat(document.getElementById('fLat').value),
+        lon:     parseFloat(document.getElementById('fLon').value),
+        link:    document.getElementById('fLink').value.trim(),
+        zufahrt,
+    };
+
+    // If nummer changed in edit mode, delete the old record first
+    if (editMode === 'edit' && originalNummer && originalNummer !== nummer) {
+        await fetch(`/api/standorte/${encodeURIComponent(originalNummer)}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${adminToken}` }
+        });
+    }
+
+    const res = await fetch(`/api/standorte/${encodeURIComponent(nummer)}`, {
+        method:  'PUT',
+        headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body:    JSON.stringify(body),
+    });
+
+    btn.disabled = false;
+    btn.textContent = 'Speichern';
+
+    if (res.status === 401) { showFormError('Nicht autorisiert — Token falsch?'); return; }
+    if (!res.ok) { const err = await res.json().catch(() => ({})); showFormError(err.error || 'Fehler beim Speichern.'); return; }
+
+    closeModal();
+    await loadStandorte();
+    setStatus(`Standort ${nummer} gespeichert — ${new Date().toLocaleTimeString()}`);
+}
+
+async function deleteStandort(nummer) {
+    if (!confirm(`Standort "${nummer}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`)) return;
+    const res = await fetch(`/api/standorte/${encodeURIComponent(nummer)}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+    });
+    if (!res.ok) { alert('Fehler beim Löschen.'); return; }
+    await loadStandorte();
+    setStatus(`Standort ${nummer} gelöscht — ${new Date().toLocaleTimeString()}`);
+}
+
+async function deleteOverlay(nummer) {
+    if (!confirm(`Alle Overlays für Standort "${nummer}" wirklich löschen?`)) return;
+    const res = await fetch(`/api/overlays/${encodeURIComponent(nummer)}`, {
+        method: 'DELETE',
+    });
+    if (!res.ok) { alert('Fehler beim Löschen.'); return; }
+    await loadOverlays();
+    setStatus(`Overlays für ${nummer} gelöscht — ${new Date().toLocaleTimeString()}`);
+}
+
+// ─── SEED FROM standorte.js ───────────────────────────────────────────────────
+
+async function seedFromStandorteJs() {
+    if (!confirm('Alle Standorte aus standorte.js ins Backend laden und vorhandene Einträge ersetzen?')) return;
+
+    showSeedProgress('Lade standorte.js…');
+
+    let data;
+    try {
+        const text = await fetch('standorte.js').then(r => r.text());
+        // Evaluate the file in isolation to extract standorteDaten
+        const fn = new Function(text + '\n; return standorteDaten;');
+        data = fn();
+        if (!Array.isArray(data) || data.length === 0) throw new Error('standorteDaten ist leer oder kein Array.');
+    } catch (err) {
+        hideSeedProgress();
+        alert('Fehler beim Laden von standorte.js: ' + err.message);
+        return;
+    }
+
+    showSeedProgress(`${data.length} Standorte gefunden. Sende an Backend…`);
+
+    const res = await fetch('/api/admin/seed', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${adminToken}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ standorte: data, replace: true }),
+    });
+
+    hideSeedProgress();
+
+    if (res.status === 401) { alert('Admin-Token ungültig.'); return; }
+    if (!res.ok) { const err = await res.json().catch(() => ({})); alert('Seed-Fehler: ' + (err.error || 'Unbekannt')); return; }
+
+    const result = await res.json();
+    await loadStandorte();
+    setStatus(`Seed abgeschlossen: ${result.seeded} Standorte importiert. Gesamt: ${result.total}`);
+}
+
+// ─── MODAL HELPERS ────────────────────────────────────────────────────────────
+
+function closeModal() {
+    document.getElementById('editModal').classList.add('hidden');
+}
+
+function showFormError(msg) {
+    const el = document.getElementById('formError');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+}
+
+function hideFormError() {
+    document.getElementById('formError').classList.add('hidden');
+}
+
+// ─── STATUS HELPERS ───────────────────────────────────────────────────────────
+
+function setStatus(msg) {
+    document.getElementById('statusBar').textContent = msg;
+}
+
+function showSeedProgress(msg) {
+    const el = document.getElementById('seedProgress');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+}
+
+function hideSeedProgress() {
+    document.getElementById('seedProgress').classList.add('hidden');
+}
+
+function esc(str) {
+    const d = document.createElement('div');
+    d.textContent = String(str ?? '');
+    return d.innerHTML;
+}
+
+// Close modal on backdrop click
+document.getElementById('editModal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeModal();
+});
+</script>
+</body>
+</html>

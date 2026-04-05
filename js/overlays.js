@@ -50,18 +50,30 @@ const PFAD_STYLE_LABELS = {
 };
 
 const PFAD_STYLE_ICONS = {
-    solid:      '━',
-    dash:       '┄',
-    dot:        '·····',
-    arrow:      '→',
-    arrow_many: '⇒'
+    solid:      'minus',
+    dash:       'dots-horizontal',
+    dot:        'circle-small',
+    arrow:      'arrow-right',
+    arrow_many: 'ray-start-arrow'
 };
 
 const OVERLAY_ICONS = {
-    schranke: { label: 'Schranke',        symbol: '⛔' },
-    tresor:   { label: 'Schlüsseltresor', symbol: '🔐' },
-    hinweis:  { label: 'Hinweis',         symbol: '💬' }
+    schranke: { label: 'Schranke',        symbol: '\u26d4', mdi: 'boom-gate'      },
+    tresor:   { label: 'Schl\u00fcsseltresor', symbol: '\ud83d\udd10', mdi: 'lock' },
+    hinweis:  { label: 'Hinweis',         symbol: '\ud83d\udcac', mdi: 'comment-text' }
 };
+
+/** Returns a colored MDI icon element as an HTML string. */
+function mdiIcon(name, color, sizePx) {
+    let style = '';
+    if (color || sizePx) {
+        const parts = [];
+        if (color)  parts.push(`color:${color}`);
+        if (sizePx) parts.push(`font-size:${sizePx}px`);
+        style = ` style="${parts.join(';')}"`;
+    }
+    return `<i class="mdi mdi-${name}"${style} aria-hidden="true"></i>`;
+}
 
 // ─── STATE ───────────────────────────────────────────────
 
@@ -83,6 +95,7 @@ let overlaySyncChannel = null;
 let overlayPollingTimer = null;
 let overlaySidebarEl = null;   // Leaflet control container (trigger button only)
 let ovPanelEl = null;          // Panel element — appended to <body> to escape overflow:hidden
+let ovActiveCategoryTab = null; // 'anfahrt' | 'pfad' | 'marker' | 'zone' | 'farbe' | null
 
 // Modal
 let ovModalMode = null;        // 'hinweis' | 'zone' | 'edit-hinweis' | 'edit-zone'
@@ -123,31 +136,43 @@ function loadOverlayStorageSnapshot() {
 }
 
 // Feature description (for element list)
+function routeIconSVG(routeType, color) {
+    const c = color || '#dc2626';
+    if (routeType === 'hauptzufahrt') return `<svg width="18" height="10" viewBox="0 0 18 10" fill="none" style="display:inline-block;vertical-align:middle"><line x1="1" y1="5" x2="11" y2="5" stroke="${c}" stroke-width="2.5" stroke-linecap="round"/><polygon points="9,1 17,5 9,9 11.5,5" fill="${c}"/></svg>`;
+    if (routeType === 'alternativ')   return `<svg width="18" height="10" viewBox="0 0 18 10" fill="none" style="display:inline-block;vertical-align:middle"><line x1="1" y1="5" x2="11" y2="5" stroke="${c}" stroke-width="2" stroke-linecap="round" stroke-dasharray="4,2.5"/><polygon points="9,1 17,5 9,9 11.5,5" fill="${c}"/></svg>`;
+    return `<svg width="18" height="10" viewBox="0 0 18 10" fill="none" style="display:inline-block;vertical-align:middle"><path d="M1 7 Q5 1 9 5 Q13 9 17 3" stroke="${c}" stroke-width="2" stroke-linecap="round"/></svg>`;
+}
+
 function describeFeature(f) {
     const p = f?.properties || {};
     if (p.overlayType === 'anfahrt') {
-        if (p.routeType === 'hauptzufahrt') return { icon: '🔴', label: 'Hauptzufahrt', color: p.color };
-        if (p.routeType === 'alternativ')   return { icon: '🟠', label: 'Alternative Zufahrt', color: p.color };
-        return { icon: '📍', label: p.label || 'Freie Route', color: p.color };
+        const color = p.color || '#dc2626';
+        if (p.routeType === 'hauptzufahrt') return { icon: routeIconSVG('hauptzufahrt', color), label: p.label || 'Hauptzufahrt', color };
+        if (p.routeType === 'alternativ')   return { icon: routeIconSVG('alternativ',   color), label: p.label || 'Alternative Zufahrt', color };
+        return { icon: routeIconSVG('custom', color), label: p.label || 'Freie Route', color };
     }
     if (p.overlayType === 'icon') {
-        if (p.iconType === 'schranke') return { icon: '⛔', label: 'Schranke', color: p.color };
-        if (p.iconType === 'tresor')   return { icon: '🔐', label: 'Schlüsseltresor', color: p.color };
-        if (p.iconType === 'hinweis')  return { icon: '💬', label: (p.note || 'Hinweis').substring(0, 35), color: p.color };
+        const color = p.color || '#ef4444';
+        if (p.iconType === 'schranke') return { icon: mdiIcon('boom-gate',     color), label: p.label || 'Schranke',           color };
+        if (p.iconType === 'tresor')   return { icon: mdiIcon('lock',          color), label: p.label || 'Schl\u00fcsseltresor', color };
+        if (p.iconType === 'hinweis')  return { icon: mdiIcon('comment-text',  color), label: (p.note || 'Hinweis').substring(0, 35), color };
     }
     if (p.overlayType === 'zone' || p.overlayType === 'gefahrenzone') {
-        if (p.zoneType === 'eisabfall') return { icon: '⚠️', label: 'Eisabfallzone', color: p.color };
-        return { icon: '📐', label: p.note || 'Zone', color: p.color };
+        const color = p.color || '#8b5cf6';
+        if (p.zoneType === 'eisabfall') return { icon: mdiIcon('snowflake-alert', '#eab308'), label: p.label || 'Eisabfallzone', color };
+        return { icon: mdiIcon('vector-polygon', color), label: p.label || p.note || 'Zone', color };
     }
     if (p.overlayType === 'kreis') {
-        if (p.zoneType === 'eisabfall') return { icon: '⚠️', label: 'Eisabfallzone (Kreis)', color: p.color };
-        return { icon: '⭕', label: p.note || 'Kreis-Zone', color: p.color };
+        const color = p.color || '#8b5cf6';
+        if (p.zoneType === 'eisabfall') return { icon: mdiIcon('snowflake-alert', '#eab308'), label: p.label || 'Eisabfallzone (Kreis)', color };
+        return { icon: mdiIcon('circle-outline', color), label: p.label || p.note || 'Kreis-Zone', color };
     }
     if (p.overlayType === 'pfad') {
         const ss = p.strokeStyle || 'solid';
-        return { icon: PFAD_STYLE_ICONS[ss] || '━', label: PFAD_STYLE_LABELS[ss] || 'Pfad', color: p.color };
+        const color = p.color || '#0ea5e9';
+        return { icon: mdiIcon(PFAD_STYLE_ICONS[ss] || 'minus', color), label: p.label || PFAD_STYLE_LABELS[ss] || 'Pfad', color };
     }
-    return { icon: '📌', label: 'Element', color: p.color || '#94a3b8' };
+    return { icon: mdiIcon('map-marker', p.color || '#94a3b8'), label: p.label || 'Element', color: p.color || '#94a3b8' };
 }
 
 function getRouteLabel(rt) {
@@ -173,71 +198,129 @@ function getZoneTypeForTool(t) {
     return 'custom';
 }
 
-// ─── SUPABASE SYNC ──────────────────────────────────────
+// ─── GEOMETRY HELPERS ────────────────────────────────────
 
-function getSupabaseConfig() {
-    const c = window.__SUPABASE_CONFIG__;
-    if (!c || typeof c !== 'object' || !c.url || !c.anonKey || !c.table) return null;
-    return c;
+function calcPolylineLength(latlngs) {
+    // Accepts LatLng objects, [lat, lon] arrays, or mixed
+    let total = 0;
+    for (let i = 1; i < latlngs.length; i++) {
+        total += L.latLng(latlngs[i - 1]).distanceTo(L.latLng(latlngs[i]));
+    }
+    return total;
 }
 
-async function initOverlaySyncClient() {
-    const cfg = getSupabaseConfig();
-    if (!cfg || typeof window.supabase === 'undefined') { overlaySyncClient = null; return; }
-    overlaySyncClient = window.supabase.createClient(cfg.url, cfg.anonKey);
+function formatDistance(meters) {
+    if (meters >= 1000) return (meters / 1000).toFixed(2).replace('.', ',') + '\u00a0km';
+    return Math.round(meters) + '\u00a0m';
+}
+
+// ─── TOOLTIP COLOR HELPERS ─────────────────────────────
+
+/** Convert #rrggbb / #rgb to rgba() string */
+function hexToRgba(hex, alpha) {
+    let h = hex.replace('#', '');
+    if (h.length === 3) h = h.split('').map(c => c + c).join('');
+    const r = parseInt(h.slice(0, 2), 16);
+    const g = parseInt(h.slice(2, 4), 16);
+    const b = parseInt(h.slice(4, 6), 16);
+    return `rgba(${r},${g},${b},${alpha})`;
+}
+
+/**
+ * Bind a Leaflet tooltip and inject the element's color as CSS variables
+ * (--ov-tt-border, --ov-tt-glow) on the tooltip DOM element when it opens.
+ * The CSS for .overlay-route-tooltip / .overlay-zone-tooltip reads these vars.
+ */
+function bindColoredTooltip(layer, content, options) {
+    layer.bindTooltip(content, options);
+    layer.on('tooltipopen', () => {
+        const el = layer.getTooltip()?.getElement();
+        const color = layer.feature?.properties?.color;
+        if (el && color) {
+            el.style.setProperty('--ov-tt-border', hexToRgba(color, 0.7));
+            el.style.setProperty('--ov-tt-glow',   hexToRgba(color, 0.25));
+        }
+    });
+}
+
+// ─── CLOUDFLARE SYNC ─────────────────────────────────────────────────────────
+// Replaces the previous Supabase integration.
+// Backend: Cloudflare Pages Functions  (/api/overlays/*)
+// Real-time: polling via js/sync.js  (no WebSocket dependency)
+
+async function initCFOverlaySync() {
+    if (typeof window.__cfSync === 'undefined') {
+        overlaySyncClient = null;
+        return;
+    }
+    const reachable = await window.__cfSync.probeBackend();
+    overlaySyncClient = reachable ? 'cf' : null;   // truthy = backend active
 }
 
 async function fetchAllOverlaysRemote() {
     if (!overlaySyncClient) return null;
-    const cfg = getSupabaseConfig();
-    if (!cfg) return null;
-    const { data, error } = await overlaySyncClient.from(cfg.table).select('standort_nummer, features, updated_at, updated_by');
-    if (error) { console.error('Overlay Sync fetch failed', error); return null; }
-    const store = {};
-    (data || []).forEach(r => {
-        store[normalizeStandortNummer(r.standort_nummer)] = {
-            features: Array.isArray(r.features) ? r.features : [],
-            updatedAt: r.updated_at || null,
-            updatedBy: r.updated_by || null
-        };
-    });
-    return store;
+    try {
+        const res = await fetch('/api/overlays');
+        if (!res.ok) return null;
+        const data = await res.json();
+        const store = {};
+        Object.entries(data).forEach(([nummer, payload]) => {
+            store[normalizeStandortNummer(nummer)] = {
+                features:  Array.isArray(payload.features) ? payload.features : [],
+                updatedAt: payload.updatedAt || null,
+                updatedBy: payload.updatedBy || null,
+            };
+        });
+        return store;
+    } catch (err) {
+        console.error('Overlay CF fetch failed', err);
+        return null;
+    }
 }
 
 async function saveOverlaysRemote(nummer, payload) {
     if (!overlaySyncClient) return false;
-    const cfg = getSupabaseConfig();
-    if (!cfg) return false;
-    const { error } = await overlaySyncClient.from(cfg.table).upsert({
-        standort_nummer: normalizeStandortNummer(nummer),
-        features: payload.features,
-        updated_at: payload.updatedAt,
-        updated_by: payload.updatedBy || 'gui'
-    }, { onConflict: 'standort_nummer' });
-    if (error) { console.error('Overlay Sync save failed', error); return false; }
-    return true;
+    try {
+        const res = await fetch(`/api/overlays/${encodeURIComponent(normalizeStandortNummer(nummer))}`, {
+            method:  'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(payload),
+        });
+        return res.ok;
+    } catch (err) {
+        console.error('Overlay CF save failed', err);
+        return false;
+    }
 }
 
 async function subscribeRemoteOverlayChanges() {
-    if (!overlaySyncClient) return;
-    const cfg = getSupabaseConfig();
-    if (!cfg) return;
-    overlaySyncChannel = overlaySyncClient
-        .channel('standort-overlays-live')
-        .on('postgres_changes', { event: '*', schema: 'public', table: cfg.table }, payload => {
-            const row = payload.new || payload.old;
-            if (!row || !row.standort_nummer) return;
-            setOverlayPayloadForStandort(row.standort_nummer, {
-                features: Array.isArray(row.features) ? row.features : [],
-                updatedAt: row.updated_at || null,
-                updatedBy: row.updated_by || null
-            });
-            if (overlayEditMode && normalizeStandortNummer(row.standort_nummer) === overlayEditingStandortNummer) {
-                renderEditOverlaysForStandort(overlayEditingStandortNummer);
-            }
-            refreshVisibleOverlays();
-        }).subscribe();
+    // CF backend uses polling (no Postgres realtime subscription needed)
+    if (typeof window.__cfSync?.startOverlayPolling === 'function') {
+        window.__cfSync.startOverlayPolling();
+    }
 }
+
+/**
+ * Called by sync.js when the overlay version polling detects a remote change.
+ * Merges the remote store into local state and refreshes the map.
+ */
+function setOverlayStoreFromRemote(remote) {
+    if (!remote || typeof remote !== 'object') return;
+    Object.entries(remote).forEach(([nummer, payload]) => {
+        setOverlayPayloadForStandort(nummer, payload);
+    });
+    persistOverlayStorageSnapshot(getOverlayStorageSnapshot());
+    if (overlayEditMode && overlayEditingStandortNummer) {
+        renderEditOverlaysForStandort(overlayEditingStandortNummer);
+    }
+    refreshVisibleOverlays();
+    setSyncStatus('Sync aktiv', true);
+}
+window.setOverlayStoreFromRemote = setOverlayStoreFromRemote;
+
+// Note: overlaySyncChannel and overlayPollingTimer variables are preserved
+// in the state section for compatibility but are no longer actively used —
+// real-time sync is now handled by the polling in js/sync.js.
 
 function subscribeLocalOverlayChanges() {
     window.addEventListener('storage', e => {
@@ -298,6 +381,22 @@ function updatePaletteUI() {
         const customLabel = document.getElementById('ovCustomColorLabel');
         if (customLabel) customLabel.classList.toggle('active', isCustom);
     }
+    const preview = document.getElementById('ovColorPreview');
+    if (preview) preview.style.background = overlayActiveColor;
+}
+
+function updateToolbarState() {
+    if (!ovPanelEl) return;
+    ovPanelEl.querySelectorAll('.ov-tb-cat').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.cat === ovActiveCategoryTab);
+    });
+    const subIds = { anfahrt: 'ovSubAnfahrt', pfad: 'ovSubPfad', marker: 'ovSubMarker', zone: 'ovSubZone', farbe: 'ovSubFarbe' };
+    Object.entries(subIds).forEach(([cat, id]) => {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('ov-hidden', ovActiveCategoryTab !== cat);
+    });
+    const preview = document.getElementById('ovColorPreview');
+    if (preview) preview.style.background = overlayActiveColor;
 }
 
 // ─── MARKER ICONS ────────────────────────────────────────
@@ -307,13 +406,14 @@ function getOverlayMarkerIcon(iconType, color, note) {
         const bc = color || '#eab308';
         const title = note ? note.replace(/"/g, '&quot;').slice(0, 80) : 'Hinweis';
         return L.divIcon({
-            html: `<div class="overlay-poi-marker overlay-poi-marker-hinweis" style="border-color:${bc}" title="${title}">💬</div>`,
+            html: `<div class="overlay-poi-marker overlay-poi-marker-hinweis" style="border-color:${bc}" title="${title}"><i class="mdi mdi-comment-text"></i></div>`,
             className: 'overlay-poi-icon-wrap', iconSize: [28, 28], iconAnchor: [14, 14]
         });
     }
+    const mdiName = OVERLAY_ICONS[iconType]?.mdi || 'map-marker';
     const meta = OVERLAY_ICONS[iconType] || OVERLAY_ICONS.schranke;
     return L.divIcon({
-        html: `<div class="overlay-poi-marker" style="border-color:${color || '#ef4444'}" title="${meta.label}">${meta.symbol}</div>`,
+        html: `<div class="overlay-poi-marker" style="border-color:${color || '#ef4444'}" title="${meta.label}"><i class="mdi mdi-${mdiName}"></i></div>`,
         className: 'overlay-poi-icon-wrap', iconSize: [24, 24], iconAnchor: [12, 12]
     });
 }
@@ -338,8 +438,12 @@ function createLayerFromFeature(feature) {
                 radius, color, fillColor: color, fillOpacity: 0.18, weight: 2, dashArray: '6, 4', opacity: 0.9
             });
             circle.feature = { ...feature, properties: { ...p, overlayType: 'kreis', zoneType } };
-            const label = zoneType === 'eisabfall' ? '⚠️ Eisabfallzone' : (note || 'Kreis-Zone');
-            circle.bindTooltip(label, { direction: 'center', sticky: true, className: 'overlay-zone-tooltip' });
+            bindColoredTooltip(circle, () => {
+                const r = circle.getRadius();
+                const diam = `\u00d8\u00a0${Math.round(r * 2)}\u00a0m`;
+                const baseName = zoneType === 'eisabfall' ? 'Eisabfallzone' : (note || 'Kreis-Zone');
+                return `${baseName} \u00b7 ${diam}`;
+            }, { direction: 'center', sticky: true, className: 'overlay-zone-tooltip' });
             return circle;
         }
 
@@ -354,7 +458,7 @@ function createLayerFromFeature(feature) {
             const tt = note || 'Hinweis';
             marker.bindTooltip(tt, { direction: 'top', offset: [0, -14], className: 'overlay-hinweis-tooltip', sticky: false });
             if (note) marker.bindPopup(
-                `<div class="overlay-hinweis-popup"><strong>💬 Hinweis</strong><p>${note.replace(/\n/g, '<br>')}</p></div>`,
+                `<div class="overlay-hinweis-popup"><strong><i class="mdi mdi-comment-text"></i> Hinweis</strong><p>${note.replace(/\n/g, '<br>')}</p></div>`,
                 { maxWidth: 260, className: 'overlay-hinweis-popup-wrap' }
             );
         } else {
@@ -371,7 +475,10 @@ function createLayerFromFeature(feature) {
         const strokeStyle = p.strokeStyle || 'solid';
         const polyline = createPfadPolyline(latlngs, color, strokeStyle);
         polyline.feature = { ...feature, properties: { ...p, overlayType: 'pfad', strokeStyle } };
-        polyline.bindTooltip(PFAD_STYLE_LABELS[strokeStyle] || 'Pfad', { sticky: true, className: 'overlay-route-tooltip' });
+        bindColoredTooltip(polyline, () => {
+            const dist = formatDistance(calcPolylineLength(polyline.getLatLngs()));
+            return `${PFAD_STYLE_LABELS[strokeStyle] || 'Pfad'} \u00b7 ${dist}`;
+        }, { sticky: true, className: 'overlay-route-tooltip' });
         return polyline;
     }
 
@@ -383,7 +490,10 @@ function createLayerFromFeature(feature) {
         const routeType = p.routeType || 'custom';
         const polyline = L.polyline(latlngs, { color, weight: 4, dashArray: '8, 8', opacity: 0.9, lineCap: 'round' });
         polyline.feature = { ...feature, properties: { ...p, overlayType: 'anfahrt', routeType } };
-        polyline.bindTooltip(getRouteLabel(routeType), { sticky: true, className: 'overlay-route-tooltip' });
+        bindColoredTooltip(polyline, () => {
+            const dist = formatDistance(calcPolylineLength(polyline.getLatLngs()));
+            return `${getRouteLabel(routeType)} \u00b7 ${dist}`;
+        }, { sticky: true, className: 'overlay-route-tooltip' });
         return polyline;
     }
 
@@ -397,8 +507,8 @@ function createLayerFromFeature(feature) {
         const zoneType = p.zoneType || 'custom';
         const polygon = L.polygon(latlngs, { color, fillColor: color, fillOpacity: 0.18, weight: 2, dashArray: '6, 4', opacity: 0.9 });
         polygon.feature = { ...feature, properties: { ...p, overlayType: ot === 'gefahrenzone' ? 'zone' : ot, zoneType } };
-        const label = zoneType === 'eisabfall' ? '⚠️ Eisabfallzone' : (note || 'Zone');
-        polygon.bindTooltip(label, { direction: 'center', sticky: true, className: 'overlay-zone-tooltip' });
+        const label = zoneType === 'eisabfall' ? 'Eisabfallzone' : (note || 'Zone');
+        bindColoredTooltip(polygon, label, { direction: 'center', sticky: true, className: 'overlay-zone-tooltip' });
         return polygon;
     }
 
@@ -486,7 +596,9 @@ function buildPayloadFromEditLayerGroup() {
         const f = updateFeatureFromLayer(layer);
         if (f) features.push(f);
     });
-    return { features, updatedAt: new Date().toISOString(), updatedBy: 'gui' };
+    // Use the sync user-ID when available so overlay changes are attributable
+    const userId = window.__cfSync?.getUserId?.() ?? 'gui';
+    return { features, updatedAt: new Date().toISOString(), updatedBy: userId };
 }
 
 // ─── LAYER RENDERING ─────────────────────────────────────
@@ -646,6 +758,7 @@ function setOverlayEditMode(enabled) {
         overlayActiveTool = null;
         overlayEditingStandortNummer = null;
         overlayUndoStack = [];
+        ovActiveCategoryTab = null;
         if (overlayEditGroup) overlayEditGroup.clearLayers();
         refreshVisibleOverlays();
         updateSidebarState();
@@ -849,12 +962,17 @@ function updateToolBtnStates() {
     ovPanelEl.querySelectorAll('[data-tool]').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.tool === overlayActiveTool);
     });
+    updateToolbarState();
 }
 
 // ─── CLEAR ALL ───────────────────────────────────────────
 
 async function clearAllOverlays() {
     if (!overlayEditMode || !overlayEditingStandortNummer) return;
+    const count = overlayEditGroup.getLayers().length;
+    if (count === 0) return;
+    const confirmed = window.confirm(`Alle ${count} Elemente für diesen Standort löschen?`);
+    if (!confirmed) return;
     pushUndo();
     overlayEditGroup.clearLayers();
     await saveEditedOverlays();
@@ -892,177 +1010,149 @@ function buildPanelHTML() {
     return `
     <div id="ovPanel" class="ov-panel ov-hidden">
         <!-- Header -->
+        <!-- Header -->
         <div class="ov-header">
             <div class="ov-header-info">
-                <div class="ov-header-kicker">Standort-Overlay</div>
-                <div id="ovEditStation" class="ov-header-station">—</div>
-                <div id="ovEditName" class="ov-header-name"></div>
+                <span id="ovEditStation" class="ov-header-station">—</span>
+                <span id="ovEditName" class="ov-header-name"></span>
             </div>
             <button type="button" id="ovCloseEdit" class="ov-close-btn" title="Schließen">
-                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
 
-        <!-- Body (scrollable) -->
-        <div class="ov-body">
-            <!-- ANFAHRT -->
-            <div class="ov-section">
-                <div class="ov-section-title">
-                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                    Anfahrt
+        <!-- Compact category toolbar -->
+        <div class="ov-toolbar">
+            <div class="ov-tb-item">
+                <button type="button" class="ov-tb-cat" data-cat="anfahrt" title="Anfahrt">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
                     <span id="ovBadgeAnfahrt" class="ov-badge ov-hidden">0</span>
-                </div>
-                <div class="ov-tool-grid">
-                    <button type="button" class="ov-tool-btn" data-tool="hauptzufahrt">
-                        <span class="ov-color-dot" style="background:#ef4444"></span>
-                        <span class="ov-tool-text">Hauptzufahrt</span>
-                    </button>
-                    <button type="button" class="ov-tool-btn" data-tool="alternativ">
-                        <span class="ov-color-dot" style="background:#f97316"></span>
-                        <span class="ov-tool-text">Alternative</span>
-                    </button>
-                    <button type="button" class="ov-tool-btn" data-tool="route_custom" style="grid-column: span 2;">
-                        <span class="ov-color-dot" style="background:#3b82f6"></span>
-                        <span class="ov-tool-text">Freie Route</span>
-                    </button>
-                </div>
+                </button>
             </div>
-
-            <!-- PFADE & PFEILE -->
-            <div class="ov-section">
-                <div class="ov-section-title">
-                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-                    Pfade &amp; Pfeile
+            <div class="ov-tb-item">
+                <button type="button" class="ov-tb-cat" data-cat="pfad" title="Pfade &amp; Pfeile">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                     <span id="ovBadgePfad" class="ov-badge ov-hidden">0</span>
-                </div>
-                <div class="ov-section-hint">Linien mit Strichstärke / Pfeile für Richtungsangaben.</div>
-                <div class="ov-tool-grid">
-                    <button type="button" class="ov-tool-btn" data-tool="pfad_solid" title="Durchgehende Linie">
-                        <svg class="ov-tool-icon" width="20" height="14" viewBox="0 0 20 14" fill="none">
-                            <line x1="1" y1="7" x2="19" y2="7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-                        </svg>
-                        <span class="ov-tool-text">Solide</span>
-                    </button>
-                    <button type="button" class="ov-tool-btn" data-tool="pfad_dash" title="Gestrichelte Linie">
-                        <svg class="ov-tool-icon" width="20" height="14" viewBox="0 0 20 14" fill="none">
-                            <line x1="1" y1="7" x2="19" y2="7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="5,3"/>
-                        </svg>
-                        <span class="ov-tool-text">Gestrichelt</span>
-                    </button>
-                    <button type="button" class="ov-tool-btn" data-tool="pfad_dot" title="Gepunktete Linie">
-                        <svg class="ov-tool-icon" width="20" height="14" viewBox="0 0 20 14" fill="none">
-                            <line x1="1" y1="7" x2="19" y2="7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="0.1,4"/>
-                        </svg>
-                        <span class="ov-tool-text">Gepunktet</span>
-                    </button>
-                    <button type="button" class="ov-tool-btn" data-tool="pfad_arrow" title="Linie mit Pfeil am Ende">
-                        <svg class="ov-tool-icon" width="20" height="14" viewBox="0 0 20 14" fill="none">
-                            <line x1="1" y1="7" x2="13" y2="7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                            <polygon points="11,3 19,7 11,11 13.5,7" fill="currentColor"/>
-                        </svg>
-                        <span class="ov-tool-text">Pfeil</span>
-                    </button>
-                    <button type="button" class="ov-tool-btn" data-tool="pfad_arrow_many" style="grid-column: span 2;" title="Richtungspfeile entlang des Pfades">
-                        <svg class="ov-tool-icon" width="36" height="14" viewBox="0 0 36 14" fill="none">
-                            <line x1="1" y1="7" x2="35" y2="7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                            <polygon points="7,3 13,7 7,11 9,7" fill="currentColor"/>
-                            <polygon points="19,3 25,7 19,11 21,7" fill="currentColor"/>
-                            <polygon points="29,3 35,7 29,11 31,7" fill="currentColor"/>
-                        </svg>
-                        <span class="ov-tool-text">Richtungspfeile</span>
-                    </button>
-                </div>
+                </button>
             </div>
-
-            <!-- MARKIERUNGEN -->
-            <div class="ov-section">
-                <div class="ov-section-title">
-                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                    Markierungen
+            <div class="ov-tb-item">
+                <button type="button" class="ov-tb-cat" data-cat="marker" title="Markierungen">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     <span id="ovBadgeMarker" class="ov-badge ov-hidden">0</span>
-                </div>
-                <div class="ov-tool-grid">
-                    <button type="button" class="ov-tool-btn" data-tool="schranke">
-                        <svg class="ov-tool-icon" width="14" height="14" fill="none" stroke="#ef4444" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M4.93 4.93l14.14 14.14"></path></svg>
-                        <span class="ov-tool-text">Schranke</span>
-                    </button>
-                    <button type="button" class="ov-tool-btn" data-tool="tresor">
-                        <svg class="ov-tool-icon" width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0110 0v4"></path></svg>
-                        <span class="ov-tool-text">Tresor</span>
-                    </button>
-                    <button type="button" class="ov-tool-btn" data-tool="hinweis" style="grid-column: span 2;">
-                        <svg class="ov-tool-icon" width="14" height="14" fill="none" stroke="#eab308" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg>
-                        <span class="ov-tool-text">Hinweis hinzufügen</span>
-                    </button>
-                </div>
+                </button>
             </div>
-
-            <!-- ZONEN -->
-            <div class="ov-section">
-                <div class="ov-section-title">
-                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path></svg>
-                    Zonen
+            <div class="ov-tb-item">
+                <button type="button" class="ov-tb-cat" data-cat="zone" title="Zonen">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>
                     <span id="ovBadgeZone" class="ov-badge ov-hidden">0</span>
-                </div>
-                <div class="ov-tool-grid">
-                    <button type="button" class="ov-tool-btn" data-tool="eisabfall_poly" style="grid-column: span 2;">
-                        <svg class="ov-tool-icon" width="14" height="14" fill="none" stroke="#eab308" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                        <span class="ov-tool-text">Eisabfallzone</span>
-                    </button>
-                    <button type="button" class="ov-tool-btn" data-tool="zone_poly">
-                        <svg class="ov-tool-icon" width="14" height="14" fill="none" stroke="#8b5cf6" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"></path></svg>
-                        <span class="ov-tool-text">Polygon-Zone</span>
-                    </button>
-                    <button type="button" class="ov-tool-btn" data-tool="zone_kreis">
-                        <svg class="ov-tool-icon" width="14" height="14" fill="none" stroke="#8b5cf6" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
-                        <span class="ov-tool-text">Kreis-Zone</span>
-                    </button>
-                </div>
+                </button>
             </div>
-
-            <!-- FARBE -->
-            <div class="ov-section">
-                <div class="ov-section-title">
-                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485"/></svg>
-                    Farbe
-                </div>
-                <div class="ov-section-hint">Aktive Farbe für das aktuell gewählte Werkzeug.</div>
-                <div class="ov-palette">${paletteSwatches}</div>
-                <div class="ov-custom-row">
-                    <input type="color" id="ovCustomColorInput" value="#dc2626" class="ov-custom-input" title="Eigene Farbe" />
-                    <span id="ovCustomColorLabel" class="ov-custom-label">Eigene Farbe</span>
-                </div>
+            <div class="ov-tb-sep"></div>
+            <div class="ov-tb-item">
+                <button type="button" class="ov-tb-cat" data-cat="farbe" title="Farbe wählen">
+                    <span id="ovColorPreview" class="ov-color-preview" style="background:#dc2626"></span>
+                </button>
             </div>
+            <div class="ov-tb-sep"></div>
+            <button type="button" id="ovUndoBtn" class="ov-tb-act" disabled title="Rückgängig">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 10h10a5 5 0 010 10H9"/><path d="M3 10l4-4m-4 4l4 4"/></svg>
+            </button>
+            <button type="button" id="ovClearBtn" class="ov-tb-act ov-tb-act-danger" title="Alle löschen">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+        </div>
 
-            <!-- ELEMENTE -->
-            <div class="ov-section">
-                <div class="ov-section-title">
-                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
-                    Elemente
-                    <span id="ovBadgeTotal" class="ov-badge ov-hidden">0</span>
-                </div>
-                <div class="ov-section-hint">Doppelklick auf ein Objekt in der Karte oder lösche es hier.</div>
-                <div id="ovElementList" class="ov-element-list">
-                    <div class="ov-empty">Noch keine Elemente</div>
-                </div>
+        <!-- Sub-toolbar: Anfahrt -->
+        <div class="ov-subtoolbar ov-hidden" id="ovSubAnfahrt">
+            <button type="button" class="ov-sub-btn" data-tool="hauptzufahrt" title="Hauptzufahrt einzeichnen">
+                <svg width="18" height="10" viewBox="0 0 18 10" fill="none"><line x1="1" y1="5" x2="11" y2="5" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round"/><polygon points="9,1 17,5 9,9 11.5,5" fill="#dc2626"/></svg>
+                Haupt
+            </button>
+            <button type="button" class="ov-sub-btn" data-tool="alternativ" title="Alternative Route">
+                <svg width="18" height="10" viewBox="0 0 18 10" fill="none"><line x1="1" y1="5" x2="11" y2="5" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-dasharray="4,2.5"/><polygon points="9,1 17,5 9,9 11.5,5" fill="#f97316"/></svg>
+                Alternativ
+            </button>
+            <button type="button" class="ov-sub-btn" data-tool="route_custom" title="Freie Route einzeichnen">
+                <svg width="18" height="10" viewBox="0 0 18 10" fill="none"><path d="M1 7 Q5 1 9 5 Q13 9 17 3" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/></svg>
+                Frei
+            </button>
+        </div>
+
+        <!-- Sub-toolbar: Pfade -->
+        <div class="ov-subtoolbar ov-hidden" id="ovSubPfad">
+            <button type="button" class="ov-sub-btn" data-tool="pfad_solid" title="Solide Linie">
+                <svg width="20" height="10" viewBox="0 0 20 10" fill="none"><line x1="1" y1="5" x2="19" y2="5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+            </button>
+            <button type="button" class="ov-sub-btn" data-tool="pfad_dash" title="Gestrichelte Linie">
+                <svg width="20" height="10" viewBox="0 0 20 10" fill="none"><line x1="1" y1="5" x2="19" y2="5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="5,3"/></svg>
+            </button>
+            <button type="button" class="ov-sub-btn" data-tool="pfad_dot" title="Gepunktete Linie">
+                <svg width="20" height="10" viewBox="0 0 20 10" fill="none"><line x1="1" y1="5" x2="19" y2="5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="0.1,4"/></svg>
+            </button>
+            <button type="button" class="ov-sub-btn" data-tool="pfad_arrow" title="Pfeil">
+                <svg width="20" height="10" viewBox="0 0 20 10" fill="none"><line x1="1" y1="5" x2="13" y2="5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polygon points="11,1.5 19,5 11,8.5 13,5" fill="currentColor"/></svg>
+            </button>
+            <button type="button" class="ov-sub-btn" data-tool="pfad_arrow_many" title="Richtungspfeile">
+                <svg width="28" height="10" viewBox="0 0 28 10" fill="none"><line x1="1" y1="5" x2="27" y2="5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><polygon points="5,1.5 11,5 5,8.5 7,5" fill="currentColor"/><polygon points="16,1.5 22,5 16,8.5 18,5" fill="currentColor"/></svg>
+            </button>
+        </div>
+
+        <!-- Sub-toolbar: Markierungen -->
+        <div class="ov-subtoolbar ov-hidden" id="ovSubMarker">
+            <button type="button" class="ov-sub-btn" data-tool="schranke" title="Schranke setzen">
+                <i class="mdi mdi-boom-gate" aria-hidden="true"></i>
+                Schranke
+            </button>
+            <button type="button" class="ov-sub-btn" data-tool="tresor" title="Schlüsseltresor">
+                <i class="mdi mdi-lock" aria-hidden="true"></i>
+                Tresor
+            </button>
+            <button type="button" class="ov-sub-btn" data-tool="hinweis" title="Hinweis hinzufügen">
+                <i class="mdi mdi-comment-text" aria-hidden="true"></i>
+                Hinweis
+            </button>
+        </div>
+
+        <!-- Sub-toolbar: Zonen -->
+        <div class="ov-subtoolbar ov-subtoolbar-wrap ov-hidden" id="ovSubZone">
+            <button type="button" class="ov-sub-btn" data-tool="eisabfall_poly" title="Eisabfallzone (Polygon)">
+                <svg width="13" height="13" fill="none" stroke="#eab308" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                Eisabfall Polygon
+            </button>
+            <button type="button" class="ov-sub-btn" data-tool="eisabfall_kreis" title="Eisabfallzone (Kreis)">
+                <svg width="13" height="13" fill="none" stroke="#eab308" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+                Eisabfall Kreis
+            </button>
+            <button type="button" class="ov-sub-btn" data-tool="zone_poly" title="Freie Polygon-Zone">
+                <svg width="13" height="13" fill="none" stroke="#8b5cf6" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"/></svg>
+                Poly
+            </button>
+            <button type="button" class="ov-sub-btn" data-tool="zone_kreis" title="Freie Kreis-Zone">
+                <svg width="13" height="13" fill="none" stroke="#8b5cf6" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                Kreis
+            </button>
+        </div>
+
+        <!-- Sub-toolbar: Farbe -->
+        <div class="ov-subtoolbar ov-subtoolbar-color ov-hidden" id="ovSubFarbe">
+            <div class="ov-palette">${paletteSwatches}</div>
+            <div class="ov-custom-row">
+                <input type="color" id="ovCustomColorInput" value="#dc2626" class="ov-custom-input" title="Eigene Farbe"/>
+                <span id="ovCustomColorLabel" class="ov-custom-label">Eigene Farbe</span>
+            </div>
+        </div>
+
+        <!-- Element list (scrollable) -->
+        <div class="ov-body">
+            <div id="ovElementList" class="ov-element-list">
+                <div class="ov-empty">Noch keine Elemente</div>
             </div>
         </div>
 
         <!-- Footer -->
         <div class="ov-footer">
-            <div class="ov-footer-actions">
-                <button type="button" id="ovUndoBtn" class="ov-footer-btn" disabled title="Letzte Aktion rückgängig">
-                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 10h10a5 5 0 010 10H9"/><path d="M3 10l4-4m-4 4l4 4"/></svg>
-                    Rückgängig
-                </button>
-                <button type="button" id="ovClearBtn" class="ov-footer-btn danger" title="Alle Elemente löschen">
-                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                    Alle löschen
-                </button>
-            </div>
             <div id="ovSyncStatus" class="ov-sync-status">Lokal</div>
+            <span id="ovBadgeTotal" class="ov-badge ov-hidden">0</span>
         </div>
     </div>`;
 }
@@ -1110,6 +1200,7 @@ function updateSidebarState() {
         updateUndoBtn();
         updatePaletteUI();
         updateToolBtnStates();
+        updateToolbarState();
     } else {
         if (ovPanelEl) ovPanelEl.classList.add('ov-hidden');
     }
@@ -1157,10 +1248,16 @@ function renderElementList() {
 
     container.innerHTML = features.map(({ feature }, idx) => {
         const d = describeFeature(feature);
+        const canRename = feature.properties?.iconType !== 'hinweis';
+        const labelHtml = canRename
+            ? `<span class="ov-element-label ov-rename" contenteditable="true" data-idx="${idx}" title="Klicken zum Umbenennen">${escapeHTML(d.label)}</span>`
+            : `<span class="ov-element-label">${escapeHTML(d.label)}</span>`;
+        // Color text/unicode icons with the element color; HTML icons (<svg>, <i>) already carry their color
+        const iconIsHtml = d.icon.startsWith('<');
+        const iconStyle = (!iconIsHtml && d.color) ? ` style="color:${d.color}"` : '';
         return `<div class="ov-element-row">
-            <span class="ov-element-icon">${d.icon}</span>
-            <span class="ov-element-color" style="background:${d.color || '#94a3b8'}"></span>
-            <span class="ov-element-label">${escapeHTML(d.label)}</span>
+            <span class="ov-element-icon"${iconStyle}>${d.icon}</span>
+            ${labelHtml}
             <button type="button" class="ov-element-delete" data-idx="${idx}" title="Löschen">
                 <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
@@ -1178,6 +1275,38 @@ function renderElementList() {
                 overlayEditGroup.removeLayer(layers[idx]);
                 await saveEditedOverlays();
             }
+        });
+    });
+
+    // Attach inline rename handlers
+    container.querySelectorAll('.ov-rename').forEach(span => {
+        span.addEventListener('focus', () => {
+            span.dataset.orig = span.textContent;
+            // place cursor at end
+            const range = document.createRange();
+            range.selectNodeContents(span);
+            range.collapse(false);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+        });
+        span.addEventListener('keydown', e => {
+            if (e.key === 'Enter') { e.preventDefault(); span.blur(); }
+            if (e.key === 'Escape') { span.textContent = span.dataset.orig || ''; span.blur(); }
+        });
+        span.addEventListener('blur', async () => {
+            const newLabel = span.textContent.trim();
+            const origLabel = span.dataset.orig || '';
+            if (!newLabel || newLabel === origLabel) {
+                if (!newLabel) span.textContent = origLabel; // restore if cleared
+                return;
+            }
+            const idx = parseInt(span.dataset.idx, 10);
+            const layers = [];
+            overlayEditGroup.eachLayer(l => layers.push(l));
+            const layer = layers[idx];
+            if (!layer?.feature) return;
+            layer.feature.properties.label = newLabel;
+            await saveEditedOverlays();
         });
     });
 }
@@ -1254,7 +1383,10 @@ function attachDrawListeners() {
                 if (strokeStyle === 'arrow' || strokeStyle === 'arrow_many') {
                     applyArrowheads(layer, strokeStyle, color);
                 }
-                layer.bindTooltip(PFAD_STYLE_LABELS[strokeStyle] || 'Pfad', { sticky: true, className: 'overlay-route-tooltip' });
+                bindColoredTooltip(layer, () => {
+                    const dist = formatDistance(calcPolylineLength(layer.getLatLngs()));
+                    return `${PFAD_STYLE_LABELS[strokeStyle] || 'Pfad'} \u00b7 ${dist}`;
+                }, { sticky: true, className: 'overlay-route-tooltip' });
                 attachDeleteHandler(layer);
             } else {
                 // Standard route (anfahrt)
@@ -1265,7 +1397,10 @@ function attachDrawListeners() {
                     geometry: { type: 'LineString', coordinates: coords },
                     properties: { overlayType: 'anfahrt', routeType, color }
                 };
-                layer.bindTooltip(getRouteLabel(routeType), { sticky: true, className: 'overlay-route-tooltip' });
+                bindColoredTooltip(layer, () => {
+                    const dist = formatDistance(calcPolylineLength(layer.getLatLngs()));
+                    return `${getRouteLabel(routeType)} \u00b7 ${dist}`;
+                }, { sticky: true, className: 'overlay-route-tooltip' });
                 attachDeleteHandler(layer);
             }
         }
@@ -1282,7 +1417,7 @@ function attachDrawListeners() {
                     geometry: { type: 'Polygon', coordinates: [latlngs] },
                     properties: { overlayType: 'zone', zoneType: 'eisabfall', color, note: 'Eisabfallzone' }
                 };
-                layer.bindTooltip('⚠️ Eisabfallzone', { direction: 'center', sticky: true, className: 'overlay-zone-tooltip' });
+                bindColoredTooltip(layer, 'Eisabfallzone', { direction: 'center', sticky: true, className: 'overlay-zone-tooltip' });
                 attachDeleteHandler(layer);
             } else {
                 // Need name input
@@ -1310,7 +1445,10 @@ function attachDrawListeners() {
                     geometry: { type: 'Point', coordinates: [ll.lng, ll.lat] },
                     properties: { overlayType: 'kreis', zoneType: 'eisabfall', radius: layer.getRadius(), color, note: 'Eisabfallzone' }
                 };
-                layer.bindTooltip('⚠️ Eisabfallzone', { direction: 'center', sticky: true, className: 'overlay-zone-tooltip' });
+                bindColoredTooltip(layer, () => {
+                    const diam = `\u00d8\u00a0${Math.round(layer.getRadius() * 2)}\u00a0m`;
+                    return `Eisabfallzone \u00b7 ${diam}`;
+                }, { direction: 'center', sticky: true, className: 'overlay-zone-tooltip' });
                 attachDeleteHandler(layer);
             } else {
                 ovModalPendingLayer = layer;
@@ -1349,13 +1487,13 @@ function showOverlayModal(mode) {
     if (!modal || !input) return;
 
     if (mode === 'hinweis' || mode === 'edit-hinweis') {
-        title.textContent = '💬 Hinweis-Text';
+        title.textContent = 'Hinweis-Text';
         presetRow.classList.add('hidden');
         inputLabel.textContent = 'Hinweis-Text:';
         input.placeholder = 'z.B. Tor ist nur von 7–18 Uhr offen...';
         input.value = mode === 'edit-hinweis' ? (ovModalEditLayer?.feature?.properties?.note || '') : '';
     } else {
-        title.textContent = '📐 Zone benennen';
+        title.textContent = 'Zone benennen';
         presetRow.classList.remove('hidden');
         inputLabel.textContent = 'Zonenname:';
         input.placeholder = 'z.B. Gefahrenbereich Nord';
@@ -1426,8 +1564,19 @@ async function confirmOverlayInput() {
     if (ovModalMode === 'edit-zone' && ovModalEditLayer) {
         ovModalEditLayer.feature.properties.note = text;
         const label = text || 'Zone';
+        const isCircle = ovModalEditLayer instanceof L.Circle;
         ovModalEditLayer.unbindTooltip();
-        ovModalEditLayer.bindTooltip(label, { direction: 'center', sticky: true, className: 'overlay-zone-tooltip' });
+        if (isCircle) {
+            const circleRef = ovModalEditLayer;
+            const zt = circleRef.feature.properties.zoneType || 'custom';
+            bindColoredTooltip(circleRef, () => {
+                const diam = `\u00d8\u00a0${Math.round(circleRef.getRadius() * 2)}\u00a0m`;
+                const base = zt === 'eisabfall' ? 'Eisabfallzone' : (circleRef.feature.properties.note || 'Kreis-Zone');
+                return `${base} \u00b7 ${diam}`;
+            }, { direction: 'center', sticky: true, className: 'overlay-zone-tooltip' });
+        } else {
+            ovModalEditLayer.bindTooltip(label, { direction: 'center', sticky: true, className: 'overlay-zone-tooltip' });
+        }
         ovModalEditLayer = null;
         ovModalEditNummer = null;
         if (overlayEditMode) await saveEditedOverlays();
@@ -1447,22 +1596,30 @@ async function confirmOverlayInput() {
         layer.setIcon(getOverlayMarkerIcon('hinweis', color, text));
         layer.bindTooltip(text || 'Hinweis', { direction: 'top', offset: [0, -14], className: 'overlay-hinweis-tooltip' });
         if (text) layer.bindPopup(
-            `<div class="overlay-hinweis-popup"><strong>💬 Hinweis</strong><p>${text.replace(/\n/g, '<br>')}</p></div>`,
+            `<div class="overlay-hinweis-popup"><strong><i class="mdi mdi-comment-text"></i> Hinweis</strong><p>${text.replace(/\n/g, '<br>')}</p></div>`,
             { maxWidth: 260, className: 'overlay-hinweis-popup-wrap' }
         );
     } else {
-        // Zone
-        const zoneType = layer.feature.properties.zoneType || 'custom';
+        // Zone / Circle
         // Auto-detect preset selection
         const presetSel = document.getElementById('ovModalPreset');
         if (presetSel && presetSel.value === 'eisabfall') {
             layer.feature.properties.zoneType = 'eisabfall';
             layer.feature.properties.note = text || 'Eisabfallzone';
         }
-        const label = layer.feature.properties.zoneType === 'eisabfall'
-            ? '⚠️ Eisabfallzone'
-            : (text || 'Zone');
-        layer.bindTooltip(label, { direction: 'center', sticky: true, className: 'overlay-zone-tooltip' });
+        if (layer instanceof L.Circle) {
+            const zt = layer.feature.properties.zoneType || 'custom';
+            bindColoredTooltip(layer, () => {
+                const diam = `\u00d8\u00a0${Math.round(layer.getRadius() * 2)}\u00a0m`;
+                const base = zt === 'eisabfall' ? 'Eisabfallzone' : (layer.feature.properties.note || 'Kreis-Zone');
+                return `${base} \u00b7 ${diam}`;
+            }, { direction: 'center', sticky: true, className: 'overlay-zone-tooltip' });
+        } else {
+            const label = layer.feature.properties.zoneType === 'eisabfall'
+                ? 'Eisabfallzone'
+                : (text || 'Zone');
+            bindColoredTooltip(layer, label, { direction: 'center', sticky: true, className: 'overlay-zone-tooltip' });
+        }
     }
 
     attachDeleteHandler(layer);
@@ -1515,6 +1672,20 @@ function attachSidebarListeners() {
     const closeEdit = document.getElementById('ovCloseEdit');
     if (closeEdit) closeEdit.addEventListener('click', () => setOverlayEditMode(false));
 
+    // Category tab buttons — toggle sub-toolbars
+    ovPanelEl.querySelectorAll('.ov-tb-cat').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const cat = btn.dataset.cat;
+            if (ovActiveCategoryTab === cat) {
+                ovActiveCategoryTab = null;
+                deactivateCurrentTool();
+            } else {
+                ovActiveCategoryTab = cat;
+            }
+            updateToolbarState();
+        });
+    });
+
     // Tool buttons
     ovPanelEl.querySelectorAll('[data-tool]').forEach(btn => {
         btn.addEventListener('click', () => activateTool(btn.dataset.tool));
@@ -1552,7 +1723,7 @@ function positionOvPanel() {
     if (!bar) return;
     const rect = bar.getBoundingClientRect();
     const margin = 12;
-    const panelWidth = Math.min(360, Math.max(280, window.innerWidth - (margin * 2)));
+    const panelWidth = Math.min(240, Math.max(200, window.innerWidth - (margin * 2)));
 
     ovPanelEl.style.width = `${panelWidth}px`;
     ovPanelEl.style.maxWidth = `calc(100vw - ${margin * 2}px)`;
@@ -1619,7 +1790,7 @@ async function initStandortOverlays() {
     ensureOverlayCollections();
     attachDrawListeners();
 
-    await initOverlaySyncClient();
+    await initCFOverlaySync();
     await loadOverlayStore();
 
     if (overlaySyncClient) {

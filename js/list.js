@@ -77,7 +77,7 @@ function renderList(liste) {
                     <h3 class="text-slate-900 dark:text-zinc-100 text-sm md:text-base flex items-center gap-2 flex-wrap">
                         <span class="font-bold">${s.nummer}</span> 
                         <span class="font-normal text-slate-600 dark:text-zinc-300">${s.name}</span>
-                        <button type="button" onclick="toggleFavorite('${s.nummer}', event)" title="Favorit umschalten" class="transition-colors ${isFavorite(s.nummer) ? 'text-amber-500 opacity-100' : 'text-slate-300 dark:text-zinc-600 opacity-0 group-hover:opacity-100 hover:opacity-100'}">★</button>
+                        <button type="button" onclick="toggleFavorite('${s.nummer}', event)" title="Favorit umschalten" class="transition-colors ${isFavorite(s.nummer) ? 'text-amber-500 opacity-100' : 'text-slate-300 dark:text-zinc-600 opacity-0 group-hover:opacity-100 hover:opacity-100'}"><i class="mdi mdi-star"></i></button>
                         <span id="${warningBoxId}" class="ml-1 inline-flex empty:hidden"></span>
                     </h3>
                     ${distHtml || `<div class="text-slate-400 text-xs font-mono mt-0.5">${s.lat}, ${s.lon}</div>`}

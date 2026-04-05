@@ -52,10 +52,11 @@ function toggleCurrentDashboardFavorite(event) {
 function updateDashboardFavoriteButton() {
     const btn = document.getElementById('dashFavoriteBtn');
     if (!btn || !currentStandort) return;
-
-    if (isFavorite(currentStandort.nummer)) {
-        btn.className = 'ml-2 transition-colors text-amber-500 hover:text-amber-600';
-    } else {
-        btn.className = 'ml-2 transition-colors text-slate-300 dark:text-zinc-600 hover:text-amber-500';
-    }
+    const fav = isFavorite(currentStandort.nummer);
+    btn.className = fav
+        ? 'ml-2 transition-colors text-amber-500 hover:text-amber-600'
+        : 'ml-2 transition-colors text-slate-300 dark:text-zinc-600 hover:text-amber-500';
+    // Swap filled / outline star icon
+    const icon = btn.querySelector('i.mdi');
+    if (icon) { icon.classList.toggle('mdi-star', fav); icon.classList.toggle('mdi-star-outline', !fav); }
 }

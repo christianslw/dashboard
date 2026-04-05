@@ -28,13 +28,7 @@ let radarPlayTimer = null;
 let radarHost = 'https://tilecache.rainviewer.com';
 const warningsCache = {}, routeCache = {};
 
-if (typeof window.__SUPABASE_CONFIG__ === 'undefined') {
-    window.__SUPABASE_CONFIG__ = {
-        url: '',
-        anonKey: '',
-        table: 'standort_overlays'
-    };
-}
+// Backend sync is handled by js/sync.js  (window.__cfSync)
 
 // ==========================================
 // Theme and Appearance
