@@ -5,15 +5,34 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Admin — SWR Standort Dashboard</title>
 <script src="https://cdn.tailwindcss.com"></script>
+<!-- Material Design Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7/css/materialdesignicons.min.css" />
 <script>
     tailwind.config = {
         darkMode: 'class',
-        theme: { extend: { fontFamily: { sans: ['Segoe UI', 'system-ui', 'sans-serif'] } } }
+        theme: {
+            extend: {
+                fontFamily: { sans: ['Segoe UI', 'system-ui', 'sans-serif'] },
+                colors: { oled: '#000000', zinc: { 900: '#18181b', 950: '#09090b' } }
+            }
+        }
     };
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        document.documentElement.classList.add('dark');
+    // Full theme loading — mirrors index.html
+    const cTheme = localStorage.getItem('colorTheme') || 'standard';
+    const cAppm  = localStorage.getItem('appearance') || 'system';
+    const _tm    = { 'dracula': 'themes/dracula.css', 'dracula-laser': 'themes/dracula-laser.css', 'kirschbluete': 'themes/kirschbluete.css', 'swr-ms': 'themes/swr-ms.css' };
+    let isD = false;
+    if (cAppm === 'dark' || (cAppm === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) isD = true;
+    if (isD) document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
+    if (_tm[cTheme]) {
+        document.documentElement.classList.add(cTheme);
+        const l = document.createElement('link');
+        l.rel = 'stylesheet'; l.id = 'custom-theme-css'; l.href = _tm[cTheme];
+        document.head.appendChild(l);
     }
 </script>
+<link rel="stylesheet" href="styles.css" />
 <style>
     [x-cloak] { display: none; }
     .cell { @apply px-3 py-2 text-sm; }
@@ -130,6 +149,33 @@
         </div>
     </div>
 
+</div>
+
+<!-- ───────────────────────────── OVERLAY DETAIL MODAL ──────────────────────── -->
+<div id="overlayDetailModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 hidden flex items-start justify-center pt-10 px-4">
+    <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-2xl w-full max-w-2xl max-h-[82vh] flex flex-col">
+        <!-- Header -->
+        <div class="p-5 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between flex-shrink-0 sticky top-0">
+            <div>
+                <h2 id="overlayDetailTitle" class="text-base font-bold">Overlays</h2>
+                <p id="overlayDetailMeta" class="text-xs text-slate-500 dark:text-zinc-400 mt-0.5"></p>
+            </div>
+            <button onclick="closeOverlayDetail()" class="text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 text-xl leading-none transition-colors">&times;</button>
+        </div>
+        <!-- Body (scrollable list) -->
+        <div id="overlayDetailBody" class="flex-1 overflow-y-auto p-4 space-y-1.5"></div>
+        <!-- Footer -->
+        <div class="p-4 border-t border-slate-200 dark:border-zinc-800 flex justify-between items-center flex-shrink-0">
+            <button id="overlayDetailClearBtn" onclick="clearAllOverlaysDetail()"
+                class="hidden px-3 py-1.5 text-sm border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                Alle Overlays löschen
+            </button>
+            <span></span>
+            <button onclick="closeOverlayDetail()" class="px-4 py-1.5 text-sm border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors">
+                Schließen
+            </button>
+        </div>
+    </div>
 </div>
 
 <!-- ───────────────────────────── EDIT MODAL ──────────────────────────────── -->
@@ -318,8 +364,12 @@ function renderStandorteTable(data) {
             <td class="cell font-mono text-xs text-slate-500 dark:text-zinc-400">${s.lat?.toFixed(6) ?? '—'}</td>
             <td class="cell font-mono text-xs text-slate-500 dark:text-zinc-400">${s.lon?.toFixed(6) ?? '—'}</td>
             <td class="cell text-center text-xs">${zufahrtLen > 0 ? `<span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300">${zufahrtLen} Pkt.</span>` : '<span class="text-slate-300 dark:text-zinc-600">—</span>'}</td>
-            <td class="cell text-center text-xs">${typeof ovCount === 'number' && ovCount > 0 ? `<span class="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">${ovCount}</span>` : '<span class="text-slate-300 dark:text-zinc-600">—</span>'}</td>
+            <td class="cell text-center text-xs">${typeof ovCount === 'number' && ovCount > 0 ? `<button onclick="openOverlayDetail('${esc(s.nummer)}')" class="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800/40 transition-colors font-medium">${ovCount}</button>` : `<button onclick="openOverlayDetail('${esc(s.nummer)}')" class="text-slate-300 dark:text-zinc-600 hover:text-blue-400 transition-colors px-1">+</button>`}</td>
             <td class="cell text-right">
+                <button onclick="openOverlayDetail('${esc(s.nummer)}')"
+                    class="text-xs px-2 py-1 rounded border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors mr-1">
+                    Overlays
+                </button>
                 <button onclick="editStandort('${esc(s.nummer)}')"
                     class="text-xs px-2 py-1 rounded border border-slate-300 dark:border-zinc-600 hover:bg-slate-100 dark:hover:bg-zinc-700 transition-colors mr-1">
                     Bearbeiten
@@ -565,6 +615,175 @@ function esc(str) {
 // Close modal on backdrop click
 document.getElementById('editModal').addEventListener('click', e => {
     if (e.target === e.currentTarget) closeModal();
+});
+
+// ─── OVERLAY DETAIL ───────────────────────────────────────────────────────────
+
+let overlayDetailNummer = null;
+let overlayDetailPayload = null;
+
+function mdiIconAdmin(name, color, sizePx = 15) {
+    return `<i class="mdi mdi-${name}" style="color:${color || '#94a3b8'};font-size:${sizePx}px" aria-hidden="true"></i>`;
+}
+
+function describeFeatureAdmin(f) {
+    const p = f?.properties || {};
+    if (p.overlayType === 'anfahrt') {
+        const color = p.color || '#dc2626';
+        const label = p.routeType === 'hauptzufahrt' ? 'Hauptzufahrt'
+                    : p.routeType === 'alternativ'   ? 'Alternative Zufahrt'
+                    : (p.label || 'Freie Route');
+        return { icon: mdiIconAdmin('road-variant', color), label, type: 'Anfahrt', color };
+    }
+    if (p.overlayType === 'icon') {
+        const color = p.color || '#ef4444';
+        if (p.iconType === 'schranke') return { icon: mdiIconAdmin('boom-gate',    color), label: p.label || 'Schranke',            type: 'Marker', color };
+        if (p.iconType === 'tresor')   return { icon: mdiIconAdmin('lock',         color), label: p.label || 'Schlüsseltresor',      type: 'Marker', color };
+        if (p.iconType === 'hinweis')  return { icon: mdiIconAdmin('comment-text', color), label: (p.note || p.label || 'Hinweis').substring(0, 60), type: 'Hinweis', color };
+    }
+    if (p.overlayType === 'zone' || p.overlayType === 'gefahrenzone') {
+        const color = p.color || '#8b5cf6';
+        if (p.zoneType === 'eisabfall') return { icon: mdiIconAdmin('snowflake-alert', '#eab308'), label: p.label || 'Eisabfallzone',        type: 'Zone', color };
+        return { icon: mdiIconAdmin('vector-polygon', color), label: p.label || p.note || 'Zone', type: 'Zone', color };
+    }
+    if (p.overlayType === 'kreis') {
+        const color = p.color || '#8b5cf6';
+        if (p.zoneType === 'eisabfall') return { icon: mdiIconAdmin('snowflake-alert', '#eab308'), label: p.label || 'Eisabfallzone (Kreis)', type: 'Kreis-Zone', color };
+        return { icon: mdiIconAdmin('circle-outline', color), label: p.label || p.note || 'Kreis-Zone', type: 'Kreis-Zone', color };
+    }
+    if (p.overlayType === 'pfad') {
+        const ss = p.strokeStyle || 'solid';
+        const color = p.color || '#0ea5e9';
+        const styleNames = { solid: 'Solide Linie', dash: 'Gestrichelt', dot: 'Gepunktet', arrow: 'Pfeil', arrow_many: 'Richtungspfeile' };
+        return { icon: mdiIconAdmin('vector-polyline', color), label: p.label || styleNames[ss] || 'Pfad', type: 'Pfad', color };
+    }
+    return { icon: mdiIconAdmin('map-marker', p.color || '#94a3b8'), label: p.label || 'Element', type: 'Unbekannt', color: p.color || '#94a3b8' };
+}
+
+async function openOverlayDetail(nummer) {
+    overlayDetailNummer = String(nummer);
+    const s = standorte.find(x => String(x.nummer) === overlayDetailNummer);
+    document.getElementById('overlayDetailTitle').textContent =
+        `Overlays — ${s ? (s.name ? `${s.name} (${overlayDetailNummer})` : overlayDetailNummer) : overlayDetailNummer}`;
+    document.getElementById('overlayDetailMeta').textContent = 'Lade…';
+    document.getElementById('overlayDetailBody').innerHTML =
+        '<p class="text-sm text-slate-400 dark:text-zinc-500 py-6 text-center">Lade Overlay-Daten…</p>';
+    document.getElementById('overlayDetailClearBtn').classList.add('hidden');
+    document.getElementById('overlayDetailModal').classList.remove('hidden');
+
+    try {
+        const res = await fetch(`/api/overlays/${encodeURIComponent(overlayDetailNummer)}`);
+        overlayDetailPayload = await res.json();
+    } catch {
+        overlayDetailPayload = { features: [], updatedAt: null, updatedBy: null };
+    }
+    renderOverlayDetail();
+}
+
+function renderOverlayDetail() {
+    const payload = overlayDetailPayload;
+    const features = Array.isArray(payload?.features) ? payload.features : [];
+    const updAt = payload?.updatedAt ? new Date(payload.updatedAt).toLocaleString('de-DE') : null;
+    const updBy = payload?.updatedBy;
+
+    const metaParts = [];
+    if (features.length) metaParts.push(`${features.length} Element${features.length !== 1 ? 'e' : ''}`);
+    if (updAt) metaParts.push(`Letzte Änderung: ${updAt}`);
+    if (updBy) metaParts.push(`von ${updBy}`);
+    document.getElementById('overlayDetailMeta').textContent = metaParts.join(' · ') || 'Keine Overlays vorhanden';
+
+    const body = document.getElementById('overlayDetailBody');
+    const clearBtn = document.getElementById('overlayDetailClearBtn');
+
+    if (!features.length) {
+        body.innerHTML = `<div class="text-center py-10">
+            <i class="mdi mdi-map-marker-off text-4xl text-slate-300 dark:text-zinc-600"></i>
+            <p class="text-sm text-slate-400 dark:text-zinc-500 mt-3">Keine Overlay-Elemente vorhanden.</p>
+        </div>`;
+        clearBtn.classList.add('hidden');
+        return;
+    }
+
+    clearBtn.classList.remove('hidden');
+
+    body.innerHTML = features.map((f, idx) => {
+        const d = describeFeatureAdmin(f);
+        return `<div class="flex items-center gap-3 py-2.5 px-3 rounded-lg border border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/30 hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors group" data-idx="${idx}">
+            <span class="flex-shrink-0 w-5 text-center">${d.icon}</span>
+            <div class="flex-1 min-w-0">
+                <div class="text-sm font-medium text-slate-900 dark:text-zinc-100 truncate">${esc(d.label)}</div>
+                <div class="flex items-center gap-2 mt-0.5">
+                    <span class="text-xs text-slate-500 dark:text-zinc-400">${esc(d.type)}</span>
+                    <span class="inline-block w-3 h-3 rounded-full flex-shrink-0 border border-black/10" style="background:${d.color}"></span>
+                    <span class="text-xs font-mono text-slate-400 dark:text-zinc-500">${d.color}</span>
+                </div>
+            </div>
+            <button onclick="deleteOverlayFeature(${idx})"
+                class="flex-shrink-0 opacity-0 group-hover:opacity-100 focus:opacity-100 text-xs px-2 py-1 rounded border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all" title="Element entfernen">
+                <i class="mdi mdi-undo"></i> Entfernen
+            </button>
+        </div>`;
+    }).join('');
+}
+
+async function deleteOverlayFeature(idx) {
+    if (!overlayDetailPayload) return;
+    const features = [...(overlayDetailPayload.features || [])];
+    if (idx < 0 || idx >= features.length) return;
+    const removed = features[idx];
+    const d = describeFeatureAdmin(removed);
+    if (!confirm(`Element "${d.label}" wirklich entfernen?`)) return;
+
+    features.splice(idx, 1);
+    const newPayload = {
+        ...overlayDetailPayload,
+        features,
+        updatedAt: new Date().toISOString(),
+        updatedBy: 'admin'
+    };
+
+    const res = await fetch(`/api/overlays/${encodeURIComponent(overlayDetailNummer)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newPayload)
+    });
+    if (!res.ok) { alert('Fehler beim Speichern.'); return; }
+
+    overlayDetailPayload = newPayload;
+    overlayData[overlayDetailNummer] = newPayload;
+    renderOverlayDetail();
+    renderStandorteTable(standorte);
+    renderOverlaysTable();
+    setStatus(`Element entfernt (Standort ${overlayDetailNummer}) — ${new Date().toLocaleTimeString()}`);
+}
+
+async function clearAllOverlaysDetail() {
+    const s = standorte.find(x => String(x.nummer) === overlayDetailNummer);
+    const name = s ? (s.name || overlayDetailNummer) : overlayDetailNummer;
+    if (!confirm(`Alle Overlays für "${name}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`)) return;
+
+    const res = await fetch(`/api/overlays/${encodeURIComponent(overlayDetailNummer)}`, {
+        method: 'DELETE'
+    });
+    if (!res.ok) { alert('Fehler beim Löschen.'); return; }
+
+    delete overlayData[overlayDetailNummer];
+    overlayDetailPayload = { features: [], updatedAt: null, updatedBy: null };
+    renderOverlayDetail();
+    renderStandorteTable(standorte);
+    renderOverlaysTable();
+    setStatus(`Overlays für ${overlayDetailNummer} gelöscht — ${new Date().toLocaleTimeString()}`);
+}
+
+function closeOverlayDetail() {
+    document.getElementById('overlayDetailModal').classList.add('hidden');
+    overlayDetailNummer = null;
+    overlayDetailPayload = null;
+}
+
+// Close overlay detail modal on backdrop click
+document.getElementById('overlayDetailModal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeOverlayDetail();
 });
 </script>
 </body>
