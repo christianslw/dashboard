@@ -1726,3 +1726,29 @@ body.split-dragging #splitDivider {
 	from { opacity: 0; transform: translate3d(-12px, 0, 0); }
 	to   { opacity: 1; transform: translate3d(0, 0, 0); }
 }
+
+/* ===== DWD Warning Label — hover badge sliding from icon ===== */
+.dwd-warn-label {
+	display: inline-flex;
+	align-items: center;
+	white-space: nowrap;
+	font-size: 0.7rem;
+	font-weight: 600;
+	line-height: 1;
+	padding: 2px 7px;
+	border-radius: 4px;
+	border: 1px solid var(--dwl-color, currentColor);
+	background: var(--dwl-bg, transparent);
+	color: var(--dwl-color, currentColor);
+	/* Start fully clipped from the right (origin = icon side = left) */
+	clip-path: inset(0 100% 0 0 round 4px);
+	opacity: 0;
+	transition:
+		clip-path 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+		opacity   0.18s ease;
+	will-change: clip-path, opacity;
+}
+.group:hover .dwd-warn-label {
+	clip-path: inset(0 0% 0 0 round 4px);
+	opacity: 1;
+}

@@ -122,6 +122,7 @@ window.onload = async () => {
 
     // ── 5. Map + overlays ──────────────────────────────────────────────────────
     initLeafletMap();
+    initSplitPane();        // run before first renderMap so fitBounds uses the correct container width
     if (typeof initStandortOverlays === 'function') {
         initStandortOverlays();
     }
@@ -137,5 +138,4 @@ window.onload = async () => {
     }
 
     initTutorialHighlight();
-    initSplitPane();
 };

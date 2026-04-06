@@ -306,6 +306,7 @@ function updateMapMarkers(liste) {
                 leafletMap.setView([s.lat, s.lon], 17, { animate: true });
             }
         } else {
+            leafletMap.invalidateSize({ animate: false });
             leafletMap.fitBounds(markerClusterGroup.getBounds(), { padding: [30, 30], maxZoom: 12, animate: true });
         }
     }

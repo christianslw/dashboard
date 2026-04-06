@@ -88,11 +88,18 @@ function getDwdEventIconPath(eventDe, eventEn) {
 function getDwdLevelBox(severity, eventDe, eventEn) {
     const iconPath = getDwdEventIconPath(eventDe, eventEn);
     const iconFilter = getDwdSeverityFilter(severity);
+    const severityColor = getDwdSeverityColor(severity);
+    const level = getDwdSeverityRank(severity);
     const label = (eventDe || eventEn || severity || 'Warnung').replace(/"/g, '&quot;');
     const sizeClass = iconPath.includes('slippery') ? 'w-7 h-7' : 'w-5 h-5';
+    const levelLabel = level > 0 ? `Stufe ${level}` : (severity || '');
+    const eventLabel = (eventDe || eventEn || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const hoverText = eventLabel ? `${levelLabel} &middot; ${eventLabel}` : levelLabel;
+    const bgColor = hexToRgba(severityColor, 0.13);
     return `
-        <span class="inline-flex items-center" title="${label}">
+        <span class="inline-flex items-center gap-1" title="${label}">
             <img src="${iconPath}" alt="DWD Warnsymbol" class="${sizeClass} shrink-0" style="filter:${iconFilter};" />
+            <span class="dwd-warn-label" style="--dwl-color:${severityColor};--dwl-bg:${bgColor};">${hoverText}</span>
         </span>
     `;
 }
