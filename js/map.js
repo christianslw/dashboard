@@ -282,18 +282,6 @@ function updateMapMarkers(liste) {
             const s = liste[0];
             let bounds = L.latLngBounds([[s.lat, s.lon]]);
 
-            if (s.zufahrt && s.zufahrt.length > 0) {
-                const routeLatLngs = s.zufahrt.map(coord => [coord[1], coord[0]]);
-                currentZufahrtLayer = L.polyline(routeLatLngs, {
-                    color: '#ef4444',
-                    weight: 5,
-                    dashArray: '10, 10',
-                    opacity: 0.9,
-                    lineCap: 'round'
-                }).addTo(leafletMap);
-                bounds.extend(currentZufahrtLayer.getBounds());
-            }
-
             if (typeof getOverlayPayloadForStandort === 'function') {
                 const payload = getOverlayPayloadForStandort(s.nummer);
                 if (payload && payload.features) {
@@ -343,26 +331,8 @@ function focusMapOnStandort(nummer) {
         onOverlayTargetStandortChanged(standort.nummer);
     }
 
-    if (currentZufahrtLayer) {
-        leafletMap.removeLayer(currentZufahrtLayer);
-        currentZufahrtLayer = null;
-    }
-
     let bounds = L.latLngBounds([[standort.lat, standort.lon]]);
 
-    if (standort.zufahrt && standort.zufahrt.length > 0) {
-        const routeLatLngs = standort.zufahrt.map(coord => [coord[1], coord[0]]);
-        currentZufahrtLayer = L.polyline(routeLatLngs, {
-            color: '#ef4444',
-            weight: 5,
-            dashArray: '10, 10',
-            opacity: 0.9,
-            lineCap: 'round'
-        }).addTo(leafletMap);
-
-        bounds.extend(currentZufahrtLayer.getBounds());
-    }
-    
     // Extend bounds with overlay elements
     if (typeof getOverlayPayloadForStandort === 'function') {
         const payload = getOverlayPayloadForStandort(standort.nummer);

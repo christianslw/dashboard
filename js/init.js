@@ -99,6 +99,9 @@ window.onload = async () => {
 
         // Start watching for local setting changes and push them to the backend
         window.__cfSync.startSettingsSync();
+
+        // Load shared Fahrtanweisungen from backend into localStorage
+        await window.__cfSync.loadFahrtanweisungen();
     }
 
     // ── 3. Restore per-user in-memory state from (possibly updated) localStorage

@@ -210,6 +210,63 @@
         _overlayPollTimer = setInterval(_checkOverlayVersion, OVERLAY_POLL_MS);
     }
 
+    // ─── FAHRTANWEISUNGEN ────────────────────────────────────────────────────────
+
+    let _fahrtanweisungenPushTimers = {}; // per-nummer debounce
+
+    /**
+     * Load all Fahrtanweisungen from the backend and write them into localStorage.
+     * Called once on boot.
+     */
+    async function loadFahrtanweisungen() {
+        try {
+            const res = await fetch('/api/fahrtanweisungen');
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data && typeof data === 'object') {
+                Object.entries(data).forEach(([nummer, entry]) => {
+                    if (entry?.text) {
+                        localStorage.setItem(`wayInstructions_${nummer}`, entry.text);
+                    } else {
+                        localStorage.removeItem(`wayInstructions_${nummer}`);
+                    }
+                });
+            }
+        } catch { /* silent — localStorage fallback remains */ }
+    }
+
+    /**
+     * Push a single Fahrtanweisung to the backend (debounced 500 ms per nummer).
+     * @param {string|number} nummer
+     * @param {string} text
+     */
+    function pushFahrtanweisung(nummer, text) {
+        const key = String(nummer);
+        if (_fahrtanweisungenPushTimers[key]) clearTimeout(_fahrtanweisungenPushTimers[key]);
+        _fahrtanweisungenPushTimers[key] = setTimeout(async () => {
+            delete _fahrtanweisungenPushTimers[key];
+            try {
+                await fetch(`/api/fahrtanweisungen/${encodeURIComponent(key)}`, {
+                    method:  'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({ text, updatedAt: new Date().toISOString() }),
+                });
+            } catch { /* silent */ }
+        }, 500);
+    }
+
+    /**
+     * Delete a Fahrtanweisung from the backend immediately.
+     * @param {string|number} nummer
+     */
+    async function deleteFahrtanweisung(nummer) {
+        try {
+            await fetch(`/api/fahrtanweisungen/${encodeURIComponent(String(nummer))}`, {
+                method: 'DELETE',
+            });
+        } catch { /* silent */ }
+    }
+
     // ─── PROBE ───────────────────────────────────────────────────────────────────
 
     /** Quick check to see if the CF backend is reachable at all. */
@@ -246,6 +303,11 @@
         // Overlays
         startOverlayPolling,
         refreshOverlaysNow: _refreshOverlays,
+
+        // Fahrtanweisungen
+        loadFahrtanweisungen,
+        pushFahrtanweisung,
+        deleteFahrtanweisung,
     };
 
     window.__cfSync = cfSync;

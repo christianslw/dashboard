@@ -60,15 +60,20 @@ export async function onRequestPost({ env, request }) {
             records.slice(i, i + CHUNK).map(r => {
                 const nummer = String(r.nummer);
                 numbers.push(nummer);
+                // Read existing record to preserve user-added fahrtanweisung
+                const existing = await env.STANDORTE_KV.get(`standort:${nummer}`, { type: 'json' });
                 const record = {
                     nummer,
                     name:    r.name    ?? '',
                     lat:     Number(r.lat),
                     lon:     Number(r.lon),
                     link:    r.link    ?? '',
-                    zufahrt: Array.isArray(r.zufahrt) ? r.zufahrt : [],
                     updatedAt: now,
                 };
+                if (existing?.fahrtanweisung) {
+                    record.fahrtanweisung = existing.fahrtanweisung;
+                    if (existing.fahrtanweisungUpdatedAt) record.fahrtanweisungUpdatedAt = existing.fahrtanweisungUpdatedAt;
+                }
                 return env.STANDORTE_KV.put(`standort:${nummer}`, JSON.stringify(record));
             })
         );

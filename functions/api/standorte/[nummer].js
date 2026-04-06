@@ -54,16 +54,23 @@ export async function onRequestPut({ params, env, request }) {
         return Response.json({ error: 'Missing required fields: nummer, lat, lon' }, { status: 400 });
     }
 
+    // Read existing record to preserve user-added fahrtanweisung (not admin-managed)
+    const existing = await env.STANDORTE_KV.get(`standort:${nummer}`, { type: 'json' });
+
     const record = {
         nummer: String(body.nummer),
         name:    body.name   ?? '',
         lat:     Number(body.lat),
         lon:     Number(body.lon),
         link:    body.link   ?? '',
-        zufahrt: Array.isArray(body.zufahrt) ? body.zufahrt : [],
         ...(body.extra ? { extra: body.extra } : {}),
         updatedAt: new Date().toISOString(),
     };
+
+    if (existing?.fahrtanweisung) {
+        record.fahrtanweisung = existing.fahrtanweisung;
+        if (existing.fahrtanweisungUpdatedAt) record.fahrtanweisungUpdatedAt = existing.fahrtanweisungUpdatedAt;
+    }
 
     await env.STANDORTE_KV.put(`standort:${nummer}`, JSON.stringify(record));
     await rebuildIndex(env);

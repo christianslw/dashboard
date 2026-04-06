@@ -96,19 +96,7 @@ function setupMobileMap(standort) {
     
     dashMobileMarker = L.marker([standort.lat, standort.lon], { icon: mobileIcon }).addTo(dashMobileMapInstance);
 
-    // Zufahrtsroute anzeigen, sofern vorhanden
     let bounds = L.latLngBounds([[standort.lat, standort.lon]]);
-
-    if (standort.zufahrt && standort.zufahrt.length > 0) {
-        const routeLatLngs = standort.zufahrt.map(coord => [coord[1], coord[0]]);
-        dashMobileRouteLayer = L.polyline(routeLatLngs, {
-            color: '#ef4444',
-            weight: 4,
-            dashArray: '8, 8'
-        }).addTo(dashMobileMapInstance);
-        
-        bounds.extend(dashMobileRouteLayer.getBounds());
-    }
 
     // Extend bounds with overlay elements
     if (typeof getOverlayPayloadForStandort === 'function') {
@@ -244,6 +232,12 @@ function saveWayInstructions() {
     saveWayInstructionsToStorage(currentStandort.nummer, instructions);
     displayWayInstructions();
     closeWayInstructionsModal();
+    // Sync to backend
+    if (instructions.trim() === '') {
+        window.__cfSync?.deleteFahrtanweisung(currentStandort.nummer);
+    } else {
+        window.__cfSync?.pushFahrtanweisung(currentStandort.nummer, instructions);
+    }
 }
 
 function deleteWayInstructions() {
@@ -252,5 +246,7 @@ function deleteWayInstructions() {
         saveWayInstructionsToStorage(currentStandort.nummer, '');
         displayWayInstructions();
         closeWayInstructionsModal();
+        // Sync to backend
+        window.__cfSync?.deleteFahrtanweisung(currentStandort.nummer);
     }
 }

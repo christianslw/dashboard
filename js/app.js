@@ -10,7 +10,6 @@ let standorte = typeof standorteDaten !== 'undefined' ? standorteDaten : [
 let userLat = null, userLon = null, currentStandort = null;
 let selectedListItemId = null;
 let currentRouteLayer = null;
-let currentZufahrtLayer = null;
 let leafletMap = null;
 let markerClusterGroup = null;
 let favoriteStationNumbers = new Set();
