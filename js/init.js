@@ -115,7 +115,10 @@ window.onload = async () => {
     if (typeof window.__cfSync !== 'undefined') {
         backendHasStandorte = await window.__cfSync.loadStandorteFromBackend();
     }
-    if (!backendHasStandorte) {
+    if (backendHasStandorte) {
+        // Use the admin-managed data loaded by loadStandorteFromBackend
+        standorte = window.standorte;
+    } else {
         // Fallback: use the static JS bundle
         standorte = typeof standorteDaten !== 'undefined' ? standorteDaten : [];
     }
