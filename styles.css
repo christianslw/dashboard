@@ -639,10 +639,110 @@ html.dark:not(.dracula):not(.dracula-laser) .leaflet-control-attribution {
 
 .dark .leaflet-control-layers label { color: #d4d4d8 !important; }
 
-.leaflet-control-layers input[type="radio"],
-.leaflet-control-layers input[type="checkbox"] {
+/* ── Tailwind-style radio buttons (base layers) ── */
+.leaflet-control-layers input[type="radio"] {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	width: 1rem !important;
+	height: 1rem !important;
+	min-width: 1rem !important;
+	border-radius: 9999px !important;
+	border: 2px solid #cbd5e1 !important;
+	background-color: #ffffff !important;
 	cursor: pointer !important;
-	accent-color: #2563eb !important;
+	transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	flex-shrink: 0 !important;
+	position: relative !important;
+}
+.leaflet-control-layers input[type="radio"]::after {
+	content: '' !important;
+	display: block !important;
+	width: 6px !important;
+	height: 6px !important;
+	border-radius: 9999px !important;
+	background: transparent !important;
+	transition: background 0.15s !important;
+}
+.leaflet-control-layers input[type="radio"]:checked {
+	border-color: #2563eb !important;
+	background-color: #2563eb !important;
+}
+.leaflet-control-layers input[type="radio"]:checked::after {
+	background: #ffffff !important;
+}
+.leaflet-control-layers input[type="radio"]:hover:not(:checked) {
+	border-color: #94a3b8 !important;
+}
+.leaflet-control-layers input[type="radio"]:focus {
+	outline: none !important;
+	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25) !important;
+}
+
+/* ── Tailwind-style checkboxes (overlay layers) ── */
+.leaflet-control-layers input[type="checkbox"] {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	width: 1rem !important;
+	height: 1rem !important;
+	min-width: 1rem !important;
+	border-radius: 0.25rem !important;
+	border: 2px solid #cbd5e1 !important;
+	background-color: #ffffff !important;
+	cursor: pointer !important;
+	transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	flex-shrink: 0 !important;
+	position: relative !important;
+}
+.leaflet-control-layers input[type="checkbox"]::after {
+	content: '' !important;
+	display: block !important;
+	width: 5px !important;
+	height: 9px !important;
+	border: 2px solid transparent !important;
+	border-top: none !important;
+	border-left: none !important;
+	transform: rotate(45deg) translateY(-1px) !important;
+	transition: border-color 0.15s !important;
+}
+.leaflet-control-layers input[type="checkbox"]:checked {
+	border-color: #2563eb !important;
+	background-color: #2563eb !important;
+}
+.leaflet-control-layers input[type="checkbox"]:checked::after {
+	border-color: #ffffff !important;
+}
+.leaflet-control-layers input[type="checkbox"]:hover:not(:checked) {
+	border-color: #94a3b8 !important;
+}
+.leaflet-control-layers input[type="checkbox"]:focus {
+	outline: none !important;
+	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25) !important;
+}
+
+/* ── Dark mode overrides ── */
+.dark .leaflet-control-layers input[type="radio"],
+.dark .leaflet-control-layers input[type="checkbox"] {
+	background-color: #27272a !important;
+	border-color: #52525b !important;
+}
+.dark .leaflet-control-layers input[type="radio"]:hover:not(:checked),
+.dark .leaflet-control-layers input[type="checkbox"]:hover:not(:checked) {
+	border-color: #71717a !important;
+}
+.dark .leaflet-control-layers input[type="radio"]:checked,
+.dark .leaflet-control-layers input[type="checkbox"]:checked {
+	border-color: #3b82f6 !important;
+	background-color: #3b82f6 !important;
+}
+.dark .leaflet-control-layers input[type="radio"]:focus,
+.dark .leaflet-control-layers input[type="checkbox"]:focus {
+	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35) !important;
 }
 
 .leaflet-control-layers-separator {

@@ -133,7 +133,7 @@
                         <th class="cell w-28">Lon</th>
                         <th class="cell w-20 text-center">Zufahrt</th>
                         <th class="cell w-20 text-center">Overlays</th>
-                        <th class="cell w-28 text-right">Aktionen</th>
+                        <th class="cell w-16 text-right">Aktionen</th>
                     </tr>
                 </thead>
                 <tbody id="standorteBody">
@@ -155,7 +155,7 @@
                         <th class="cell w-28 text-center">Elemente</th>
                         <th class="cell w-44">Letzte Änderung</th>
                         <th class="cell w-36">Geändert von</th>
-                        <th class="cell w-24 text-right">Aktionen</th>
+                        <th class="cell w-14 text-right">Aktionen</th>
                     </tr>
                 </thead>
                 <tbody id="overlaysBody">
@@ -367,18 +367,16 @@ function renderStandorteTable(data) {
             <td class="cell text-center text-xs">${zufahrtLen > 0 ? `<span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300">${zufahrtLen} Pkt.</span>` : '<span class="text-slate-300 dark:text-zinc-600">—</span>'}</td>
             <td class="cell text-center text-xs">${typeof ovCount === 'number' && ovCount > 0 ? `<button onclick="openOverlayDetail('${esc(s.nummer)}')" class="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800/40 transition-colors font-medium">${ovCount}</button>` : `<button onclick="openOverlayDetail('${esc(s.nummer)}')" class="text-slate-300 dark:text-zinc-600 hover:text-blue-400 transition-colors px-1">+</button>`}</td>
             <td class="cell text-right">
-                <button onclick="openOverlayDetail('${esc(s.nummer)}')"
-                    class="text-xs px-2 py-1 rounded border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors mr-1">
-                    Overlays
-                </button>
-                <button onclick="editStandort('${esc(s.nummer)}')"
-                    class="text-xs px-2 py-1 rounded border border-slate-300 dark:border-zinc-600 hover:bg-slate-100 dark:hover:bg-zinc-700 transition-colors mr-1">
-                    Bearbeiten
-                </button>
-                <button onclick="deleteStandort('${esc(s.nummer)}')"
-                    class="text-xs px-2 py-1 rounded border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                    Löschen
-                </button>
+                <div class="inline-flex items-center gap-0.5">
+                    <button onclick="editStandort('${esc(s.nummer)}')" title="Bearbeiten"
+                        class="inline-flex items-center justify-center w-7 h-7 rounded text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-700 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                        <i class="mdi mdi-pencil-outline text-base leading-none"></i>
+                    </button>
+                    <button onclick="deleteStandort('${esc(s.nummer)}')" title="Löschen"
+                        class="inline-flex items-center justify-center w-7 h-7 rounded text-slate-400 dark:text-zinc-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors">
+                        <i class="mdi mdi-delete-outline text-base leading-none"></i>
+                    </button>
+                </div>
             </td>
         </tr>`;
     }).join('');
@@ -405,10 +403,12 @@ function renderOverlaysTable() {
             <td class="cell text-xs text-slate-500 dark:text-zinc-400">${updAt}</td>
             <td class="cell text-xs text-slate-500 dark:text-zinc-400">${esc(payload.updatedBy || '—')}</td>
             <td class="cell text-right">
-                <button onclick="deleteOverlay('${esc(nummer)}')"
-                    class="text-xs px-2 py-1 rounded border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                    Löschen
-                </button>
+                <div class="inline-flex items-center justify-end">
+                    <button onclick="deleteOverlay('${esc(nummer)}')" title="Overlay löschen"
+                        class="inline-flex items-center justify-center w-7 h-7 rounded text-slate-400 dark:text-zinc-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors">
+                        <i class="mdi mdi-delete-outline text-base leading-none"></i>
+                    </button>
+                </div>
             </td>
         </tr>`;
     }).join('');
