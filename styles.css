@@ -644,6 +644,44 @@ html.dark {
 .modal-enter { opacity: 0; transform: scale(0.99) translateY(5px); }
 .modal-enter-active { opacity: 1; transform: scale(1) translateY(0); transition: all 0.2s ease-out; }
 
+/* ===================================================================
+   UI PANEL ANIMATIONS
+   Standard for all themes. Individual themes may override the
+   animation-name or redefine @keyframes if needed.
+   =================================================================== */
+
+/* --- Shared keyframes --- */
+
+/* Sort / Filter panels: reveal downward from the button */
+@keyframes panel-reveal-down {
+    from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+/* Closing is handled via JS inline transition — no keyframe needed */
+
+/* Leaflet layer panel: expand from top-right downward+left */
+@keyframes layer-panel-reveal {
+    from { opacity: 0; transform: scale(0.88); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+/* --- Sort & Filter dropdown panels --- */
+/* transform-origin top right because panels are right-aligned to their trigger buttons */
+#sortMenuPanel,
+#filterMenuPanel {
+    transform-origin: top right;
+}
+#sortMenuPanel:not(.hidden),
+#filterMenuPanel:not(.hidden) {
+    animation: panel-reveal-down 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* --- Leaflet layer control panel --- */
+.leaflet-control-layers-expanded .leaflet-control-layers-list {
+    transform-origin: top right;
+    animation: layer-panel-reveal 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 /* Dark mode Leaflet filter */
 html.dark:not(.dracula):not(.dracula-laser) .leaflet-layer:not(.no-filter),
 html.dark:not(.dracula):not(.dracula-laser) .leaflet-control-zoom-in,

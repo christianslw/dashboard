@@ -146,32 +146,55 @@ function resetAllFilters() {
     filterStandorte();
 }
 
+function _positionPanel(panel, btn, panelWidth) {
+    const rect = btn.getBoundingClientRect();
+    panel.style.position = 'fixed';
+    panel.style.top = (rect.bottom + 4) + 'px';
+    const w = Math.min(panelWidth, window.innerWidth - 16);
+    let left = rect.right - w;
+    if (left < 8) left = 8;
+    panel.style.left = left + 'px';
+    panel.style.width = w + 'px';
+}
+
+function _animateClosePanel(panel, callback) {
+    if (!panel || panel.classList.contains('hidden')) { callback && callback(); return; }
+    // Cancel the open animation so the close transition isn't overridden
+    panel.style.animation = 'none';
+    // Force reflow to ensure the cancel takes effect before we transition
+    void panel.offsetHeight;
+    panel.style.transition = 'opacity 0.13s ease-in, transform 0.13s ease-in';
+    panel.style.opacity = '0';
+    panel.style.transform = 'translateY(-8px) scale(0.97)';
+    const done = () => {
+        panel.classList.add('hidden');
+        panel.style.animation = '';
+        panel.style.transition = '';
+        panel.style.opacity = '';
+        panel.style.transform = '';
+        callback && callback();
+    };
+    setTimeout(done, 140);
+}
+
 function toggleFilterMenu() {
     const panel = document.getElementById('filterMenuPanel');
     const btn = document.getElementById('filterMenuButton');
     if (!panel || !btn) return;
-    const isHidden = panel.classList.contains('hidden');
-    if (isHidden) {
-        // Position using fixed so overflow:hidden parents don't clip
-        const rect = btn.getBoundingClientRect();
-        panel.style.position = 'fixed';
-        panel.style.top = (rect.bottom + 4) + 'px';
-        // Align right edge of panel to right edge of button
-        const panelWidth = 480;
-        let left = rect.right - panelWidth;
-        if (left < 8) left = 8; // don't go off-screen left
-        panel.style.left = left + 'px';
-        panel.style.width = Math.min(panelWidth, window.innerWidth - 16) + 'px';
+    if (panel.classList.contains('hidden')) {
+        _positionPanel(panel, btn, 480);
         panel.classList.remove('hidden');
+        // Force animation restart in case it's been played before
+        panel.style.animation = 'none';
+        void panel.offsetHeight;
+        panel.style.animation = '';
     } else {
-        panel.classList.add('hidden');
+        _animateClosePanel(panel);
     }
 }
 
 function closeFilterMenu() {
-    const panel = document.getElementById('filterMenuPanel');
-    if (!panel) return;
-    panel.classList.add('hidden');
+    _animateClosePanel(document.getElementById('filterMenuPanel'));
 }
 
 function initFilterMenu() {
@@ -185,7 +208,7 @@ function initFilterMenu() {
         const wrapper = document.getElementById('filterMenuWrapper');
         if (!panel || !wrapper) return;
         if (!panel.classList.contains('hidden') && !wrapper.contains(event.target)) {
-            panel.classList.add('hidden');
+            _animateClosePanel(panel);
         }
     });
 
@@ -194,7 +217,7 @@ function initFilterMenu() {
         const wrapper = document.getElementById('sortMenuWrapper');
         if (!panel || !wrapper) return;
         if (!panel.classList.contains('hidden') && !wrapper.contains(event.target)) {
-            panel.classList.add('hidden');
+            _animateClosePanel(panel);
         }
     });
 }
@@ -231,14 +254,11 @@ function getFilteredStandorte() {
 // Sort Menu
 // ==========================================
 
-const SORT_OPTIONS = [
-    { field: 'default',  dir: 'asc',  label: 'Standard' },
-    { field: 'distance', dir: 'asc',  label: '↑ Distanz (nah → fern)' },
-    { field: 'distance', dir: 'desc', label: '↓ Distanz (fern → nah)' },
-    { field: 'numeric',  dir: 'asc',  label: '↑ Numerisch (0 → 9)' },
-    { field: 'numeric',  dir: 'desc', label: '↓ Numerisch (9 → 0)' },
-    { field: 'alpha',    dir: 'asc',  label: '↑ Alphabetisch (A → Z)' },
-    { field: 'alpha',    dir: 'desc', label: '↓ Alphabetisch (Z → A)' },
+const SORT_FIELDS = [
+    { field: 'default',  label: 'Standard' },
+    { field: 'distance', label: 'Distanz' },
+    { field: 'numeric',  label: 'Numerisch' },
+    { field: 'alpha',    label: 'Alphabetisch' },
 ];
 
 function applySorting(liste) {
@@ -264,51 +284,92 @@ function toggleSortMenu() {
     if (!panel || !btn) return;
     if (panel.classList.contains('hidden')) {
         renderSortOptions();
-        const rect = btn.getBoundingClientRect();
-        panel.style.position = 'fixed';
-        panel.style.top  = (rect.bottom + 4) + 'px';
-        const panelWidth = 230;
-        let left = rect.right - panelWidth;
-        if (left < 8) left = 8;
-        panel.style.left  = left + 'px';
-        panel.style.width = panelWidth + 'px';
+        _positionPanel(panel, btn, 240);
         panel.classList.remove('hidden');
+        // Force animation restart in case it's been played before
+        panel.style.animation = 'none';
+        void panel.offsetHeight;
+        panel.style.animation = '';
     } else {
-        panel.classList.add('hidden');
+        _animateClosePanel(panel);
     }
 }
 
 function closeSortMenu() {
-    const panel = document.getElementById('sortMenuPanel');
-    if (panel) panel.classList.add('hidden');
+    _animateClosePanel(document.getElementById('sortMenuPanel'));
 }
 
 function renderSortOptions() {
     const container = document.getElementById('sortOptionsContainer');
     if (!container) return;
     container.innerHTML = '';
-    SORT_OPTIONS.forEach(opt => {
+
+    // --- Field selection ---
+    const fieldLabel = document.createElement('p');
+    fieldLabel.className = 'text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-zinc-400 mb-1.5';
+    fieldLabel.textContent = 'Sortieren nach';
+    container.appendChild(fieldLabel);
+
+    const fieldCol = document.createElement('div');
+    fieldCol.className = 'flex flex-col gap-0.5';
+    SORT_FIELDS.forEach(opt => {
         const btn = document.createElement('button');
         btn.type = 'button';
-        const isActive = sortField === opt.field && sortDir === opt.dir;
+        const isActive = sortField === opt.field;
         btn.className = 'w-full text-left px-3 py-1.5 text-sm rounded transition-colors ' +
             (isActive
                 ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-semibold'
                 : 'text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800');
         btn.textContent = opt.label;
-        btn.onclick = () => setSortOption(opt.field, opt.dir);
-        container.appendChild(btn);
+        btn.onclick = () => {
+            sortField = opt.field;
+            localStorage.setItem('sortField', opt.field);
+            updateSortButtonLabel();
+            filterStandorte();
+            // Close immediately for 'default'; re-render direction row for others
+            if (opt.field === 'default') {
+                closeSortMenu();
+            } else {
+                renderSortOptions();
+            }
+        };
+        fieldCol.appendChild(btn);
     });
-}
+    container.appendChild(fieldCol);
 
-function setSortOption(field, dir) {
-    sortField = field;
-    sortDir   = dir;
-    localStorage.setItem('sortField', field);
-    localStorage.setItem('sortDir',   dir);
-    updateSortButtonLabel();
-    closeSortMenu();
-    filterStandorte();
+    // --- Direction selection (only when a non-default field is active) ---
+    if (sortField && sortField !== 'default') {
+        const sep = document.createElement('div');
+        sep.className = 'border-t border-slate-200 dark:border-zinc-700 mt-2 pt-2';
+
+        const dirLabel = document.createElement('p');
+        dirLabel.className = 'text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-zinc-400 mb-1.5';
+        dirLabel.textContent = 'Reihenfolge';
+        sep.appendChild(dirLabel);
+
+        const dirRow = document.createElement('div');
+        dirRow.className = 'grid grid-cols-2 gap-1';
+        [{ dir: 'asc', label: '↑ Aufsteigend' }, { dir: 'desc', label: '↓ Absteigend' }].forEach(d => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            const isActive = sortDir === d.dir;
+            btn.className = 'px-2.5 py-1.5 text-xs rounded border transition-colors ' +
+                (isActive
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-semibold'
+                    : 'border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800');
+            btn.textContent = d.label;
+            btn.onclick = () => {
+                sortDir = d.dir;
+                localStorage.setItem('sortDir', d.dir);
+                updateSortButtonLabel();
+                filterStandorte();
+                closeSortMenu();
+            };
+            dirRow.appendChild(btn);
+        });
+        sep.appendChild(dirRow);
+        container.appendChild(sep);
+    }
 }
 
 function updateSortButtonLabel() {
@@ -318,6 +379,8 @@ function updateSortButtonLabel() {
         label.textContent = 'Sortieren';
         return;
     }
-    const opt = SORT_OPTIONS.find(o => o.field === sortField && o.dir === sortDir);
-    if (opt) label.textContent = opt.label;
+    const field = SORT_FIELDS.find(f => f.field === sortField);
+    const fieldLabel = field ? field.label : sortField;
+    const dirArrow = sortDir === 'asc' ? '↑' : '↓';
+    label.textContent = `${dirArrow} ${fieldLabel}`;
 }

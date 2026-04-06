@@ -1,58 +1,90 @@
 /* ===================================================================
    SWR Standort Dashboard — Carbon Design System Theme
    CSS class: "carbon" on <html>
-   Dark mode: TRUE BLACK (#000000 base, #161616 layers)
-   Light mode: Standard Carbon White/Gray palette
-   Based on: https://carbondesignsystem.com/elements/
+
+   Dark mode:  OLED-black base (#000000) with near-black layers
+   Light mode: Carbon G10 palette (#f4f4f4 base, #ffffff panels)
+
+   Typeface:   IBM Plex Sans (300 / 400 / 500 / 600)
+   Shape:      0 px border-radius everywhere (Carbon productive spec)
+   Sizing:     Carbon 8pt grid — sm buttons 32px, md inputs 40px
+   Motion:     Carbon productive easing + duration tokens
+   Based on:   https://carbondesignsystem.com/elements/
    =================================================================== */
 
-/* ──────────────────────────────────────────────────────────────────
-   CARBON DESIGN TOKENS
-   ────────────────────────────────────────────────────────────────── */
+/* ── IBM Plex Sans — Google Fonts ──────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap');
+
+/* ══════════════════════════════════════════════════════════════════
+   CARBON GLOBAL TOKENS  (available on both light and dark)
+   ══════════════════════════════════════════════════════════════════ */
+html.carbon {
+    /* ── Motion ── */
+    --motion-fast-01:         70ms;
+    --motion-fast-02:         110ms;
+    --motion-moderate-01:     150ms;
+    --motion-moderate-02:     240ms;
+    --motion-standard:        cubic-bezier(0.2, 0, 0.38, 0.9);
+    --motion-entrance:        cubic-bezier(0, 0, 0.38, 0.9);
+    --motion-exit:            cubic-bezier(0.2, 0, 1, 0.9);
+    /* ── Shape ── */
+    --c-radius:               0px;
+    /* ── Sizing (Carbon 8pt grid) ── */
+    --c-height-sm:            32px;
+    --c-height-md:            40px;
+    --c-height-lg:            48px;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   DARK MODE — OLED BLACK
+   ══════════════════════════════════════════════════════════════════ */
 html.carbon.dark {
     /* Backgrounds */
-    --c-bg:           #000000;
-    --c-bg-hover:     #161616;
-    --c-layer-01:     #161616;
-    --c-layer-01h:    #202020;
-    --c-layer-02:     #262626;
-    --c-layer-02h:    #2e2e2e;
-    --c-layer-03:     #393939;
-    --c-layer-03h:    #414141;
+    --c-bg:           #000000;   /* pure OLED black */
+    --c-bg-hover:     #0a0a0a;
+    --c-layer-01:     #0d0d0d;   /* main card / panel */
+    --c-layer-01h:    #141414;
+    --c-layer-02:     #161616;   /* nested inputs / sub-panels */
+    --c-layer-02h:    #1c1c1c;
+    --c-layer-03:     #222222;   /* deepest nesting */
+    --c-layer-03h:    #282828;
 
     /* Borders */
-    --c-border-00:    #161616;
-    --c-border-01:    #393939;
-    --c-border-02:    #525252;
-    --c-border-03:    #6f6f6f;
-    --c-border-int:   #4589ff;
+    --c-border-00:    #080808;
+    --c-border-01:    #1a1a1a;   /* default border */
+    --c-border-02:    #2c2c2c;   /* medium contrast */
+    --c-border-03:    #3d3d3d;   /* strong contrast */
+    --c-border-int:   #4589ff;   /* Blue 50 */
 
     /* Text */
-    --c-text-pri:     #f4f4f4;
-    --c-text-sec:     #c6c6c6;
-    --c-text-muted:   #8d8d8d;
-    --c-text-ph:      #6f6f6f;
-    --c-text-dis:     #525252;
+    --c-text-pri:     #f4f4f4;   /* Gray 10 */
+    --c-text-sec:     #c6c6c6;   /* Gray 30 */
+    --c-text-muted:   #8d8d8d;   /* Gray 50 */
+    --c-text-ph:      #6f6f6f;   /* Gray 60 — placeholders */
+    --c-text-dis:     #3d3d3d;
     --c-text-on:      #ffffff;
 
     /* Interactive */
-    --c-interactive:  #4589ff;
+    --c-interactive:  #4589ff;   /* Blue 50 — 3:1 AA */
     --c-hover:        rgba(69, 137, 255, 0.10);
     --c-active:       rgba(69, 137, 255, 0.20);
-    --c-focus:        #ffffff;
-    --c-link:         #78a9ff;
-    --c-link-h:       #a6c8ff;
+    --c-focus:        #ffffff;   /* white focus ring on dark */
+    --c-link:         #78a9ff;   /* Blue 40 */
+    --c-link-h:       #a6c8ff;   /* Blue 30 */
 
-    /* Support */
-    --c-warn:         #f1c21b;
-    --c-error:        #fa4d56;
-    --c-success:      #42be65;
+    /* Status / Support */
+    --c-warn:         #f1c21b;   /* Yellow 30 */
+    --c-error:        #ff8389;   /* Red 40 — AA on dark */
+    --c-error-bold:   #fa4d56;
+    --c-success:      #42be65;   /* Green 40 */
+    --c-success-bold: #6fdc8c;
     --c-info:         #4589ff;
+    --c-caution:      #ff832b;   /* Orange 40 */
 
     /* Overlays */
-    --c-overlay:      rgba(0, 0, 0, 0.65);
+    --c-overlay:      rgba(0, 0, 0, 0.72);
 
-    /* ── theme bridge tokens (map --c-* to shared contract) ── */
+    /* ── theme bridge tokens ── */
     --theme-bg:               var(--c-bg);
     --theme-surface:          var(--c-layer-01);
     --theme-surface-alt:      var(--c-layer-02);
@@ -71,50 +103,56 @@ html.carbon.dark {
     --theme-focus-glow:       rgba(69, 137, 255, 0.40);
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   LIGHT MODE — CARBON G10
+   ══════════════════════════════════════════════════════════════════ */
 html.carbon:not(.dark) {
     /* Backgrounds */
-    --c-bg:           #f4f4f4;
+    --c-bg:           #f4f4f4;   /* G10 background */
     --c-bg-hover:     #e8e8e8;
-    --c-layer-01:     #ffffff;
+    --c-layer-01:     #ffffff;   /* White layer */
     --c-layer-01h:    #e8e8e8;
-    --c-layer-02:     #f4f4f4;
+    --c-layer-02:     #f4f4f4;   /* G10 on White */
     --c-layer-02h:    #e8e8e8;
-    --c-layer-03:     #e0e0e0;
+    --c-layer-03:     #e0e0e0;   /* Gray 20 */
     --c-layer-03h:    #d1d1d1;
 
     /* Borders */
     --c-border-00:    #e0e0e0;
-    --c-border-01:    #c6c6c6;
-    --c-border-02:    #8d8d8d;
-    --c-border-03:    #525252;
-    --c-border-int:   #0f62fe;
+    --c-border-01:    #c6c6c6;   /* Gray 30 */
+    --c-border-02:    #8d8d8d;   /* Gray 50 */
+    --c-border-03:    #525252;   /* Gray 60 */
+    --c-border-int:   #0f62fe;   /* Blue 60 */
 
     /* Text */
-    --c-text-pri:     #161616;
-    --c-text-sec:     #525252;
-    --c-text-muted:   #8d8d8d;
-    --c-text-ph:      #a8a8a8;
+    --c-text-pri:     #161616;   /* Gray 100 */
+    --c-text-sec:     #525252;   /* Gray 60 */
+    --c-text-muted:   #8d8d8d;   /* Gray 50 */
+    --c-text-ph:      #a8a8a8;   /* Gray 40 */
     --c-text-dis:     #c6c6c6;
     --c-text-on:      #ffffff;
 
     /* Interactive */
-    --c-interactive:  #0f62fe;
+    --c-interactive:  #0f62fe;   /* Blue 60 */
     --c-hover:        rgba(15, 98, 254, 0.08);
     --c-active:       rgba(15, 98, 254, 0.16);
     --c-focus:        #0f62fe;
     --c-link:         #0f62fe;
-    --c-link-h:       #0043ce;
+    --c-link-h:       #0043ce;   /* Blue 70 */
 
-    /* Support */
+    /* Status / Support */
     --c-warn:         #f1c21b;
-    --c-error:        #da1e28;
-    --c-success:      #198038;
+    --c-error:        #da1e28;   /* Red 60 */
+    --c-error-bold:   #da1e28;
+    --c-success:      #198038;   /* Green 60 */
+    --c-success-bold: #24a148;
     --c-info:         #0f62fe;
+    --c-caution:      #a56eff;
 
     /* Overlays */
-    --c-overlay:      rgba(22, 22, 22, 0.5);
+    --c-overlay:      rgba(22, 22, 22, 0.50);
 
-    /* ── theme bridge tokens (map --c-* to shared contract) ── */
+    /* ── theme bridge tokens ── */
     --theme-bg:               var(--c-bg);
     --theme-surface:          var(--c-layer-01);
     --theme-surface-alt:      var(--c-layer-02);
@@ -133,44 +171,177 @@ html.carbon:not(.dark) {
     --theme-focus-glow:       rgba(15, 98, 254, 0.40);
 }
 
-/* ──────────────────────────────────────────────────────────────────
-   BODY & PAGE BACKGROUND
-   ────────────────────────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════════
+   TYPEFACE & TYPOGRAPHY
+   Carbon: IBM Plex Sans, productive weights 300 / 400 / 500 / 600
+   ══════════════════════════════════════════════════════════════════ */
+html.carbon,
 html.carbon body {
-    background-color: var(--c-bg) !important;
-    color: var(--c-text-pri) !important;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    font-family: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+    letter-spacing: 0.16px;
 }
 
-/* ──────────────────────────────────────────────────────────────────
-   DARK MODE: OVERRIDE ZINC-TINTED BACKGROUNDS → TRUE CARBON GRAYS
-   ────────────────────────────────────────────────────────────────── */
+html.carbon body {
+    font-weight: 400;
+    background-color: var(--c-bg) !important;
+    color: var(--c-text-pri) !important;
+}
 
-/* Page / OLED base - already black, keep it */
-html.carbon.dark .dark\:bg-oled { background-color: #000000 !important; }
+html.carbon label,
+html.carbon .text-xs,
+html.carbon .text-sm {
+    font-weight: 400;
+    letter-spacing: 0.32px;
+}
 
-/* Main content card */
-html.carbon.dark .dark\:bg-zinc-950 { background-color: #161616 !important; }
+html.carbon h1, html.carbon h2, html.carbon h3,
+html.carbon h4, html.carbon h5, html.carbon h6 {
+    font-family: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif !important;
+    font-weight: 600;
+    letter-spacing: 0px;
+}
 
-/* Headers, sidebar panels */
-html.carbon.dark .dark\:bg-zinc-900    { background-color: #161616 !important; }
-html.carbon.dark .dark\:bg-zinc-900\/50 { background-color: rgba(22,22,22,0.5) !important; }
+html.carbon .text-muted,
+html.carbon .font-light { font-weight: 300; }
 
-/* Nested surfaces, inputs */
-html.carbon.dark .dark\:bg-zinc-800    { background-color: #262626 !important; }
+html.carbon code,
+html.carbon pre,
+html.carbon .font-mono {
+    font-family: 'IBM Plex Mono', 'Menlo', 'DejaVu Sans Mono', Courier, monospace !important;
+}
 
-/* Hover backgrounds */
-html.carbon.dark .dark\:hover\:bg-zinc-900:hover   { background-color: #1c1c1c !important; }
-html.carbon.dark .dark\:hover\:bg-zinc-800:hover   { background-color: #262626 !important; }
-html.carbon.dark .dark\:hover\:bg-zinc-700:hover   { background-color: #353535 !important; }
+html.carbon button {
+    font-family: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.16px !important;
+}
 
-/* ── BORDERS ── */
-html.carbon.dark .dark\:border-zinc-800  { border-color: #393939 !important; }
-html.carbon.dark .dark\:border-zinc-700  { border-color: #525252 !important; }
+/* ══════════════════════════════════════════════════════════════════
+   SHAPE — 0 px BORDER RADIUS (Carbon productive spec)
+   ══════════════════════════════════════════════════════════════════ */
+html.carbon .rounded,
+html.carbon .rounded-sm,
+html.carbon .rounded-md,
+html.carbon .rounded-lg,
+html.carbon .rounded-xl,
+html.carbon .rounded-2xl,
+html.carbon .rounded-3xl,
+html.carbon .rounded-full,
+html.carbon .rounded-t,
+html.carbon .rounded-t-sm,
+html.carbon .rounded-t-md,
+html.carbon .rounded-t-lg,
+html.carbon .rounded-t-xl,
+html.carbon .rounded-b,
+html.carbon .rounded-b-sm,
+html.carbon .rounded-b-md,
+html.carbon .rounded-b-lg,
+html.carbon .rounded-b-xl,
+html.carbon .rounded-l,
+html.carbon .rounded-l-md,
+html.carbon .rounded-l-lg,
+html.carbon .rounded-r,
+html.carbon .rounded-r-md,
+html.carbon .rounded-r-lg,
+html.carbon .rounded-tl-lg,
+html.carbon .rounded-tr-lg,
+html.carbon .rounded-bl-lg,
+html.carbon .rounded-br-lg { border-radius: 0 !important; }
 
-/* Dividers */
-html.carbon.dark .dark\:divide-zinc-800 > * + * { border-color: #393939 !important; }
+html.carbon button,
+html.carbon input,
+html.carbon select,
+html.carbon textarea { border-radius: 0 !important; }
+
+html.carbon [class*="rounded"],
+html.carbon [id$="Modal"] > div,
+html.carbon [id$="Modal"] > div > div { border-radius: 0 !important; }
+
+html.carbon .leaflet-popup-content-wrapper,
+html.carbon .leaflet-popup-tip-container,
+html.carbon .leaflet-tooltip,
+html.carbon .leaflet-bar,
+html.carbon .leaflet-bar a,
+html.carbon .leaflet-bar a:first-child,
+html.carbon .leaflet-bar a:last-child,
+html.carbon .leaflet-control-layers,
+html.carbon .leaflet-control-layers-toggle { border-radius: 0 !important; }
+
+html.carbon .ov-panel,
+html.carbon .ov-badge,
+html.carbon .ov-trigger-btn,
+html.carbon .ov-sub-btn,
+html.carbon .ov-tb-cat { border-radius: 0 !important; }
+
+html.carbon ::-webkit-scrollbar-thumb { border-radius: 0 !important; }
+
+/* ══════════════════════════════════════════════════════════════════
+   SIZING — CARBON 8PT GRID
+   sm = 32px (header controls), md = 40px (form inputs)
+   ══════════════════════════════════════════════════════════════════ */
+html.carbon button {
+    min-height: var(--c-height-sm);
+    padding-inline: 15px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+html.carbon input[type="text"],
+html.carbon input[type="search"],
+html.carbon input[type="password"],
+html.carbon input[type="email"],
+html.carbon input[type="number"],
+html.carbon select {
+    height: var(--c-height-md);
+    min-height: var(--c-height-md);
+    padding-block: 0;
+    padding-inline: 16px;
+    background: var(--c-layer-02) !important;
+    border: 1px solid var(--c-border-01) !important;
+    color: var(--c-text-pri) !important;
+}
+
+/* Search input has an absolute-positioned SVG icon at left:12px — preserve Tailwind pl-10 (2.5rem) */
+html.carbon #searchInput {
+    padding-left: 2.5rem !important;
+    padding-right: 2.5rem !important;
+}
+
+/* Suppress browser's native search cancel/decoration chrome */
+html.carbon input[type="search"]::-webkit-search-cancel-button,
+html.carbon input[type="search"]::-webkit-search-decoration { display: none; }
+
+html.carbon textarea {
+    min-height: var(--c-height-md);
+    padding: 11px 16px;
+    background: var(--c-layer-02) !important;
+    border: 1px solid var(--c-border-01) !important;
+    color: var(--c-text-pri) !important;
+}
+
+html.carbon input::placeholder,
+html.carbon textarea::placeholder {
+    color: var(--c-text-ph) !important;
+    font-weight: 400;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   DARK MODE — TAILWIND CLASS REMAPS → CARBON OLED TOKENS
+   ══════════════════════════════════════════════════════════════════ */
+html.carbon.dark .dark\:bg-oled       { background-color: #000000 !important; }
+html.carbon.dark .dark\:bg-zinc-950   { background-color: #0d0d0d !important; }
+html.carbon.dark .dark\:bg-zinc-900      { background-color: #0d0d0d !important; }
+html.carbon.dark .dark\:bg-zinc-900\/50  { background-color: rgba(13,13,13,0.5) !important; }
+html.carbon.dark .dark\:bg-zinc-800      { background-color: #161616 !important; }
+html.carbon.dark .dark\:hover\:bg-zinc-900:hover    { background-color: #141414 !important; }
+html.carbon.dark .dark\:hover\:bg-zinc-800:hover    { background-color: #161616 !important; }
+html.carbon.dark .dark\:hover\:bg-zinc-700:hover    { background-color: #1e1e1e !important; }
+html.carbon.dark .dark\:border-zinc-800  { border-color: #1a1a1a !important; }
+html.carbon.dark .dark\:border-zinc-700  { border-color: #2c2c2c !important; }
+html.carbon.dark .dark\:divide-zinc-800 > * + * { border-color: #1a1a1a !important; }
 
 /* ── TEXT ── */
 html.carbon.dark .dark\:text-zinc-100 { color: #f4f4f4 !important; }
@@ -204,14 +375,15 @@ html.carbon.dark .dark\:text-orange-400 { color: #ff832b !important; }
 
 html.carbon.dark .dark\:text-red-400   { color: #ff8389 !important; }
 
-html.carbon.dark .dark\:bg-yellow-900\/20 { background-color: rgba(241,194,27,0.08) !important; }
+html.carbon.dark .dark\:bg-yellow-900\/20     { background-color: rgba(241,194,27,0.08) !important; }
 html.carbon.dark .dark\:border-yellow-700\/50 { border-color: rgba(241,194,27,0.3) !important; }
-html.carbon.dark .dark\:text-yellow-300  { color: #f6d860 !important; }
-html.carbon.dark .dark\:text-yellow-400\/80 { color: rgba(241,194,27,0.8) !important; }
+html.carbon.dark .dark\:text-yellow-400\/80   { color: rgba(241,194,27,0.8) !important; }
 
-/* ──────────────────────────────────────────────────────────────────
-   LIGHT MODE OVERRIDES (CARBON WHITE / GRAY NEUTRAL PALETTE)
-   ────────────────────────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════════
+   LIGHT MODE — TAILWIND CLASS REMAPS → CARBON G10 TOKENS
+   ══════════════════════════════════════════════════════════════════ */
+
+
 html.carbon:not(.dark) body { background: var(--c-bg) !important; }
 html.carbon:not(.dark) .bg-white      { background-color: #ffffff !important; }
 html.carbon:not(.dark) .bg-slate-50   { background-color: #f4f4f4 !important; }
@@ -238,22 +410,20 @@ html.carbon:not(.dark) .bg-blue-100       { background-color: rgba(15,98,254,0.1
 html.carbon:not(.dark) .text-blue-700     { color: #0043ce !important; }
 html.carbon:not(.dark) .hover\:bg-blue-100:hover { background-color: rgba(15,98,254,0.10) !important; }
 
-/* ──────────────────────────────────────────────────────────────────
-   INTERACTIVE ELEMENTS — SMOOTH POLISH
-   ────────────────────────────────────────────────────────────────── */
-
-/* Universal transition on all interactive elements */
+/* ══════════════════════════════════════════════════════════════════
+   MOTION — CARBON PRODUCTIVE EASING
+   ══════════════════════════════════════════════════════════════════ */
 html.carbon button,
 html.carbon a,
 html.carbon input,
 html.carbon select,
 html.carbon textarea {
     transition:
-        background-color 100ms cubic-bezier(0.2, 0, 0.38, 0.9),
-        border-color 100ms cubic-bezier(0.2, 0, 0.38, 0.9),
-        color 100ms cubic-bezier(0.2, 0, 0.38, 0.9),
-        box-shadow 150ms cubic-bezier(0.2, 0, 0.38, 0.9),
-        opacity 100ms ease !important;
+        background-color var(--motion-fast-01) var(--motion-standard),
+        border-color     var(--motion-fast-01) var(--motion-standard),
+        color            var(--motion-fast-01) var(--motion-standard),
+        box-shadow       var(--motion-fast-02) var(--motion-standard),
+        opacity          var(--motion-fast-01) var(--motion-standard) !important;
 }
 
 /* Focus ring — Carbon 2px solid white (dark) / blue (light) */
@@ -277,29 +447,17 @@ html.carbon select:focus {
     border-color: var(--c-interactive) !important;
 }
 
-/* ── INPUT STYLING ── */
-html.carbon input[type="text"],
-html.carbon input[type="password"],
-html.carbon input[type="number"],
-html.carbon textarea,
-html.carbon select {
-    background: var(--c-layer-01) !important;
-    border-color: var(--c-border-01) !important;
-    color: var(--c-text-pri) !important;
-}
-
-html.carbon input::placeholder,
-html.carbon textarea::placeholder {
-    color: var(--c-text-ph) !important;
-}
-
-/* ── PRIMARY BUTTONS (bg-blue-600) ── */
+/* ══════════════════════════════════════════════════════════════════
+   PRIMARY BUTTONS (bg-blue-600)
+   ══════════════════════════════════════════════════════════════════ */
 html.carbon button.bg-blue-600,
 html.carbon .bg-blue-600 {
-    background-color: var(--c-interactive) !important;
-    border-color: var(--c-interactive) !important;
-    color: var(--c-text-on) !important;
+    background-color: #0f62fe !important;
+    border-color:     #0f62fe !important;
+    color:            #ffffff !important;
     font-weight: 500 !important;
+    min-height: var(--c-height-md) !important;
+    padding-inline: 15px !important;
 }
 html.carbon button.bg-blue-600:hover,
 html.carbon .bg-blue-600:hover,
@@ -318,9 +476,9 @@ html.carbon .dark\:border-zinc-700 {
     border-color: var(--c-border-01) !important;
 }
 
-/* ── LIST ITEMS — SMOOTH HOVER ── */
+/* ── List item hover ── */
 html.carbon .group.p-3 {
-    transition: background-color 80ms ease !important;
+    transition: background-color var(--motion-fast-01) var(--motion-standard) !important;
 }
 
 /* ──────────────────────────────────────────────────────────────────
@@ -329,10 +487,10 @@ html.carbon .group.p-3 {
 html.carbon ::-webkit-scrollbar { width: 6px; height: 6px; }
 html.carbon ::-webkit-scrollbar-track { background: transparent; }
 html.carbon.dark ::-webkit-scrollbar-thumb {
-    background: #525252;
+    background: #3a3a3a;
     border-radius: 0;
 }
-html.carbon.dark ::-webkit-scrollbar-thumb:hover { background: #6f6f6f; }
+html.carbon.dark ::-webkit-scrollbar-thumb:hover { background: #4c4c4c; }
 html.carbon:not(.dark) ::-webkit-scrollbar-thumb {
     background: #8d8d8d;
     border-radius: 0;
@@ -354,17 +512,28 @@ html.carbon .fixed.inset-0:not(#mainMap):not(#resultList) {
 }
 
 /* Modal panels */
-html.carbon.dark .bg-white { background-color: var(--c-layer-01) !important; }
-html.carbon.dark .dark\:bg-zinc-900 { background-color: var(--c-layer-01) !important; }
-
-/* Modal headers */
+html.carbon.dark .bg-white             { background-color: var(--c-layer-01) !important; }
+html.carbon.dark .dark\:bg-zinc-900    { background-color: var(--c-layer-01) !important; }
 html.carbon.dark .bg-slate-50.dark\:bg-zinc-900\/50 {
     background-color: var(--c-layer-02) !important;
 }
 
-/* ──────────────────────────────────────────────────────────────────
+/* Modal entrance — Carbon moderate-02 (240ms) with entrance easing */
+html.carbon .modal-enter {
+    opacity: 0;
+    transform: scale(0.98) translateY(4px) !important;
+}
+html.carbon .modal-enter-active {
+    opacity: 1;
+    transform: scale(1) translateY(0) !important;
+    transition:
+        opacity   var(--motion-moderate-02) var(--motion-entrance),
+        transform var(--motion-moderate-02) var(--motion-entrance) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
    SETTINGS MODAL — ACTIVE STATES
-   ────────────────────────────────────────────────────────────────── */
+   ══════════════════════════════════════════════════════════════════ */
 html.carbon.dark #settingsModal .bg-blue-100,
 html.carbon.dark #settingsModal .dark\:bg-blue-900\/50 {
     background-color: rgba(69,137,255,0.12) !important;
@@ -400,9 +569,9 @@ html.carbon.dark #appSettingsModal .dark\:text-blue-300 {
     color: #78a9ff !important;
 }
 
-/* ──────────────────────────────────────────────────────────────────
+/* ══════════════════════════════════════════════════════════════════
    LIST ITEM SELECTION — CARBON BLUE LEFT BORDER
-   ────────────────────────────────────────────────────────────────── */
+   ══════════════════════════════════════════════════════════════════ */
 html.carbon .list-item-selected {
     background-color: var(--c-hover) !important;
     border-left: 3px solid var(--c-interactive) !important;
@@ -413,117 +582,126 @@ html.carbon.dark .list-item-selected {
     border-left-color: #4589ff !important;
 }
 
-/* ──────────────────────────────────────────────────────────────────
+/* ══════════════════════════════════════════════════════════════════
    FILTER CHIPS — ACTIVE AREA CHIPS
-   ────────────────────────────────────────────────────────────────── */
+   ══════════════════════════════════════════════════════════════════ */
 html.carbon.dark #filterMenuPanel .border-green-500 { border-color: #42be65 !important; }
 html.carbon.dark #filterMenuPanel .bg-green-900\/30 { background-color: rgba(66,190,101,0.12) !important; }
 html.carbon.dark #filterMenuPanel .dark\:text-green-300 { color: #6fdc8c !important; }
 
-html.carbon.dark #filterMenuPanel .border-red-500   { border-color: #fa4d56 !important; }
-html.carbon.dark #filterMenuPanel .bg-red-900\/30   { background-color: rgba(250,77,86,0.12) !important; }
+html.carbon.dark #filterMenuPanel .border-red-500     { border-color: #ff8389 !important; }
+html.carbon.dark #filterMenuPanel .bg-red-900\/30     { background-color: rgba(255,131,137,0.12) !important; }
 html.carbon.dark #filterMenuPanel .dark\:text-red-300 { color: #ff8389 !important; }
 
-/* ──────────────────────────────────────────────────────────────────
-   OVERLAY PANEL — CARBON DARK OVERRIDE
-   ────────────────────────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════════
+   OVERLAY PANEL — CARBON DARK
+   ══════════════════════════════════════════════════════════════════ */
 html.carbon.dark .ov-panel {
-    background: #161616 !important;
-    border-color: #393939 !important;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.8) !important;
+    background: #0d0d0d !important;
+    border-color: #1a1a1a !important;
+    border-radius: 0 !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.90) !important;
 }
-html.carbon.dark .ov-header        { background: #262626 !important; border-color: #393939 !important; }
-html.carbon.dark .ov-header-station { color: #f4f4f4 !important; }
-html.carbon.dark .ov-header-name   { color: #a8a8a8 !important; }
-html.carbon.dark .ov-toolbar       { background: #161616 !important; border-color: #393939 !important; }
-html.carbon.dark .ov-tb-cat        { color: #8d8d8d !important; }
-html.carbon.dark .ov-tb-cat:hover  { background: #262626 !important; color: #f4f4f4 !important; }
-html.carbon.dark .ov-tb-cat.active { background: rgba(69,137,255,0.15) !important; color: #78a9ff !important; }
-html.carbon.dark .ov-tb-sep        { background: #393939 !important; }
-html.carbon.dark .ov-tb-act        { color: #8d8d8d !important; border-color: #393939 !important; }
-html.carbon.dark .ov-tb-act:hover  { background: #262626 !important; }
-html.carbon.dark .ov-subtoolbar    { background: #1a1a1a !important; border-color: #393939 !important; }
-html.carbon.dark .ov-sub-btn       { color: #a8a8a8 !important; }
-html.carbon.dark .ov-sub-btn:hover { background: #262626 !important; color: #f4f4f4 !important; }
+html.carbon.dark .ov-header {
+    background: #141414 !important;
+    border-color: #1a1a1a !important;
+}
+html.carbon.dark .ov-header-station  { color: #f4f4f4 !important; }
+html.carbon.dark .ov-header-name     { color: #a8a8a8 !important; }
+html.carbon.dark .ov-toolbar {
+    background: #0d0d0d !important;
+    border-color: #1a1a1a !important;
+}
+html.carbon.dark .ov-tb-cat         { color: #8d8d8d !important; border-radius: 0 !important; }
+html.carbon.dark .ov-tb-cat:hover   { background: #161616 !important; color: #f4f4f4 !important; }
+html.carbon.dark .ov-tb-cat.active  { background: rgba(69,137,255,0.15) !important; color: #78a9ff !important; }
+html.carbon.dark .ov-tb-sep         { background: #1a1a1a !important; }
+html.carbon.dark .ov-tb-act         { color: #8d8d8d !important; border-color: #1a1a1a !important; }
+html.carbon.dark .ov-tb-act:hover   { background: #161616 !important; }
+html.carbon.dark .ov-subtoolbar {
+    background: #111111 !important;
+    border-color: #1a1a1a !important;
+}
+html.carbon.dark .ov-sub-btn        { color: #a8a8a8 !important; border-radius: 0 !important; }
+html.carbon.dark .ov-sub-btn:hover  { background: #161616 !important; color: #f4f4f4 !important; }
 html.carbon.dark .ov-sub-btn.active { background: rgba(69,137,255,0.15) !important; border-color: #4589ff !important; color: #78a9ff !important; }
-html.carbon.dark .ov-body          { background: #161616 !important; }
-html.carbon.dark .ov-element-row   { background: #1f1f1f !important; color: #c6c6c6 !important; }
-html.carbon.dark .ov-element-row:hover { background: #262626 !important; }
-html.carbon.dark .ov-footer        { background: #1a1a1a !important; border-color: #393939 !important; }
-html.carbon.dark .ov-badge         { background: #262626 !important; color: #a8a8a8 !important; }
-html.carbon.dark .ov-trigger-btn   { background: #262626 !important; color: #c6c6c6 !important; }
-html.carbon.dark .ov-trigger-btn:hover  { background: #393939 !important; color: #f4f4f4 !important; }
+html.carbon.dark .ov-body           { background: #0d0d0d !important; }
+html.carbon.dark .ov-element-row    { background: #0e0e0e !important; color: #c6c6c6 !important; }
+html.carbon.dark .ov-element-row:hover { background: #161616 !important; }
+html.carbon.dark .ov-footer {
+    background: #111111 !important;
+    border-color: #1a1a1a !important;
+}
+html.carbon.dark .ov-badge          { background: #141414 !important; color: #a8a8a8 !important; border-radius: 0 !important; }
+html.carbon.dark .ov-trigger-btn    { background: #141414 !important; color: #c6c6c6 !important; border-radius: 0 !important; }
+html.carbon.dark .ov-trigger-btn:hover  { background: #222222 !important; color: #f4f4f4 !important; }
 html.carbon.dark .ov-trigger-btn.active { background: rgba(69,137,255,0.15) !important; color: #78a9ff !important; }
 
-/* ──────────────────────────────────────────────────────────────────
-   LEAFLET CONTROLS — CARBON DARK
-   ────────────────────────────────────────────────────────────────── */
-
-/* Tile filter stays the same for dark mode */
+/* ══════════════════════════════════════════════════════════════════
+   LEAFLET CONTROLS — DARK
+   ══════════════════════════════════════════════════════════════════ */
 html.carbon.dark .leaflet-control-layers {
-    background: #161616 !important;
-    border: 1px solid #393939 !important;
+    background: #0d0d0d !important;
+    border: 1px solid #1a1a1a !important;
     border-radius: 0 !important;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.6) !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.80) !important;
 }
 html.carbon.dark .leaflet-control-layers-toggle {
-    background-color: #262626 !important;
+    background-color: #141414 !important;
     background-image: none !important;
-    border-color: #393939 !important;
+    border-color: #1a1a1a !important;
     border-radius: 0 !important;
     color: #c6c6c6 !important;
 }
 html.carbon.dark .leaflet-control-layers-toggle:hover {
-    background-color: #353535 !important;
-    border-color: #525252 !important;
+    background-color: #1e1e1e !important;
+    border-color: #2c2c2c !important;
     color: #f4f4f4 !important;
 }
-html.carbon.dark .leaflet-control-layers label { color: #c6c6c6 !important; }
-html.carbon.dark .leaflet-control-layers-separator { border-color: #393939 !important; }
-html.carbon.dark .leaflet-control-layers-group-name { color: #8d8d8d !important; }
+html.carbon.dark .leaflet-control-layers label       { color: #c6c6c6 !important; }
+html.carbon.dark .leaflet-control-layers-separator   { border-color: #1a1a1a !important; }
+html.carbon.dark .leaflet-control-layers-group-name  { color: #8d8d8d !important; }
 
-/* Zoom buttons */
 html.carbon.dark .leaflet-bar a,
 html.carbon.dark .leaflet-control-zoom-in,
 html.carbon.dark .leaflet-control-zoom-out {
-    background: #262626 !important;
-    background-color: #262626 !important;
-    border-color: #393939 !important;
+    background: #141414 !important;
+    background-color: #141414 !important;
+    border-color: #1a1a1a !important;
     color: #c6c6c6 !important;
     border-radius: 0 !important;
     width: 30px !important;
     height: 30px !important;
     line-height: 30px !important;
-    transition: background 100ms ease, color 100ms ease !important;
+    transition: background var(--motion-fast-01) var(--motion-standard), color var(--motion-fast-01) var(--motion-standard) !important;
 }
-html.carbon.dark .leaflet-bar a:first-child { border-radius: 0 !important; }
-html.carbon.dark .leaflet-bar a:last-child  { border-radius: 0 !important; }
+html.carbon.dark .leaflet-bar a:first-child,
+html.carbon.dark .leaflet-bar a:last-child { border-radius: 0 !important; }
 html.carbon.dark .leaflet-bar a:hover,
 html.carbon.dark .leaflet-control-zoom-in:hover,
 html.carbon.dark .leaflet-control-zoom-out:hover {
-    background: #353535 !important;
-    background-color: #353535 !important;
+    background: #1e1e1e !important;
+    background-color: #1e1e1e !important;
     color: #f4f4f4 !important;
-    border-color: #525252 !important;
+    border-color: #2c2c2c !important;
 }
 html.carbon.dark .leaflet-control-zoom-in:active,
 html.carbon.dark .leaflet-control-zoom-out:active {
-    background: var(--c-interactive, #4589ff) !important;
+    background: #4589ff !important;
     color: #ffffff !important;
 }
 
-/* Attribution */
 html.carbon.dark .leaflet-control-attribution {
-    background: rgba(22,22,22,0.92) !important;
-    border: 1px solid #393939 !important;
+    background: rgba(8,8,8,0.95) !important;
+    border: 1px solid #1a1a1a !important;
     color: #6f6f6f !important;
     font-size: 10px !important;
 }
 html.carbon.dark .leaflet-control-attribution a { color: #78a9ff !important; }
 
-/* ──────────────────────────────────────────────────────────────────
-   LEAFLET CONTROLS — CARBON LIGHT
-   ────────────────────────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════════
+   LEAFLET CONTROLS — LIGHT
+   ══════════════════════════════════════════════════════════════════ */
 html.carbon:not(.dark) .leaflet-control-layers {
     background: #ffffff !important;
     border: 1px solid #e0e0e0 !important;
@@ -538,53 +716,52 @@ html.carbon:not(.dark) .leaflet-control-layers-toggle:hover {
     background-color: #f4f4f4 !important;
     border-color: #c6c6c6 !important;
 }
+html.carbon:not(.dark) .leaflet-bar a,
+html.carbon:not(.dark) .leaflet-control-zoom-in,
+html.carbon:not(.dark) .leaflet-control-zoom-out { border-radius: 0 !important; }
 
-/* ──────────────────────────────────────────────────────────────────
+/* ══════════════════════════════════════════════════════════════════
    RADAR TIMELINE
-   ────────────────────────────────────────────────────────────────── */
-html.carbon.dark #radarSlider                { background: #393939 !important; }
-html.carbon.dark #radarSlider::-webkit-slider-thumb { background: #4589ff !important; border-color: #161616 !important; }
+   ══════════════════════════════════════════════════════════════════ */
+html.carbon.dark #radarSlider { background: #1a1a1a !important; }
+html.carbon.dark #radarSlider::-webkit-slider-thumb { background: #4589ff !important; border-color: #0d0d0d !important; }
 
-/* ──────────────────────────────────────────────────────────────────
-   ADMIN PAGE OVERRIDES
-   ────────────────────────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════════
+   ADMIN PAGE
+   ══════════════════════════════════════════════════════════════════ */
 html.carbon.dark .bg-slate-100 { background-color: #000000 !important; }
 
+/* ══════════════════════════════════════════════════════════════════
+   DRAW TOOLBAR
+   ══════════════════════════════════════════════════════════════════ */
+/*
+   Leaflet Draw sprite icons are black-on-transparent.
+   filter:invert(1) makes them white; pre-invert the background
+   so it cancels back to the intended dark value after filtering:
+     pre-bg  #ebebeb → invert(1) → #141414  (target bg)
+     pre-bg  #e1e1e1 → invert(1) → #1e1e1e  (target hover)
+     icon px #000000 → invert(1) → #ffffff  (visible on dark)
+*/
+html.carbon.dark .leaflet-draw-toolbar a {
+    background-color: #ebebeb !important;
+    border-color: #e5e5e5 !important;
+    border-radius: 0 !important;
+    filter: invert(1) !important;
+}
+html.carbon.dark .leaflet-draw-toolbar a:hover {
+    background-color: #e1e1e1 !important;
+}
+html.carbon.dark .leaflet-draw-actions a {
+    filter: invert(1) !important;
+    background-color: #ebebeb !important;
+}
 
-
-/* ──────────────────────────────────────────────────────────────────
-   ICON SIZE HELPERS (for MDI icons used as button icons)
-   Use alongside Tailwind sizing classes
-   ────────────────────────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════════
+   MDI ICON BUTTON HELPER
+   ══════════════════════════════════════════════════════════════════ */
 html.carbon .mdi-btn-icon {
     font-size: 1.125rem;
     line-height: 1;
     display: inline-flex;
     align-items: center;
-}
-
-/* ──────────────────────────────────────────────────────────────────
-   SMOOTH PAGE TRANSITIONS
-   ────────────────────────────────────────────────────────────────── */
-html.carbon .modal-enter {
-    opacity: 0;
-    transform: scale(0.98) translateY(4px) !important;
-}
-html.carbon .modal-enter-active {
-    opacity: 1;
-    transform: scale(1) translateY(0) !important;
-    transition: opacity 180ms cubic-bezier(0.2,0,0.38,0.9), transform 180ms cubic-bezier(0.2,0,0.38,0.9) !important;
-}
-
-/* ──────────────────────────────────────────────────────────────────
-   DRAW TOOLBAR
-   ────────────────────────────────────────────────────────────────── */
-html.carbon.dark .leaflet-draw-toolbar a {
-    background-color: #262626 !important;
-    border-color: #393939 !important;
-    color: #c6c6c6 !important;
-    border-radius: 0 !important;
-}
-html.carbon.dark .leaflet-draw-toolbar a:hover {
-    background-color: #353535 !important;
 }
