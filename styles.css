@@ -683,6 +683,11 @@ html.dark {
 }
 
 /* Dark mode Leaflet filter */
+/* OSM tiles: always invert to dark in dark mode (all themes) */
+html.dark .osm-tiles {
+	filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+
 html.dark:not(.dracula):not(.dracula-laser) .leaflet-layer:not(.no-filter),
 html.dark:not(.dracula):not(.dracula-laser) .leaflet-control-zoom-in,
 html.dark:not(.dracula):not(.dracula-laser) .leaflet-control-zoom-out,

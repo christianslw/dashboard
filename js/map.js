@@ -39,10 +39,8 @@ function restoreActiveOverlayLayers(overlayLayers) {
     saveActiveOverlayLayerNames(overlayLayers);
 }
 
-function getThemeAwareOsmUrl(isDarkMode) {
-    return isDarkMode
-        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-        : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+function getThemeAwareOsmUrl() {
+    return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 }
 
 function getThemeAwareCartoUrl(isDarkMode) {
@@ -55,10 +53,10 @@ function initLeafletMap() {
     const isDarkMode = document.documentElement.classList.contains('dark');
     const useDarkMap = isDarkMode; // Respect appearance mode regardless of theme
 
-    osmLayer = L.tileLayer(getThemeAwareOsmUrl(useDarkMap), {
-        attribution: '© OpenStreetMap contributors, © CARTO',
+    osmLayer = L.tileLayer(getThemeAwareOsmUrl(), {
+        attribution: '© OpenStreetMap contributors',
         maxZoom: 19,
-        className: 'no-filter'
+        className: 'osm-tiles'
     });
 
     cartoDBPositronLayer = L.tileLayer(getThemeAwareCartoUrl(useDarkMap), {
@@ -179,18 +177,12 @@ function initLeafletMap() {
 
 function updateLeafletMapTheme() {
     const isDarkMode = document.documentElement.classList.contains('dark');
-    const newOsmUrl = getThemeAwareOsmUrl(isDarkMode);
     const newCartoUrl = getThemeAwareCartoUrl(isDarkMode);
 
-    if (leafletMap && cartoDBPositronLayer && osmLayer) {
+    if (leafletMap && cartoDBPositronLayer) {
         cartoDBPositronLayer.setUrl(newCartoUrl);
-        osmLayer.setUrl(newOsmUrl);
     }
-
-    // Update Mobile Dashboard Map if it is currently initialized
-    if (typeof dashMobileTileLayer !== 'undefined' && dashMobileTileLayer) {
-        dashMobileTileLayer.setUrl(newOsmUrl);
-    }
+    // OSM dark mode is handled via CSS inversion on .osm-tiles — no URL swap needed
 }
 
 function updateMapMarkers(liste) {

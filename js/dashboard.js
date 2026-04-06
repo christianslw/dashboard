@@ -64,18 +64,15 @@ function setupMobileMap(standort) {
         });
     }
     
-    // Thema-Status prüfen und Tile-Layer passend laden (verhindert grelle Karte im Darkmode)
-    const isDarkMode = document.documentElement.classList.contains('dark');
-    const useDarkMap = isDarkMode;
-    const tileUrl = useDarkMap 
-        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' 
-        : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-        
     // Tile-Layer aktualisieren falls das Theme gewechselt wurde
+    // Dark mode appearance is handled via CSS inversion on the osm-tiles class
     if (dashMobileTileLayer) {
         dashMobileMapInstance.removeLayer(dashMobileTileLayer);
     }
-    dashMobileTileLayer = L.tileLayer(tileUrl, { maxZoom: 19 }).addTo(dashMobileMapInstance);
+    dashMobileTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        className: 'osm-tiles'
+    }).addTo(dashMobileMapInstance);
 
     // Alte Marker & Routen entfernen
     if (dashMobileMarker) {
