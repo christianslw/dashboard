@@ -142,7 +142,7 @@ function initLeafletMap() {
     // Inject local icons into Leaflet controls (layers toggle + zoom buttons)
     requestAnimationFrame(function() {
         const defs = [
-            { sel: '.leaflet-control-layers-toggle', icon: 'layers' },
+            { sel: '.leaflet-control-layers-toggle', icon: 'layers-outline' },
             { sel: '.leaflet-control-zoom-in',       icon: 'plus'   },
             { sel: '.leaflet-control-zoom-out',      icon: 'minus'  }
         ];

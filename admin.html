@@ -35,50 +35,25 @@
 <link rel="stylesheet" href="styles.css" />
 <style>
     [x-cloak] { display: none; }
-    .cell { @apply px-3 py-2 text-sm; }
+    /* .cell mirrors Tailwind px-3 py-2 text-sm */
+    .cell { padding: 0.5rem 0.75rem; font-size: 0.875rem; }
     details > summary { list-style: none; cursor: pointer; }
     details > summary::-webkit-details-marker { display: none; }
-</style>
-<style>
-.form-input {
-    width: 100%;
-    border: 1px solid #e0e0e0;
-    border-radius: 0.375rem;
-    padding: 0.5rem 0.75rem;
-    font-size: 0.875rem;
-    background: white;
-    outline: none;
-    transition: border-color 150ms ease, box-shadow 150ms ease;
-}
-.dark .form-input {
-    border-color: #393939;
-    background: #161616;
-    color: #f4f4f4;
-}
-.form-input:focus {
-    border-color: #4589ff;
-    box-shadow: 0 0 0 2px rgba(69,137,255,0.25);
-}
-.dark .form-input:focus {
-    border-color: #4589ff;
-    box-shadow: 0 0 0 2px rgba(69,137,255,0.2);
-}
-.form-input::placeholder { color: #a8a8a8; }
 
-/* Carbon dark overrides for admin — zinc → neutral Carbon grays */
-html.carbon.dark body { background: #000000; }
-html.carbon.dark .dark\:bg-zinc-950 { background-color: #000000 !important; }
-html.carbon.dark .dark\:bg-zinc-900 { background-color: #161616 !important; }
-html.carbon.dark .dark\:bg-zinc-800 { background-color: #262626 !important; }
-html.carbon.dark .dark\:bg-zinc-700 { background-color: #393939 !important; }
-html.carbon.dark .dark\:border-zinc-800 { border-color: #393939 !important; }
-html.carbon.dark .dark\:border-zinc-700 { border-color: #525252 !important; }
-html.carbon.dark .dark\:border-zinc-600 { border-color: #525252 !important; }
-html.carbon.dark .dark\:text-zinc-100 { color: #f4f4f4 !important; }
-html.carbon.dark .dark\:text-zinc-200 { color: #e0e0e0 !important; }
-html.carbon.dark .dark\:text-zinc-400 { color: #a8a8a8 !important; }
-html.carbon.dark .dark\:text-zinc-500 { color: #8d8d8d !important; }
-html.carbon.dark .dark\:hover\:bg-zinc-700:hover { background-color: #353535 !important; }
+    .form-input {
+        width: 100%;
+        border: 1px solid #e0e0e0;
+        border-radius: 0.375rem;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+        background: white;
+        outline: none;
+        transition: border-color 150ms ease, box-shadow 150ms ease;
+    }
+    .dark .form-input { border-color: #393939; background: #161616; color: #f4f4f4; }
+    .form-input:focus { border-color: #4589ff; box-shadow: 0 0 0 2px rgba(69,137,255,0.25); }
+    .dark .form-input:focus { border-color: #4589ff; box-shadow: 0 0 0 2px rgba(69,137,255,0.2); }
+    .form-input::placeholder { color: #a8a8a8; }
 </style>
 </head>
 <body class="bg-slate-100 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 min-h-screen font-sans">
@@ -110,19 +85,19 @@ html.carbon.dark .dark\:hover\:bg-zinc-700:hover { background-color: #353535 !im
         <div class="flex gap-2 flex-wrap">
             <button onclick="openAddForm()"
                 class="px-3 py-1.5 text-sm bg-green-600 hover:bg-green-700 text-white rounded-md font-medium transition-colors flex items-center gap-1.5">
-                <i class="mdi mdi-plus" style="font-size:1rem;line-height:1"></i> Neuer Standort
+                <i class="mdi mdi-plus text-base leading-none"></i> Neuer Standort
             </button>
             <button onclick="seedFromStandorteJs()"
                 class="px-3 py-1.5 text-sm border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 rounded-md font-medium transition-colors flex items-center gap-1.5">
-                <i class="mdi mdi-database-import-outline" style="font-size:1rem;line-height:1"></i> Seed von standorte.js
+                <i class="mdi mdi-database-import-outline text-base leading-none"></i> Seed von standorte.js
             </button>
             <button onclick="loadAll()"
                 class="px-3 py-1.5 text-sm border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 rounded-md font-medium transition-colors flex items-center gap-1.5">
-                <i class="mdi mdi-refresh" style="font-size:1rem;line-height:1"></i> Neu laden
+                <i class="mdi mdi-refresh text-base leading-none"></i> Neu laden
             </button>
             <button onclick="logout()"
                 class="px-3 py-1.5 text-sm text-slate-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 rounded-md transition-colors flex items-center gap-1.5">
-                <i class="mdi mdi-logout" style="font-size:1rem;line-height:1"></i> Abmelden
+                <i class="mdi mdi-logout text-base leading-none"></i> Abmelden
             </button>
         </div>
     </div>
@@ -202,7 +177,7 @@ html.carbon.dark .dark\:hover\:bg-zinc-700:hover { background-color: #353535 !im
                 <p id="overlayDetailMeta" class="text-xs text-slate-500 dark:text-zinc-400 mt-0.5"></p>
             </div>
             <button onclick="closeOverlayDetail()" class="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
-                <i class="mdi mdi-close" style="font-size:1.25rem;line-height:1"></i>
+                <i class="mdi mdi-close text-xl leading-none"></i>
             </button>
         </div>
         <!-- Body (scrollable list) -->
@@ -227,7 +202,7 @@ html.carbon.dark .dark\:hover\:bg-zinc-700:hover { background-color: #353535 !im
         <div class="p-5 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between sticky top-0 bg-white dark:bg-zinc-900 z-10">
             <h2 id="editModalTitle" class="text-base font-bold">Standort bearbeiten</h2>
             <button onclick="closeModal()" class="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
-                <i class="mdi mdi-close" style="font-size:1.25rem;line-height:1"></i>
+                <i class="mdi mdi-close text-xl leading-none"></i>
             </button>
         </div>
         <form id="editForm" onsubmit="submitForm(event)" class="p-5 space-y-4">

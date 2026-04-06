@@ -63,8 +63,22 @@
         <div class="p-3 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 overflow-visible">
             <div class="flex justify-between items-center gap-2 mb-4">
                 <h1 class="text-xl font-semibold flex items-center gap-2 truncate">
-                    <svg class="h-7 w-auto shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 815 240"><path fill="currentColor" class="text-slate-900 dark:text-zinc-100" d="m588.391 240 118.971-120L588.391 0v78.074L630.302 120l-41.911 41.926V240ZM303.562 146.776l21.765-133.7402h50.293L337.466 229.078h-56.327L256.697 90.4052 232.254 229.078h-56.327L137.773 13.0358h50.269l21.743 133.7402L231.55 13.0358h50.246l21.766 133.7402Z M489.449 135.408c5.752 8.315 11.2 16.301 16.647 24.287l45.644 69.383h-60.671l-51.42-84.416h-1.926v84.393h-49.917V13.1063c18.244-1.2684 41.606-1.5972 67.598-1.5972 51.02 0 80.769 18.3206 80.769 64.1221 0 29.0778-17.915 52.7538-46.724 59.7768Zm-39.211-26.236c21.225 0 34.726-11.1802 34.726-29.4069 0-16.9348-9.979-27.1756-33.435-27.1521-5.142 0-10.941.3054-13.829.6342v55.2908c2.583.305 7.725.634 12.538.634Z M139.816 159.154c0 41.95-33.529 73.071-88.659 73.071-15.0269 0-30.7347-1.597-44.49366-4.815l2.20708-47.328c12.13888 4.486 30.42938 9.137 46.09028 9.137 18.314 0 31.486-7.681 31.486-23.042 0-15.404-14.8508-21.164-32.2422-27.91C30.0415 128.895.974344 117.62.0186443 75.9366-.897056 35.3494 31.9742 8.52613 86.1414 8.52613c11.505 0 25.8746 1.26835 39.3286 3.85207l-.118 44.0634c-12.139-3.5232-28.3161-6.7411-41.1124-6.7411-20.8967 0-30.8521 8.9489-30.8521 21.1157 0 13.9038 14.7894 19.8656 32.1325 26.8568 24.582 9.91 54.296 21.887 54.296 61.481ZM695.294 78.074V0l118.97 120-118.97 120v-78.074L737.204 120l-41.91-41.926Z"/></svg>
-                    <span class="truncate">Standorte</span>
+                    <svg class="h-7 w-auto shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 815 240" style="overflow:hidden">
+                        <!-- Arrows rendered first so letters layer on top while they emerge -->
+                        <g class="swr-arrow-1 text-slate-900 dark:text-zinc-100" fill="currentColor">
+                            <path d="m588.391 240 118.971-120L588.391 0v78.074L630.302 120l-41.911 41.926V240Z"/>
+                        </g>
+                        <g class="swr-arrow-2 text-slate-900 dark:text-zinc-100" fill="currentColor">
+                            <path d="M695.294 78.074V0l118.97 120-118.97 120v-78.074L737.204 120l-41.91-41.926Z"/>
+                        </g>
+                        <!-- SWR letters slide up from bottom -->
+                        <g class="swr-letters text-slate-900 dark:text-zinc-100" fill="currentColor">
+                            <path d="M303.562 146.776l21.765-133.7402h50.293L337.466 229.078h-56.327L256.697 90.4052 232.254 229.078h-56.327L137.773 13.0358h50.269l21.743 133.7402L231.55 13.0358h50.246l21.766 133.7402Z"/>
+                            <path d="M489.449 135.408c5.752 8.315 11.2 16.301 16.647 24.287l45.644 69.383h-60.671l-51.42-84.416h-1.926v84.393h-49.917V13.1063c18.244-1.2684 41.606-1.5972 67.598-1.5972 51.02 0 80.769 18.3206 80.769 64.1221 0 29.0778-17.915 52.7538-46.724 59.7768Zm-39.211-26.236c21.225 0 34.726-11.1802 34.726-29.4069 0-16.9348-9.979-27.1756-33.435-27.1521-5.142 0-10.941.3054-13.829.6342v55.2908c2.583.305 7.725.634 12.538.634Z"/>
+                            <path d="M139.816 159.154c0 41.95-33.529 73.071-88.659 73.071-15.0269 0-30.7347-1.597-44.49366-4.815l2.20708-47.328c12.13888 4.486 30.42938 9.137 46.09028 9.137 18.314 0 31.486-7.681 31.486-23.042 0-15.404-14.8508-21.164-32.2422-27.91C30.0415 128.895.974344 117.62.0186443 75.9366-.897056 35.3494 31.9742 8.52613 86.1414 8.52613c11.505 0 25.8746 1.26835 39.3286 3.85207l-.118 44.0634c-12.139-3.5232-28.3161-6.7411-41.1124-6.7411-20.8967 0-30.8521 8.9489-30.8521 21.1157 0 13.9038 14.7894 19.8656 32.1325 26.8568 24.582 9.91 54.296 21.887 54.296 61.481Z"/>
+                        </g>
+                    </svg>
+                    <span class="truncate swr-title">Standorte</span>
                 </h1>
                 
                 <div class="flex items-center gap-3 shrink-0">
@@ -81,7 +95,7 @@
                        onkeyup="filterStandorte()">
                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 pointer-events-none transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 <button id="clearSearchBtn" type="button" onclick="clearSearch()" class="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 active:text-blue-700 dark:active:text-blue-300 transition-colors opacity-0 pointer-events-none" title="Suche löschen">
-                    <i class="mdi mdi-close" style="font-size:1.25rem;line-height:1;display:block"></i>
+                    <i class="mdi mdi-close text-xl leading-none block"></i>
                 </button>
             </div>
 
@@ -96,8 +110,8 @@
                 <div id="filterMenuPanel" class="hidden z-[50] rounded-md border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl p-3" onclick="event.stopPropagation()">
                     <div class="flex items-center justify-between mb-3">
                         <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-zinc-400">Filteroptionen</p>
-                        <button type="button" onclick="closeFilterMenu()" class="text-slate-400 hover:text-slate-700 dark:hover:text-zinc-300 transition-colors" title="Schließen">
-                            <i class="mdi mdi-close" style="font-size:1rem"></i>
+                        <button type="button" onclick="closeFilterMenu()" class="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors" title="Schließen">
+                            <i class="mdi mdi-close text-base leading-none"></i>
                         </button>
                     </div>
                     <div class="mb-3">
@@ -120,14 +134,14 @@
                 <div class="relative" id="sortMenuWrapper">
                     <button id="sortMenuButton" type="button" onclick="toggleSortMenu()"
                         class="inline-flex items-center gap-1.5 px-3 py-2 text-sm border border-slate-300 dark:border-zinc-700 rounded-md bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors">
-                        <i class="mdi mdi-sort shrink-0" style="font-size:1rem"></i>
+                        <i class="mdi mdi-sort shrink-0 text-base"></i>
                         <span id="sortMenuLabel">Sortieren</span>
                     </button>
                     <div id="sortMenuPanel" class="hidden z-[50] rounded-md border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl p-3" onclick="event.stopPropagation()">
                         <div class="flex items-center justify-between mb-2">
                             <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-zinc-400">Sortierung</p>
-                            <button type="button" onclick="closeSortMenu()" class="text-slate-400 hover:text-slate-700 dark:hover:text-zinc-300 transition-colors">
-                                <i class="mdi mdi-close" style="font-size:1rem"></i>
+                            <button type="button" onclick="closeSortMenu()" class="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors" title="Schließen">
+                                <i class="mdi mdi-close text-base leading-none"></i>
                             </button>
                         </div>
                         <div id="sortOptionsContainer" class="flex flex-col gap-0.5">
@@ -150,8 +164,8 @@
             </div>
 
             <!-- Drag divider -->
-            <div id="splitDivider" class="hidden md:flex shrink-0 select-none touch-none" style="width:5px;cursor:col-resize;align-items:stretch;position:relative;z-index:10">
-                <div id="splitDividerBar" style="width:1px;background:transparent;margin:0 auto;align-self:stretch;transition:background 0.15s,width 0.15s"></div>
+            <div id="splitDivider" class="hidden md:flex shrink-0 select-none touch-none w-[5px] cursor-col-resize items-stretch relative z-10">
+                <div id="splitDividerBar" class="w-px bg-transparent mx-auto self-stretch" style="transition:background 0.15s,width 0.15s"></div>
             </div>
 
             <!-- Main map -->
@@ -165,7 +179,7 @@
                         <button id="radarPlayBtn" type="button" onclick="toggleRadarPlay()"
                             title="Abspielen / Pause"
                             class="w-7 h-7 shrink-0 flex items-center justify-center rounded border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-700 transition-colors">
-                            <i class="mdi mdi-play" style="font-size:0.875rem"></i>
+                            <i class="mdi mdi-play text-sm"></i>
                         </button>
                         <input type="range" id="radarSlider" min="0" max="0" value="0"
                             oninput="setRadarFrame(parseInt(this.value))"
@@ -191,17 +205,17 @@
         <div class="flex items-center gap-4">
             <div class="text-[10px] uppercase tracking-wider font-semibold">Standort DB v0.1</div>
             <button id="helpBtn" onclick="openTutorial()" class="text-[11px] font-medium text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1">
-                <i class="mdi mdi-help-circle-outline" style="font-size:1rem"></i>
+                <i class="mdi mdi-help-circle-outline text-base"></i>
                 Hilfe
             </button>
         </div>
         <div class="flex items-center gap-3">
         <button id="settingsBtn" onclick="openSettingsModal()" class="text-[11px] font-medium text-slate-400 hover:text-slate-600 dark:hover:text-zinc-400 transition-colors flex items-center gap-1">
-            <i class="mdi mdi-palette" style="font-size:1rem"></i>
+            <i class="mdi mdi-palette-outline text-base"></i>
             Darstellung
         </button>
         <button id="appSettingsBtn" onclick="openAppSettingsModal()" class="text-[11px] font-medium text-slate-400 hover:text-slate-600 dark:hover:text-zinc-400 transition-colors flex items-center gap-1">
-            <i class="mdi mdi-cog" style="font-size:1rem"></i>
+            <i class="mdi mdi-cog-outline text-base"></i>
             Einstellungen
         </button>
         </div>
@@ -212,10 +226,10 @@
         <div class="bg-white dark:bg-zinc-900 rounded-md shadow-xl w-full max-w-md border border-slate-200 dark:border-zinc-700 overflow-hidden">
             <div class="p-4 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center bg-slate-50 dark:bg-zinc-900/50">
                 <h3 class="font-semibold text-slate-800 dark:text-zinc-100 flex items-center gap-2">
-                    <i class="mdi mdi-palette text-slate-500 dark:text-zinc-400" style="font-size:1.25rem"></i>
+                    <i class="mdi mdi-palette-outline text-slate-500 dark:text-zinc-400 text-xl"></i>
                     Darstellung
                 </h3>
-                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-800 dark:hover:text-zinc-200"><i class="mdi mdi-close" style="font-size:1.25rem"></i></button>
+                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors" title="Schließen"><i class="mdi mdi-close text-xl leading-none"></i></button>
             </div>
             <div class="p-5 space-y-6">
                 <!-- Appearance Mode -->
@@ -252,7 +266,7 @@
         <div class="bg-white dark:bg-zinc-900 rounded-md shadow-xl w-full max-w-md border border-slate-200 dark:border-zinc-700 overflow-hidden">
             <div class="p-4 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center">
                 <h3 class="font-semibold">Start-Standort festlegen</h3>
-                <button onclick="closeLocationModal()" class="text-slate-400 hover:text-slate-800 dark:hover:text-zinc-200"><i class="mdi mdi-close" style="font-size:1.25rem"></i></button>
+                <button onclick="closeLocationModal()" class="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors" title="Schließen"><i class="mdi mdi-close text-xl leading-none"></i></button>
             </div>
             <div class="p-6">
                 <label class="block text-sm font-medium mb-2 text-slate-600 dark:text-zinc-400">Stadt oder PLZ eingeben:</label>
@@ -263,7 +277,7 @@
                 <div id="citySearchResults" class="mt-4 flex flex-col gap-2"></div>
                 <div class="mt-6 border-t border-slate-100 dark:border-zinc-800 pt-4">
                     <button onclick="useAutoGPS()" class="w-full text-sm py-2 px-4 border border-slate-300 dark:border-zinc-700 rounded-md hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex justify-center items-center gap-2">
-                        <i class="mdi mdi-crosshairs-gps" style="font-size:1rem"></i>
+                        <i class="mdi mdi-crosshairs-gps text-base"></i>
                         GPS verwenden
                     </button>
                 </div>
@@ -273,7 +287,7 @@
 
     <!-- Dashboard modal -->
     <div id="dashboardModal" class="fixed inset-0 bg-slate-900/60 dark:bg-black/80 z-50 hidden flex items-center justify-center p-4 md:p-8">
-        <div class="bg-white dark:bg-zinc-950 w-full max-w-10x1 rounded-md shadow-2xl overflow-hidden flex flex-col max-h-[95vh] border border-slate-200 dark:border-zinc-800">
+        <div class="bg-white dark:bg-zinc-950 w-full max-w-5xl rounded-md shadow-2xl overflow-hidden flex flex-col max-h-[95vh] border border-slate-200 dark:border-zinc-800">
             <div class="flex justify-between items-center p-5 border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900">
                 <div>
                     <h2 class="text-xl font-bold text-slate-900 dark:text-zinc-100">
@@ -281,8 +295,8 @@
                         <button id="dashFavoriteBtn" type="button" onclick="toggleCurrentDashboardFavorite(event)" class="ml-2 transition-colors text-slate-300 dark:text-zinc-600 hover:text-amber-500" title="Favorit umschalten"><i class="mdi mdi-star"></i></button>
                     </h2>
                 </div>
-                <button onclick="closeDashboard()" class="text-slate-400 hover:text-red-500 transition-colors">
-                    <i class="mdi mdi-close" style="font-size:1.5rem"></i>
+                <button onclick="closeDashboard()" class="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors" title="Schließen">
+                    <i class="mdi mdi-close text-2xl leading-none"></i>
                 </button>
             </div>
 
@@ -318,7 +332,7 @@
                         <div class="border border-slate-200 dark:border-zinc-800 rounded-md overflow-hidden flex flex-col justify-center p-5 bg-white dark:bg-zinc-950 relative">
                             <div class="flex items-center gap-4">
                                 <div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-900 flex items-center justify-center text-slate-500 dark:text-zinc-400">
-                                    <i class="mdi mdi-clock-outline" style="font-size:1.25rem"></i>
+                                    <i class="mdi mdi-clock-outline text-xl"></i>
                                 </div>
                                 <div>
                                     <p class="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wide">Fahrtzeit (OSRM Route)</p>
@@ -334,7 +348,7 @@
                             
                             <!-- Traffic warning -->
                             <div id="trafficAlertBox" class="hidden mt-4 p-2.5 bg-yellow-50/80 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700/50 rounded-md flex items-start gap-2 text-xs">
-                                <i class="mdi mdi-alert text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" style="font-size:1rem"></i>
+                                <i class="mdi mdi-alert text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5 text-base"></i>
                                 <div>
                                     <span class="font-semibold text-yellow-800 dark:text-yellow-300 block mb-0.5">Mögliche Verzögerung</span>
                                     <span id="trafficAlertText" class="text-yellow-700 dark:text-yellow-400/80"></span>
@@ -354,22 +368,22 @@
                         <!-- Actions -->
                         <div class="grid grid-cols-2 gap-3">
                             <a id="btnTagebuch" href="#" target="_blank" class="flex items-center justify-center gap-2 p-3 border border-slate-300 dark:border-zinc-700 bg-transparent hover:bg-blue-100 dark:hover:bg-blue-900/50 active:bg-blue-500 active:text-white text-slate-700 dark:text-zinc-200 rounded-md text-sm font-medium transition-colors">
-                                <i class="mdi mdi-notebook-edit-outline" style="font-size:1rem"></i>
+                                <i class="mdi mdi-notebook-edit-outline text-base"></i>
                                 Tagebuch
                             </a>
                             <a id="btnOrdner" href="#" target="_blank" class="flex items-center justify-center gap-2 p-3 border border-slate-300 dark:border-zinc-700 bg-transparent hover:bg-blue-100 dark:hover:bg-blue-900/50 active:bg-blue-500 active:text-white text-slate-700 dark:text-zinc-200 rounded-md text-sm font-medium transition-colors">
-                                <i class="mdi mdi-folder-open-outline" style="font-size:1rem"></i>
+                                <i class="mdi mdi-folder-open-outline text-base"></i>
                                 Verzeichnis
                             </a>
                             <a id="btnRoute" href="#" target="_blank" class="flex items-center justify-center gap-2 p-3 border border-slate-300 dark:border-zinc-700 bg-transparent hover:bg-blue-100 dark:hover:bg-blue-900/50 active:bg-blue-500 active:text-white text-slate-700 dark:text-zinc-200 rounded-md text-sm font-medium transition-colors">
-                                <span class="nav-icon-wrap" style="font-size:1rem">
+                                <span class="nav-icon-wrap text-base">
                                     <i class="mdi mdi-navigation-variant-outline nav-outline"></i>
                                     <i class="mdi mdi-navigation-variant nav-filled"></i>
                                 </span>
                                 Navigation
                             </a>
                             <button onclick="copyCoords()" class="flex items-center justify-center gap-2 p-3 border border-slate-300 dark:border-zinc-700 bg-transparent hover:bg-blue-100 dark:hover:bg-blue-900/50 active:bg-blue-500 active:text-white text-slate-700 dark:text-zinc-200 rounded-md text-sm font-medium transition-colors">
-                                <i class="mdi mdi-content-copy" style="font-size:1rem"></i>
+                                <i class="mdi mdi-content-copy text-base"></i>
                                 <span>Koordinaten</span>
                             </button>
                         </div>
@@ -397,8 +411,8 @@
         <div class="bg-white dark:bg-zinc-950 w-full max-w-2xl rounded-md shadow-2xl overflow-hidden border border-slate-200 dark:border-zinc-800">
             <div class="flex justify-between items-center p-5 border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900">
                 <h2 class="text-xl font-bold text-slate-900 dark:text-zinc-100">Tutorial - Alle Funktionen im Überblick</h2>
-                <button onclick="closeTutorial()" class="text-slate-400 hover:text-red-500 transition-colors">
-                    <i class="mdi mdi-close" style="font-size:1.5rem"></i>
+                <button onclick="closeTutorial()" class="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors" title="Schließen">
+                    <i class="mdi mdi-close text-2xl leading-none"></i>
                 </button>
             </div>
             <div class="p-5 overflow-y-auto max-h-[75vh]">
@@ -474,7 +488,7 @@
         <div class="bg-white dark:bg-zinc-900 rounded-md shadow-xl w-full max-w-md border border-slate-200 dark:border-zinc-700 overflow-hidden">
             <div class="p-4 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center">
                 <h3 class="font-semibold">Fahrtanweisungen für <span id="wayModalStationNum"></span></h3>
-                <button onclick="closeWayInstructionsModal()" class="text-slate-400 hover:text-slate-800 dark:hover:text-zinc-200"><i class="mdi mdi-close" style="font-size:1.25rem"></i></button>
+                <button onclick="closeWayInstructionsModal()" class="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors" title="Schließen"><i class="mdi mdi-close text-xl leading-none"></i></button>
             </div>
             <div class="p-6">
                 <label class="block text-sm font-medium mb-2 text-slate-600 dark:text-zinc-400">Anweisungen eingeben:</label>
@@ -492,10 +506,10 @@
         <div class="bg-white dark:bg-zinc-900 rounded-md shadow-xl w-full max-w-md border border-slate-200 dark:border-zinc-700 overflow-hidden">
             <div class="p-4 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center bg-slate-50 dark:bg-zinc-900/50">
                 <h3 class="font-semibold text-slate-800 dark:text-zinc-100 flex items-center gap-2">
-                    <i class="mdi mdi-cog text-slate-500 dark:text-zinc-400" style="font-size:1.25rem"></i>
+                    <i class="mdi mdi-cog-outline text-slate-500 dark:text-zinc-400 text-xl"></i>
                     Einstellungen
                 </h3>
-                <button onclick="closeAppSettingsModal()" class="text-slate-400 hover:text-slate-800 dark:hover:text-zinc-200"><i class="mdi mdi-close" style="font-size:1.25rem"></i></button>
+                <button onclick="closeAppSettingsModal()" class="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors" title="Schließen"><i class="mdi mdi-close text-xl leading-none"></i></button>
             </div>
             <div class="p-5 space-y-6">
                 <!-- Tagebuch Link Mode -->
@@ -504,11 +518,11 @@
                     <p class="text-xs text-slate-400 dark:text-zinc-500 mb-3">Bestimmt, ob der Tagebuch-Link im Browser oder in Desktop-Excel geöffnet wird.</p>
                     <div class="grid grid-cols-2 gap-2">
                         <button id="btn-tagebuch-web" onclick="changeTagebuchMode('web')" class="py-2 px-3 text-sm font-medium rounded border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2">
-                            <i class="mdi mdi-web" style="font-size:1rem"></i>
+                            <i class="mdi mdi-web text-base"></i>
                             Browser (Web)
                         </button>
                         <button id="btn-tagebuch-excel" onclick="changeTagebuchMode('excel')" class="py-2 px-3 text-sm font-medium rounded border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2">
-                            <i class="mdi mdi-microsoft-excel" style="font-size:1rem"></i>
+                            <i class="mdi mdi-microsoft-excel text-base"></i>
                             Desktop Excel
                         </button>
                     </div>
@@ -519,11 +533,11 @@
                     <p class="text-xs text-slate-400 dark:text-zinc-500 mb-3">Bestimmt, welche Karten-App für Navigationslinks verwendet wird.</p>
                     <div class="grid grid-cols-2 gap-2">
                         <button id="btn-nav-google" onclick="changeNavMode('google')" class="py-2 px-3 text-sm font-medium rounded border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2">
-                            <i class="mdi mdi-google-maps" style="font-size:1rem"></i>
+                            <i class="mdi mdi-google-maps text-base"></i>
                             Google Maps
                         </button>
                         <button id="btn-nav-apple" onclick="changeNavMode('apple')" class="py-2 px-3 text-sm font-medium rounded border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2">
-                            <i class="mdi mdi-apple" style="font-size:1rem"></i>
+                            <i class="mdi mdi-apple text-base"></i>
                             Apple Maps
                         </button>
                     </div>
@@ -540,8 +554,8 @@
         <div class="bg-white dark:bg-zinc-900 rounded-lg shadow-xl w-full max-w-sm border border-slate-200 dark:border-zinc-700 overflow-hidden">
             <div class="p-4 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center">
                 <h3 id="ovModalTitle" class="font-semibold text-slate-800 dark:text-zinc-100 flex items-center gap-2">Eingabe</h3>
-                <button onclick="cancelOverlayInput()" class="text-slate-400 hover:text-slate-800 dark:hover:text-zinc-200">
-                    <i class="mdi mdi-close" style="font-size:1.25rem"></i>
+                <button onclick="cancelOverlayInput()" class="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors" title="Schließen">
+                    <i class="mdi mdi-close text-xl leading-none"></i>
                 </button>
             </div>
             <div class="p-4 space-y-3">

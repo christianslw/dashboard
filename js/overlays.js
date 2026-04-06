@@ -994,11 +994,7 @@ function buildSidebarHTML() {
     <div class="ov-wrap">
         <div class="leaflet-bar ov-bar ov-hidden" id="ovBar">
             <button type="button" id="ovTrigger" class="ov-trigger-btn" data-tooltip="Kartenebenen" title="Kartenebenen">
-                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5
-                           m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                </svg>
+                <i class="mdi mdi-pencil-outline pointer-events-none"></i>
             </button>
         </div>
     </div>`;

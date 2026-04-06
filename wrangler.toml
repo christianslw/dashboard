@@ -1,4 +1,4 @@
-# Cloudflare Pages / Workers configuration
+# Cloudflare Pages configuration
 # Used by: wrangler pages dev  (local development)
 # Production bindings are configured in the Cloudflare Dashboard:
 #  Pages > <project> > Settings > Functions > KV namespace bindings

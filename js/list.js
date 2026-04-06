@@ -62,7 +62,7 @@ function renderList(liste) {
                 <div class="flex items-center gap-3 text-xs text-slate-500 dark:text-zinc-400 mt-1">
                     <span class="font-medium">${s.distance.toFixed(1)} km</span>
                     <span class="flex items-center gap-1 font-medium text-slate-400 dark:text-zinc-500">
-                        <i class="mdi mdi-clock-outline" style="font-size:0.875rem"></i>
+                        <i class="mdi mdi-clock-outline text-sm"></i>
                         ${calcTime}
                     </span>
                 </div>
@@ -87,7 +87,7 @@ function renderList(liste) {
                 <a href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lon}" target="_blank"
                    class="p-2 text-slate-400 hover:text-blue-600 dark:hover:text-blue-500 transition-colors"
                    title="Navigation starten" onclick="event.stopPropagation();">
-                    <span class="nav-icon-wrap" style="font-size:1.25rem">
+                    <span class="nav-icon-wrap text-xl">
                         <i class="mdi mdi-navigation-variant-outline nav-outline"></i>
                         <i class="mdi mdi-navigation-variant nav-filled"></i>
                     </span>
