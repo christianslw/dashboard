@@ -62,7 +62,7 @@ function renderList(liste) {
                 <div class="flex items-center gap-3 text-xs text-slate-500 dark:text-zinc-400 mt-1">
                     <span class="font-medium">${s.distance.toFixed(1)} km</span>
                     <span class="flex items-center gap-1 font-medium text-slate-400 dark:text-zinc-500">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <i class="mdi mdi-clock-outline" style="font-size:0.875rem"></i>
                         ${calcTime}
                     </span>
                 </div>
@@ -84,10 +84,13 @@ function renderList(liste) {
                 </div>
             </div>
             <div class="flex items-center">
-                <a href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lon}" target="_blank" 
+                <a href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lon}" target="_blank"
                    class="p-2 text-slate-400 hover:text-blue-600 dark:hover:text-blue-500 transition-colors"
                    title="Navigation starten" onclick="event.stopPropagation();">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+                    <span class="nav-icon-wrap" style="font-size:1.25rem">
+                        <i class="mdi mdi-navigation-variant-outline nav-outline"></i>
+                        <i class="mdi mdi-navigation-variant nav-filled"></i>
+                    </span>
                 </a>
             </div>
         `;

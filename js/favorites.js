@@ -40,7 +40,7 @@ function toggleFavorite(nummer, event) {
     filterStandorte();
 
     if (currentStandort && String(currentStandort.nummer) === key) {
-        updateDashboardFavoriteButton();
+        updateDashboardFavoriteButton(true);
     }
 }
 
@@ -49,7 +49,7 @@ function toggleCurrentDashboardFavorite(event) {
     toggleFavorite(currentStandort.nummer, event);
 }
 
-function updateDashboardFavoriteButton() {
+function updateDashboardFavoriteButton(animate) {
     const btn = document.getElementById('dashFavoriteBtn');
     if (!btn || !currentStandort) return;
     const fav = isFavorite(currentStandort.nummer);
@@ -59,4 +59,11 @@ function updateDashboardFavoriteButton() {
     // Swap filled / outline star icon
     const icon = btn.querySelector('i.mdi');
     if (icon) { icon.classList.toggle('mdi-star', fav); icon.classList.toggle('mdi-star-outline', !fav); }
+    // Pop animation when a favorite is added
+    if (animate && fav) {
+        btn.classList.remove('star-pop-anim');
+        void btn.offsetWidth; // force reflow to restart animation
+        btn.classList.add('star-pop-anim');
+        btn.addEventListener('animationend', () => btn.classList.remove('star-pop-anim'), { once: true });
+    }
 }

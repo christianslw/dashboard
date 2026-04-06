@@ -6,7 +6,7 @@
 <title>Admin — SWR Standort Dashboard</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- Material Design Icons -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7/css/materialdesignicons.min.css" />
+<link rel="stylesheet" href="res/mdi/css/materialdesignicons.min.css" />
 <script>
     tailwind.config = {
         darkMode: 'class',
@@ -18,9 +18,9 @@
         }
     };
     // Full theme loading — mirrors index.html
-    const cTheme = localStorage.getItem('colorTheme') || 'standard';
+    const cTheme = localStorage.getItem('colorTheme') || 'carbon';
     const cAppm  = localStorage.getItem('appearance') || 'system';
-    const _tm    = { 'dracula': 'themes/dracula.css', 'dracula-laser': 'themes/dracula-laser.css', 'kirschbluete': 'themes/kirschbluete.css', 'swr-ms': 'themes/swr-ms.css' };
+    const _tm    = { 'dracula': 'themes/dracula.css', 'dracula-laser': 'themes/dracula-laser.css', 'kirschbluete': 'themes/kirschbluete.css', 'swr-ms': 'themes/swr-ms.css', 'carbon': 'themes/carbon.css' };
     let isD = false;
     if (cAppm === 'dark' || (cAppm === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) isD = true;
     if (isD) document.documentElement.classList.add('dark');
@@ -38,6 +38,47 @@
     .cell { @apply px-3 py-2 text-sm; }
     details > summary { list-style: none; cursor: pointer; }
     details > summary::-webkit-details-marker { display: none; }
+</style>
+<style>
+.form-input {
+    width: 100%;
+    border: 1px solid #e0e0e0;
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    background: white;
+    outline: none;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+.dark .form-input {
+    border-color: #393939;
+    background: #161616;
+    color: #f4f4f4;
+}
+.form-input:focus {
+    border-color: #4589ff;
+    box-shadow: 0 0 0 2px rgba(69,137,255,0.25);
+}
+.dark .form-input:focus {
+    border-color: #4589ff;
+    box-shadow: 0 0 0 2px rgba(69,137,255,0.2);
+}
+.form-input::placeholder { color: #a8a8a8; }
+
+/* Carbon dark overrides for admin — zinc → neutral Carbon grays */
+html.carbon.dark body { background: #000000; }
+html.carbon.dark .dark\:bg-zinc-950 { background-color: #000000 !important; }
+html.carbon.dark .dark\:bg-zinc-900 { background-color: #161616 !important; }
+html.carbon.dark .dark\:bg-zinc-800 { background-color: #262626 !important; }
+html.carbon.dark .dark\:bg-zinc-700 { background-color: #393939 !important; }
+html.carbon.dark .dark\:border-zinc-800 { border-color: #393939 !important; }
+html.carbon.dark .dark\:border-zinc-700 { border-color: #525252 !important; }
+html.carbon.dark .dark\:border-zinc-600 { border-color: #525252 !important; }
+html.carbon.dark .dark\:text-zinc-100 { color: #f4f4f4 !important; }
+html.carbon.dark .dark\:text-zinc-200 { color: #e0e0e0 !important; }
+html.carbon.dark .dark\:text-zinc-400 { color: #a8a8a8 !important; }
+html.carbon.dark .dark\:text-zinc-500 { color: #8d8d8d !important; }
+html.carbon.dark .dark\:hover\:bg-zinc-700:hover { background-color: #353535 !important; }
 </style>
 </head>
 <body class="bg-slate-100 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 min-h-screen font-sans">
@@ -69,19 +110,19 @@
         <div class="flex gap-2 flex-wrap">
             <button onclick="openAddForm()"
                 class="px-3 py-1.5 text-sm bg-green-600 hover:bg-green-700 text-white rounded-md font-medium transition-colors flex items-center gap-1.5">
-                + Neuer Standort
+                <i class="mdi mdi-plus" style="font-size:1rem;line-height:1"></i> Neuer Standort
             </button>
             <button onclick="seedFromStandorteJs()"
                 class="px-3 py-1.5 text-sm border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 rounded-md font-medium transition-colors flex items-center gap-1.5">
-                ↑ Seed von standorte.js
+                <i class="mdi mdi-database-import-outline" style="font-size:1rem;line-height:1"></i> Seed von standorte.js
             </button>
             <button onclick="loadAll()"
-                class="px-3 py-1.5 text-sm border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 rounded-md font-medium transition-colors">
-                ↺ Neu laden
+                class="px-3 py-1.5 text-sm border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 rounded-md font-medium transition-colors flex items-center gap-1.5">
+                <i class="mdi mdi-refresh" style="font-size:1rem;line-height:1"></i> Neu laden
             </button>
             <button onclick="logout()"
-                class="px-3 py-1.5 text-sm text-slate-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 rounded-md transition-colors">
-                Abmelden
+                class="px-3 py-1.5 text-sm text-slate-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 rounded-md transition-colors flex items-center gap-1.5">
+                <i class="mdi mdi-logout" style="font-size:1rem;line-height:1"></i> Abmelden
             </button>
         </div>
     </div>
@@ -160,7 +201,9 @@
                 <h2 id="overlayDetailTitle" class="text-base font-bold">Overlays</h2>
                 <p id="overlayDetailMeta" class="text-xs text-slate-500 dark:text-zinc-400 mt-0.5"></p>
             </div>
-            <button onclick="closeOverlayDetail()" class="text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 text-xl leading-none transition-colors">&times;</button>
+            <button onclick="closeOverlayDetail()" class="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
+                <i class="mdi mdi-close" style="font-size:1.25rem;line-height:1"></i>
+            </button>
         </div>
         <!-- Body (scrollable list) -->
         <div id="overlayDetailBody" class="flex-1 overflow-y-auto p-4 space-y-1.5"></div>
@@ -183,7 +226,9 @@
     <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-y-auto">
         <div class="p-5 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between sticky top-0 bg-white dark:bg-zinc-900 z-10">
             <h2 id="editModalTitle" class="text-base font-bold">Standort bearbeiten</h2>
-            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 text-xl leading-none transition-colors">&times;</button>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
+                <i class="mdi mdi-close" style="font-size:1.25rem;line-height:1"></i>
+            </button>
         </div>
         <form id="editForm" onsubmit="submitForm(event)" class="p-5 space-y-4">
             <input type="hidden" id="fOriginalNummer" />
@@ -234,25 +279,6 @@
         </form>
     </div>
 </div>
-
-<style>
-.form-input {
-    width: 100%;
-    border: 1px solid #cbd5e1;
-    border-radius: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    font-size: 0.875rem;
-    background: white;
-    outline: none;
-    transition: box-shadow 0.15s;
-}
-.dark .form-input {
-    border-color: #3f3f46;
-    background: #18181b;
-    color: #f4f4f5;
-}
-.form-input:focus { box-shadow: 0 0 0 2px #3b82f6; }
-</style>
 
 <script>
 // ─── STATE ───────────────────────────────────────────────────────────────────

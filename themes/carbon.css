@@ -1,0 +1,554 @@
+/* ===================================================================
+   SWR Standort Dashboard — Carbon Design System Theme
+   CSS class: "carbon" on <html>
+   Dark mode: TRUE BLACK (#000000 base, #161616 layers)
+   Light mode: Standard Carbon White/Gray palette
+   Based on: https://carbondesignsystem.com/elements/
+   =================================================================== */
+
+/* ──────────────────────────────────────────────────────────────────
+   CARBON DESIGN TOKENS
+   ────────────────────────────────────────────────────────────────── */
+html.carbon.dark {
+    /* Backgrounds */
+    --c-bg:           #000000;
+    --c-bg-hover:     #161616;
+    --c-layer-01:     #161616;
+    --c-layer-01h:    #202020;
+    --c-layer-02:     #262626;
+    --c-layer-02h:    #2e2e2e;
+    --c-layer-03:     #393939;
+    --c-layer-03h:    #414141;
+
+    /* Borders */
+    --c-border-00:    #161616;
+    --c-border-01:    #393939;
+    --c-border-02:    #525252;
+    --c-border-03:    #6f6f6f;
+    --c-border-int:   #4589ff;
+
+    /* Text */
+    --c-text-pri:     #f4f4f4;
+    --c-text-sec:     #c6c6c6;
+    --c-text-muted:   #8d8d8d;
+    --c-text-ph:      #6f6f6f;
+    --c-text-dis:     #525252;
+    --c-text-on:      #ffffff;
+
+    /* Interactive */
+    --c-interactive:  #4589ff;
+    --c-hover:        rgba(69, 137, 255, 0.10);
+    --c-active:       rgba(69, 137, 255, 0.20);
+    --c-focus:        #ffffff;
+    --c-link:         #78a9ff;
+    --c-link-h:       #a6c8ff;
+
+    /* Support */
+    --c-warn:         #f1c21b;
+    --c-error:        #fa4d56;
+    --c-success:      #42be65;
+    --c-info:         #4589ff;
+
+    /* Overlays */
+    --c-overlay:      rgba(0, 0, 0, 0.65);
+}
+
+html.carbon:not(.dark) {
+    /* Backgrounds */
+    --c-bg:           #f4f4f4;
+    --c-bg-hover:     #e8e8e8;
+    --c-layer-01:     #ffffff;
+    --c-layer-01h:    #e8e8e8;
+    --c-layer-02:     #f4f4f4;
+    --c-layer-02h:    #e8e8e8;
+    --c-layer-03:     #e0e0e0;
+    --c-layer-03h:    #d1d1d1;
+
+    /* Borders */
+    --c-border-00:    #e0e0e0;
+    --c-border-01:    #c6c6c6;
+    --c-border-02:    #8d8d8d;
+    --c-border-03:    #525252;
+    --c-border-int:   #0f62fe;
+
+    /* Text */
+    --c-text-pri:     #161616;
+    --c-text-sec:     #525252;
+    --c-text-muted:   #8d8d8d;
+    --c-text-ph:      #a8a8a8;
+    --c-text-dis:     #c6c6c6;
+    --c-text-on:      #ffffff;
+
+    /* Interactive */
+    --c-interactive:  #0f62fe;
+    --c-hover:        rgba(15, 98, 254, 0.08);
+    --c-active:       rgba(15, 98, 254, 0.16);
+    --c-focus:        #0f62fe;
+    --c-link:         #0f62fe;
+    --c-link-h:       #0043ce;
+
+    /* Support */
+    --c-warn:         #f1c21b;
+    --c-error:        #da1e28;
+    --c-success:      #198038;
+    --c-info:         #0f62fe;
+
+    /* Overlays */
+    --c-overlay:      rgba(22, 22, 22, 0.5);
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   BODY & PAGE BACKGROUND
+   ────────────────────────────────────────────────────────────────── */
+html.carbon body {
+    background-color: var(--c-bg) !important;
+    color: var(--c-text-pri) !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   DARK MODE: OVERRIDE ZINC-TINTED BACKGROUNDS → TRUE CARBON GRAYS
+   ────────────────────────────────────────────────────────────────── */
+
+/* Page / OLED base - already black, keep it */
+html.carbon.dark .dark\:bg-oled { background-color: #000000 !important; }
+
+/* Main content card */
+html.carbon.dark .dark\:bg-zinc-950 { background-color: #161616 !important; }
+
+/* Headers, sidebar panels */
+html.carbon.dark .dark\:bg-zinc-900    { background-color: #161616 !important; }
+html.carbon.dark .dark\:bg-zinc-900\/50 { background-color: rgba(22,22,22,0.5) !important; }
+
+/* Nested surfaces, inputs */
+html.carbon.dark .dark\:bg-zinc-800    { background-color: #262626 !important; }
+
+/* Hover backgrounds */
+html.carbon.dark .dark\:hover\:bg-zinc-900:hover   { background-color: #1c1c1c !important; }
+html.carbon.dark .dark\:hover\:bg-zinc-800:hover   { background-color: #262626 !important; }
+html.carbon.dark .dark\:hover\:bg-zinc-700:hover   { background-color: #353535 !important; }
+
+/* ── BORDERS ── */
+html.carbon.dark .dark\:border-zinc-800  { border-color: #393939 !important; }
+html.carbon.dark .dark\:border-zinc-700  { border-color: #525252 !important; }
+
+/* Dividers */
+html.carbon.dark .dark\:divide-zinc-800 > * + * { border-color: #393939 !important; }
+
+/* ── TEXT ── */
+html.carbon.dark .dark\:text-zinc-100 { color: #f4f4f4 !important; }
+html.carbon.dark .dark\:text-zinc-200 { color: #e0e0e0 !important; }
+html.carbon.dark .dark\:text-zinc-300 { color: #c6c6c6 !important; }
+html.carbon.dark .dark\:text-zinc-400 { color: #a8a8a8 !important; }
+html.carbon.dark .dark\:text-zinc-500 { color: #8d8d8d !important; }
+html.carbon.dark .dark\:text-zinc-600 { color: #6f6f6f !important; }
+
+html.carbon.dark .dark\:hover\:text-zinc-200:hover { color: #e0e0e0 !important; }
+html.carbon.dark .dark\:hover\:text-zinc-300:hover { color: #c6c6c6 !important; }
+
+/* ── INTERACTIVE BLUE → CARBON BLUE ── */
+html.carbon.dark .dark\:text-blue-400          { color: #78a9ff !important; }
+html.carbon.dark .dark\:text-blue-300          { color: #a6c8ff !important; }
+html.carbon.dark .dark\:text-blue-500          { color: #4589ff !important; }
+html.carbon.dark .dark\:border-blue-500        { border-color: #4589ff !important; }
+html.carbon.dark .dark\:focus\:border-blue-500:focus { border-color: #4589ff !important; }
+html.carbon.dark .dark\:bg-blue-900\/50        { background-color: rgba(69,137,255,0.10) !important; }
+html.carbon.dark .dark\:hover\:bg-blue-900:hover,
+html.carbon.dark .dark\:hover\:bg-blue-900\/50:hover { background-color: rgba(69,137,255,0.10) !important; }
+html.carbon.dark .dark\:hover\:bg-blue-100:hover     { background-color: rgba(69,137,255,0.10) !important; }
+
+html.carbon.dark .dark\:text-green-500 { color: #42be65 !important; }
+html.carbon.dark .dark\:text-green-300 { color: #6fdc8c !important; }
+
+html.carbon.dark .dark\:text-yellow-400,
+html.carbon.dark .dark\:text-yellow-300 { color: #f1c21b !important; }
+
+html.carbon.dark .dark\:text-orange-400 { color: #ff832b !important; }
+
+html.carbon.dark .dark\:text-red-400   { color: #ff8389 !important; }
+
+html.carbon.dark .dark\:bg-yellow-900\/20 { background-color: rgba(241,194,27,0.08) !important; }
+html.carbon.dark .dark\:border-yellow-700\/50 { border-color: rgba(241,194,27,0.3) !important; }
+html.carbon.dark .dark\:text-yellow-300  { color: #f6d860 !important; }
+html.carbon.dark .dark\:text-yellow-400\/80 { color: rgba(241,194,27,0.8) !important; }
+
+/* ──────────────────────────────────────────────────────────────────
+   LIGHT MODE OVERRIDES (CARBON WHITE / GRAY NEUTRAL PALETTE)
+   ────────────────────────────────────────────────────────────────── */
+html.carbon:not(.dark) body { background: var(--c-bg) !important; }
+html.carbon:not(.dark) .bg-white      { background-color: #ffffff !important; }
+html.carbon:not(.dark) .bg-slate-50   { background-color: #f4f4f4 !important; }
+html.carbon:not(.dark) .bg-slate-50\/50 { background-color: rgba(244,244,244,0.5) !important; }
+html.carbon:not(.dark) .bg-slate-100  { background-color: #f4f4f4 !important; }
+html.carbon:not(.dark) .bg-slate-200  { background-color: #e0e0e0 !important; }
+
+html.carbon:not(.dark) .border-slate-200 { border-color: #e0e0e0 !important; }
+html.carbon:not(.dark) .border-slate-300 { border-color: #c6c6c6 !important; }
+
+html.carbon:not(.dark) .text-slate-900 { color: #161616 !important; }
+html.carbon:not(.dark) .text-slate-800 { color: #262626 !important; }
+html.carbon:not(.dark) .text-slate-700 { color: #393939 !important; }
+html.carbon:not(.dark) .text-slate-600 { color: #525252 !important; }
+html.carbon:not(.dark) .text-slate-500 { color: #6f6f6f !important; }
+html.carbon:not(.dark) .text-slate-400 { color: #8d8d8d !important; }
+
+html.carbon:not(.dark) .hover\:bg-slate-50:hover  { background-color: #e8e8e8 !important; }
+html.carbon:not(.dark) .hover\:bg-slate-100:hover { background-color: #e8e8e8 !important; }
+
+html.carbon:not(.dark) .text-blue-600     { color: #0f62fe !important; }
+html.carbon:not(.dark) .border-blue-500   { border-color: #0f62fe !important; }
+html.carbon:not(.dark) .bg-blue-100       { background-color: rgba(15,98,254,0.10) !important; }
+html.carbon:not(.dark) .text-blue-700     { color: #0043ce !important; }
+html.carbon:not(.dark) .hover\:bg-blue-100:hover { background-color: rgba(15,98,254,0.10) !important; }
+
+/* ──────────────────────────────────────────────────────────────────
+   INTERACTIVE ELEMENTS — SMOOTH POLISH
+   ────────────────────────────────────────────────────────────────── */
+
+/* Universal transition on all interactive elements */
+html.carbon button,
+html.carbon a,
+html.carbon input,
+html.carbon select,
+html.carbon textarea {
+    transition:
+        background-color 100ms cubic-bezier(0.2, 0, 0.38, 0.9),
+        border-color 100ms cubic-bezier(0.2, 0, 0.38, 0.9),
+        color 100ms cubic-bezier(0.2, 0, 0.38, 0.9),
+        box-shadow 150ms cubic-bezier(0.2, 0, 0.38, 0.9),
+        opacity 100ms ease !important;
+}
+
+/* Focus ring — Carbon 2px solid white (dark) / blue (light) */
+html.carbon button:focus-visible,
+html.carbon a:focus-visible,
+html.carbon input:focus-visible,
+html.carbon select:focus-visible,
+html.carbon textarea:focus-visible {
+    outline: 2px solid var(--c-focus) !important;
+    outline-offset: 1px !important;
+    box-shadow: none !important;
+}
+
+/* Remove default input focus box-shadow, use Carbon outline */
+html.carbon input:focus,
+html.carbon textarea:focus,
+html.carbon select:focus {
+    box-shadow: none !important;
+    outline: 2px solid var(--c-interactive) !important;
+    outline-offset: -2px !important;
+    border-color: var(--c-interactive) !important;
+}
+
+/* ── INPUT STYLING ── */
+html.carbon input[type="text"],
+html.carbon input[type="password"],
+html.carbon input[type="number"],
+html.carbon textarea,
+html.carbon select {
+    background: var(--c-layer-01) !important;
+    border-color: var(--c-border-01) !important;
+    color: var(--c-text-pri) !important;
+}
+
+html.carbon input::placeholder,
+html.carbon textarea::placeholder {
+    color: var(--c-text-ph) !important;
+}
+
+/* ── PRIMARY BUTTONS (bg-blue-600) ── */
+html.carbon button.bg-blue-600,
+html.carbon .bg-blue-600 {
+    background-color: var(--c-interactive) !important;
+    border-color: var(--c-interactive) !important;
+    color: var(--c-text-on) !important;
+    font-weight: 500 !important;
+}
+html.carbon button.bg-blue-600:hover,
+html.carbon .bg-blue-600:hover,
+html.carbon .hover\:bg-blue-700:hover {
+    background-color: #0f62fe !important;
+    border-color: #0f62fe !important;
+}
+html.carbon button.bg-blue-600:active {
+    background-color: #002d9c !important;
+    border-color: #002d9c !important;
+}
+
+/* ── SECONDARY BUTTONS / ACTION BUTTONS ── */
+html.carbon .border-slate-300,
+html.carbon .dark\:border-zinc-700 {
+    border-color: var(--c-border-01) !important;
+}
+
+/* ── LIST ITEMS — SMOOTH HOVER ── */
+html.carbon .group.p-3 {
+    transition: background-color 80ms ease !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   SCROLLBAR — CARBON STYLE
+   ────────────────────────────────────────────────────────────────── */
+html.carbon ::-webkit-scrollbar { width: 6px; height: 6px; }
+html.carbon ::-webkit-scrollbar-track { background: transparent; }
+html.carbon.dark ::-webkit-scrollbar-thumb {
+    background: #525252;
+    border-radius: 0;
+}
+html.carbon.dark ::-webkit-scrollbar-thumb:hover { background: #6f6f6f; }
+html.carbon:not(.dark) ::-webkit-scrollbar-thumb {
+    background: #8d8d8d;
+    border-radius: 0;
+}
+html.carbon:not(.dark) ::-webkit-scrollbar-thumb:hover { background: #525252; }
+
+/* ──────────────────────────────────────────────────────────────────
+   MODAL OVERLAYS
+   ────────────────────────────────────────────────────────────────── */
+html.carbon.dark .fixed.inset-0.bg-slate-900\/50,
+html.carbon.dark .fixed.inset-0.bg-slate-900\/60,
+html.carbon.dark .fixed.inset-0.bg-black\/80 {
+    background-color: rgba(0, 0, 0, 0.72) !important;
+    backdrop-filter: blur(2px) !important;
+}
+
+html.carbon .fixed.inset-0:not(#mainMap):not(#resultList) {
+    backdrop-filter: blur(2px) !important;
+}
+
+/* Modal panels */
+html.carbon.dark .bg-white { background-color: var(--c-layer-01) !important; }
+html.carbon.dark .dark\:bg-zinc-900 { background-color: var(--c-layer-01) !important; }
+
+/* Modal headers */
+html.carbon.dark .bg-slate-50.dark\:bg-zinc-900\/50 {
+    background-color: var(--c-layer-02) !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   SETTINGS MODAL — ACTIVE STATES
+   ────────────────────────────────────────────────────────────────── */
+html.carbon.dark #settingsModal .bg-blue-100,
+html.carbon.dark #settingsModal .dark\:bg-blue-900\/50 {
+    background-color: rgba(69,137,255,0.12) !important;
+    border-color: #4589ff !important;
+    color: #78a9ff !important;
+    font-weight: 600 !important;
+}
+html.carbon.dark #settingsModal .text-blue-700,
+html.carbon.dark #settingsModal .dark\:text-blue-300 {
+    color: #78a9ff !important;
+}
+
+html.carbon:not(.dark) #settingsModal .bg-blue-100 {
+    background-color: rgba(15,98,254,0.10) !important;
+    border-color: #0f62fe !important;
+    color: #0f62fe !important;
+    font-weight: 600 !important;
+}
+html.carbon:not(.dark) #settingsModal .text-blue-700 {
+    color: #0f62fe !important;
+}
+
+/* App settings modal button active states */
+html.carbon.dark #appSettingsModal .bg-blue-100,
+html.carbon.dark #appSettingsModal .dark\:bg-blue-900\/50 {
+    background-color: rgba(69,137,255,0.12) !important;
+    border-color: #4589ff !important;
+    color: #78a9ff !important;
+    font-weight: 600 !important;
+}
+html.carbon.dark #appSettingsModal .text-blue-700,
+html.carbon.dark #appSettingsModal .dark\:text-blue-300 {
+    color: #78a9ff !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   LIST ITEM SELECTION — CARBON BLUE LEFT BORDER
+   ────────────────────────────────────────────────────────────────── */
+html.carbon .list-item-selected {
+    background-color: var(--c-hover) !important;
+    border-left: 3px solid var(--c-interactive) !important;
+    padding-left: calc(0.75rem - 3px) !important;
+}
+html.carbon.dark .list-item-selected {
+    background-color: rgba(69,137,255,0.10) !important;
+    border-left-color: #4589ff !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   FILTER CHIPS — ACTIVE AREA CHIPS
+   ────────────────────────────────────────────────────────────────── */
+html.carbon.dark #filterMenuPanel .border-green-500 { border-color: #42be65 !important; }
+html.carbon.dark #filterMenuPanel .bg-green-900\/30 { background-color: rgba(66,190,101,0.12) !important; }
+html.carbon.dark #filterMenuPanel .dark\:text-green-300 { color: #6fdc8c !important; }
+
+html.carbon.dark #filterMenuPanel .border-red-500   { border-color: #fa4d56 !important; }
+html.carbon.dark #filterMenuPanel .bg-red-900\/30   { background-color: rgba(250,77,86,0.12) !important; }
+html.carbon.dark #filterMenuPanel .dark\:text-red-300 { color: #ff8389 !important; }
+
+/* ──────────────────────────────────────────────────────────────────
+   OVERLAY PANEL — CARBON DARK OVERRIDE
+   ────────────────────────────────────────────────────────────────── */
+html.carbon.dark .ov-panel {
+    background: #161616 !important;
+    border-color: #393939 !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.8) !important;
+}
+html.carbon.dark .ov-header        { background: #262626 !important; border-color: #393939 !important; }
+html.carbon.dark .ov-header-station { color: #f4f4f4 !important; }
+html.carbon.dark .ov-header-name   { color: #a8a8a8 !important; }
+html.carbon.dark .ov-toolbar       { background: #161616 !important; border-color: #393939 !important; }
+html.carbon.dark .ov-tb-cat        { color: #8d8d8d !important; }
+html.carbon.dark .ov-tb-cat:hover  { background: #262626 !important; color: #f4f4f4 !important; }
+html.carbon.dark .ov-tb-cat.active { background: rgba(69,137,255,0.15) !important; color: #78a9ff !important; }
+html.carbon.dark .ov-tb-sep        { background: #393939 !important; }
+html.carbon.dark .ov-tb-act        { color: #8d8d8d !important; border-color: #393939 !important; }
+html.carbon.dark .ov-tb-act:hover  { background: #262626 !important; }
+html.carbon.dark .ov-subtoolbar    { background: #1a1a1a !important; border-color: #393939 !important; }
+html.carbon.dark .ov-sub-btn       { color: #a8a8a8 !important; }
+html.carbon.dark .ov-sub-btn:hover { background: #262626 !important; color: #f4f4f4 !important; }
+html.carbon.dark .ov-sub-btn.active { background: rgba(69,137,255,0.15) !important; border-color: #4589ff !important; color: #78a9ff !important; }
+html.carbon.dark .ov-body          { background: #161616 !important; }
+html.carbon.dark .ov-element-row   { background: #1f1f1f !important; color: #c6c6c6 !important; }
+html.carbon.dark .ov-element-row:hover { background: #262626 !important; }
+html.carbon.dark .ov-footer        { background: #1a1a1a !important; border-color: #393939 !important; }
+html.carbon.dark .ov-badge         { background: #262626 !important; color: #a8a8a8 !important; }
+html.carbon.dark .ov-trigger-btn   { background: #262626 !important; color: #c6c6c6 !important; }
+html.carbon.dark .ov-trigger-btn:hover  { background: #393939 !important; color: #f4f4f4 !important; }
+html.carbon.dark .ov-trigger-btn.active { background: rgba(69,137,255,0.15) !important; color: #78a9ff !important; }
+
+/* ──────────────────────────────────────────────────────────────────
+   LEAFLET CONTROLS — CARBON DARK
+   ────────────────────────────────────────────────────────────────── */
+
+/* Tile filter stays the same for dark mode */
+html.carbon.dark .leaflet-control-layers {
+    background: #161616 !important;
+    border: 1px solid #393939 !important;
+    border-radius: 0 !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.6) !important;
+}
+html.carbon.dark .leaflet-control-layers-toggle {
+    background-color: #262626 !important;
+    background-image: none !important;
+    border-color: #393939 !important;
+    border-radius: 0 !important;
+    color: #c6c6c6 !important;
+}
+html.carbon.dark .leaflet-control-layers-toggle:hover {
+    background-color: #353535 !important;
+    border-color: #525252 !important;
+    color: #f4f4f4 !important;
+}
+html.carbon.dark .leaflet-control-layers label { color: #c6c6c6 !important; }
+html.carbon.dark .leaflet-control-layers-separator { border-color: #393939 !important; }
+html.carbon.dark .leaflet-control-layers-group-name { color: #8d8d8d !important; }
+
+/* Zoom buttons */
+html.carbon.dark .leaflet-bar a,
+html.carbon.dark .leaflet-control-zoom-in,
+html.carbon.dark .leaflet-control-zoom-out {
+    background: #262626 !important;
+    background-color: #262626 !important;
+    border-color: #393939 !important;
+    color: #c6c6c6 !important;
+    border-radius: 0 !important;
+    width: 30px !important;
+    height: 30px !important;
+    line-height: 30px !important;
+    transition: background 100ms ease, color 100ms ease !important;
+}
+html.carbon.dark .leaflet-bar a:first-child { border-radius: 0 !important; }
+html.carbon.dark .leaflet-bar a:last-child  { border-radius: 0 !important; }
+html.carbon.dark .leaflet-bar a:hover,
+html.carbon.dark .leaflet-control-zoom-in:hover,
+html.carbon.dark .leaflet-control-zoom-out:hover {
+    background: #353535 !important;
+    background-color: #353535 !important;
+    color: #f4f4f4 !important;
+    border-color: #525252 !important;
+}
+html.carbon.dark .leaflet-control-zoom-in:active,
+html.carbon.dark .leaflet-control-zoom-out:active {
+    background: var(--c-interactive, #4589ff) !important;
+    color: #ffffff !important;
+}
+
+/* Attribution */
+html.carbon.dark .leaflet-control-attribution {
+    background: rgba(22,22,22,0.92) !important;
+    border: 1px solid #393939 !important;
+    color: #6f6f6f !important;
+    font-size: 10px !important;
+}
+html.carbon.dark .leaflet-control-attribution a { color: #78a9ff !important; }
+
+/* ──────────────────────────────────────────────────────────────────
+   LEAFLET CONTROLS — CARBON LIGHT
+   ────────────────────────────────────────────────────────────────── */
+html.carbon:not(.dark) .leaflet-control-layers {
+    background: #ffffff !important;
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 0 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important;
+}
+html.carbon:not(.dark) .leaflet-control-layers-toggle {
+    border-radius: 0 !important;
+    border-color: #e0e0e0 !important;
+}
+html.carbon:not(.dark) .leaflet-control-layers-toggle:hover {
+    background-color: #f4f4f4 !important;
+    border-color: #c6c6c6 !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   RADAR TIMELINE
+   ────────────────────────────────────────────────────────────────── */
+html.carbon.dark #radarSlider                { background: #393939 !important; }
+html.carbon.dark #radarSlider::-webkit-slider-thumb { background: #4589ff !important; border-color: #161616 !important; }
+
+/* ──────────────────────────────────────────────────────────────────
+   ADMIN PAGE OVERRIDES
+   ────────────────────────────────────────────────────────────────── */
+html.carbon.dark .bg-slate-100 { background-color: #000000 !important; }
+
+
+
+/* ──────────────────────────────────────────────────────────────────
+   ICON SIZE HELPERS (for MDI icons used as button icons)
+   Use alongside Tailwind sizing classes
+   ────────────────────────────────────────────────────────────────── */
+html.carbon .mdi-btn-icon {
+    font-size: 1.125rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   SMOOTH PAGE TRANSITIONS
+   ────────────────────────────────────────────────────────────────── */
+html.carbon .modal-enter {
+    opacity: 0;
+    transform: scale(0.98) translateY(4px) !important;
+}
+html.carbon .modal-enter-active {
+    opacity: 1;
+    transform: scale(1) translateY(0) !important;
+    transition: opacity 180ms cubic-bezier(0.2,0,0.38,0.9), transform 180ms cubic-bezier(0.2,0,0.38,0.9) !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   DRAW TOOLBAR
+   ────────────────────────────────────────────────────────────────── */
+html.carbon.dark .leaflet-draw-toolbar a {
+    background-color: #262626 !important;
+    border-color: #393939 !important;
+    color: #c6c6c6 !important;
+    border-radius: 0 !important;
+}
+html.carbon.dark .leaflet-draw-toolbar a:hover {
+    background-color: #353535 !important;
+}

@@ -39,7 +39,8 @@ const customThemes = [
     { id: 'dracula', label: 'Dracula', file: 'themes/dracula.css' },
     { id: 'dracula-laser', label: 'Dracula Laser', file: 'themes/dracula-laser.css' },
     { id: 'kirschbluete', label: 'Kirschblüte', file: 'themes/kirschbluete.css' },
-    { id: 'swr-ms', label: 'SWR MS', file: 'themes/swr-ms.css' }
+    { id: 'swr-ms', label: 'SWR MS', file: 'themes/swr-ms.css' },
+    { id: 'carbon', label: 'Carbon', file: 'themes/carbon.css' }
 ];
 
 let currentAppearance = localStorage.getItem('appearance') || 'system';

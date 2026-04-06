@@ -1,9 +1,0 @@
-{
-  "name": "swr-dashboard",
-  "version": "1.0.0",
-  "private": true,
-  "scripts": {
-    "build": "echo 'No build step required'",
-    "dev": "npx wrangler pages dev . --compatibility-date=2024-09-23"
-  }
-}

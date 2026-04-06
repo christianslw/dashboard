@@ -139,6 +139,24 @@ function initLeafletMap() {
     L.control.layers(baseLayers, overlayLayers, { position: 'topright' }).addTo(leafletMap);
     restoreActiveOverlayLayers(overlayLayers);
 
+    // Inject local icons into Leaflet controls (layers toggle + zoom buttons)
+    requestAnimationFrame(function() {
+        const defs = [
+            { sel: '.leaflet-control-layers-toggle', icon: 'layers' },
+            { sel: '.leaflet-control-zoom-in',       icon: 'plus'   },
+            { sel: '.leaflet-control-zoom-out',      icon: 'minus'  }
+        ];
+        defs.forEach(function(d) {
+            const el = document.querySelector(d.sel);
+            if (!el) return;
+            el.innerHTML = '';
+            const i = document.createElement('i');
+            i.className = 'mdi mdi-' + d.icon;
+            i.style.cssText = 'font-size:18px;line-height:1;pointer-events:none';
+            el.appendChild(i);
+        });
+    });
+
     leafletMap.on('baselayerchange', function(e) {
         localStorage.setItem('selectedMapLayer', e.name);
     });
