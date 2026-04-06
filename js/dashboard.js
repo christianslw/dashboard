@@ -6,6 +6,7 @@ let dashMobileMapInstance = null;
 let dashMobileTileLayer = null;
 let dashMobileMarker = null;
 let dashMobileRouteLayer = null;
+let dashMobileOverlayGroup = null;
 
 function openDashboard(nummer) {
     const standort = standorte.find(s => String(s.nummer) === String(nummer));
@@ -63,7 +64,7 @@ function setupMobileMap(standort) {
             attributionControl: false
         });
     }
-    
+
     // Tile-Layer aktualisieren falls das Theme gewechselt wurde
     // Dark mode appearance is handled via CSS inversion on the osm-tiles class
     if (dashMobileTileLayer) {
@@ -83,15 +84,39 @@ function setupMobileMap(standort) {
         dashMobileRouteLayer = null;
     }
 
-    // Neuen blauen Marker setzen
+    // Alte Overlays entfernen und neu erstellen
+    if (dashMobileOverlayGroup) {
+        dashMobileMapInstance.removeLayer(dashMobileOverlayGroup);
+    }
+    dashMobileOverlayGroup = L.layerGroup().addTo(dashMobileMapInstance);
+
+    // Marker-Farbe basierend auf Standort-Präfix (identisch zu updateMapMarkers)
+    const markerColors = {
+        1: '#8b5cf6', 2: '#10b981', 3: '#f59e0b', 4: '#ef4444',
+        5: '#ec4899', 6: '#06b6d4', 8: '#6366f1', 9: '#eab308'
+    };
+    const prefix = Math.floor(Number(standort.nummer) / 1000);
+    const markerColor = markerColors[prefix] || '#3b82f6';
+
     const mobileIcon = L.divIcon({
-        html: `<div style="width: 16px; height: 16px; background-color: #3b82f6; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.4);"></div>`,
+        html: `<div style="width: 16px; height: 16px; background-color: ${markerColor}; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.4);"></div>`,
         className: 'custom-mobile-marker',
         iconSize: [16, 16],
         iconAnchor: [8, 8]
     });
-    
+
     dashMobileMarker = L.marker([standort.lat, standort.lon], { icon: mobileIcon }).addTo(dashMobileMapInstance);
+
+    // Overlays rendern (Hauptzufahrt, Schranken, etc.)
+    if (typeof getOverlayPayloadForStandort === 'function' && typeof createLayerFromFeature === 'function') {
+        const payload = getOverlayPayloadForStandort(standort.nummer);
+        if (payload && payload.features) {
+            payload.features.forEach(feature => {
+                const layer = createLayerFromFeature(feature);
+                if (layer) dashMobileOverlayGroup.addLayer(layer);
+            });
+        }
+    }
 
     let bounds = L.latLngBounds([[standort.lat, standort.lon]]);
 
@@ -122,18 +147,26 @@ function setupMobileMap(standort) {
         }
     }
 
-    if (bounds.isValid() && !bounds.getNorthEast().equals(bounds.getSouthWest())) {
+    const hasBounds = bounds.isValid() && !bounds.getNorthEast().equals(bounds.getSouthWest());
+
+    if (hasBounds) {
         dashMobileMapInstance.fitBounds(bounds, { padding: [20, 20], maxZoom: 16 });
     } else {
         dashMobileMapInstance.setView([standort.lat, standort.lon], 13);
     }
 
-    // WICHTIG: Behebt Leaflet-Rendering-Fehler in versteckten Modals
+    // WICHTIG: Behebt Leaflet-Rendering-Fehler in versteckten Modals.
+    // Nach invalidateSize die Ansicht erneut setzen, da die Kartengröße
+    // beim ersten Aufruf noch unbekannt war (Modal war versteckt).
     setTimeout(() => {
-        if (dashMobileMapInstance) {
-            dashMobileMapInstance.invalidateSize();
+        if (!dashMobileMapInstance) return;
+        dashMobileMapInstance.invalidateSize();
+        if (hasBounds) {
+            dashMobileMapInstance.fitBounds(bounds, { padding: [20, 20], maxZoom: 16, animate: false });
+        } else {
+            dashMobileMapInstance.setView([standort.lat, standort.lon], 13, { animate: false });
         }
-    }, 250);
+    }, 300);
 }
 
 function closeDashboard() {
