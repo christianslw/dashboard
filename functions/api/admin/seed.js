@@ -57,7 +57,7 @@ export async function onRequestPost({ env, request }) {
     const CHUNK = 50;
     for (let i = 0; i < records.length; i += CHUNK) {
         await Promise.all(
-            records.slice(i, i + CHUNK).map(r => {
+            records.slice(i, i + CHUNK).map(async r => {
                 const nummer = String(r.nummer);
                 numbers.push(nummer);
                 // Read existing record to preserve user-added fahrtanweisung
