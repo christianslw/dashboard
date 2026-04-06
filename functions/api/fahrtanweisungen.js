@@ -23,5 +23,8 @@ export async function onRequestGet({ env }) {
     );
 
     const result = Object.fromEntries(entries.filter(Boolean));
-    return Response.json(result, { headers: { 'Cache-Control': 'no-store' } });
+    return Response.json(result, {
+        // Cache at Cloudflare edge for 30 s; serve stale for up to 2 min while revalidating.
+        headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120' }
+    });
 }

@@ -88,20 +88,21 @@ window.onload = async () => {
     applyThemeAndAppearance();
 
     // ── 2. Cloudflare backend sync ─────────────────────────────────────────────
+    // All three fetches are independent — run them in parallel to avoid
+    // stacking round-trips (settings → fahrtanweisungen → standorte was ~3 RTTs).
+    let backendHasStandorte = false;
     if (typeof window.__cfSync !== 'undefined') {
-        // Pull user settings (appearance, favorites, sort, …) from the backend.
-        // This must happen before loadFavorites / loadFilterState so that
-        // any changes made on another device are reflected right away.
-        await window.__cfSync.loadSettingsFromBackend();
+        [, , backendHasStandorte] = await Promise.all([
+            window.__cfSync.loadSettingsFromBackend(),
+            window.__cfSync.loadFahrtanweisungen(),
+            window.__cfSync.loadStandorteFromBackend(),
+        ]);
 
         // Re-apply theme in case the backend had a different value
         applyThemeAndAppearance();
 
         // Start watching for local setting changes and push them to the backend
         window.__cfSync.startSettingsSync();
-
-        // Load shared Fahrtanweisungen from backend into localStorage
-        await window.__cfSync.loadFahrtanweisungen();
     }
 
     // ── 3. Restore per-user in-memory state from (possibly updated) localStorage
@@ -109,17 +110,11 @@ window.onload = async () => {
     loadFilterState();
 
     // ── 4. Load standorte ──────────────────────────────────────────────────────
-    // Try the CF backend first (admin-managed data).
-    // If not seeded yet, fall back to the bundled standorte.js.
-    let backendHasStandorte = false;
-    if (typeof window.__cfSync !== 'undefined') {
-        backendHasStandorte = await window.__cfSync.loadStandorteFromBackend();
-    }
+    // backendHasStandorte already resolved above via Promise.all.
+    // Fall back to the bundled standorte.js if the backend has no data.
     if (backendHasStandorte) {
-        // Use the admin-managed data loaded by loadStandorteFromBackend
         standorte = window.standorte;
     } else {
-        // Fallback: use the static JS bundle
         standorte = typeof standorteDaten !== 'undefined' ? standorteDaten : [];
     }
 

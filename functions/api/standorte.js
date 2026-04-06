@@ -21,7 +21,10 @@ export async function onRequestGet({ env }) {
         );
 
         return Response.json(records.filter(Boolean), {
-            headers: { 'Cache-Control': 'no-store' }
+            // Cache at Cloudflare edge for 30 s; serve stale for up to 2 min while revalidating.
+            // Admin mutations (PUT/DELETE on /api/standorte/:nr) carry no-store so the edge
+            // cache is bypassed there and the index is always freshly rebuilt.
+            headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120' }
         });
     } catch (err) {
         return Response.json({ error: err.message }, { status: 500 });
