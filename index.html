@@ -143,12 +143,17 @@
         </div>
 
         <!-- Split view -->
-        <div class="flex-1 flex overflow-hidden">
+        <div class="flex-1 flex overflow-hidden" id="splitPane">
             <!-- Result list -->
-            <div id="resultList" class="w-full md:w-[340px] lg:w-[380px] flex-shrink-0 divide-y divide-slate-100 dark:divide-zinc-800 overflow-y-auto p-2 border-r border-slate-200 dark:border-zinc-800">
+            <div id="resultList" class="w-full flex-shrink-0 divide-y divide-slate-100 dark:divide-zinc-800 overflow-y-auto p-2">
                 <!-- Rendered by JS -->
             </div>
-            
+
+            <!-- Drag divider -->
+            <div id="splitDivider" class="hidden md:flex shrink-0 select-none touch-none" style="width:5px;cursor:col-resize;align-items:stretch;position:relative;z-index:10">
+                <div id="splitDividerBar" style="width:1px;background:transparent;margin:0 auto;align-self:stretch;transition:background 0.15s,width 0.15s"></div>
+            </div>
+
             <!-- Main map -->
             <div class="hidden md:flex flex-1 flex-col overflow-hidden">
                 <div id="mainMap" class="flex-1 bg-slate-100 dark:bg-zinc-900 relative z-0">

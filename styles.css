@@ -56,12 +56,19 @@ html.dark:not(.dracula):not(.dracula-laser) .leaflet-control-attribution {
 	display: flex !important;
 	align-items: center !important;
 	justify-content: center !important;
+	padding: 0 !important;
+	text-indent: 0 !important;
 }
 .leaflet-control-zoom-in .mdi,
-.leaflet-control-zoom-out .mdi {
+.leaflet-control-zoom-out .mdi,
+.ov-trigger-btn .mdi {
 	display: block;
 	line-height: 1 !important;
 	font-size: 18px !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	vertical-align: 0 !important;
+	flex-shrink: 0 !important;
 }
 
 /* Custom markers */
@@ -237,18 +244,26 @@ html.dark:not(.dracula):not(.dracula-laser) .leaflet-control-attribution {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 26px;
-	height: 26px;
+	width: 30px;
+	height: 30px;
+	padding: 0;
+	text-indent: 0;
 	background: #fff;
 	border: none;
 	outline: none;
-	color: #555;
+	color: #444;
 	cursor: pointer;
 	transition: background 0.12s, color 0.12s;
 	position: relative;
 }
+.dark .ov-trigger-btn {
+	background: #09090b;
+	color: #d4d4d8;
+}
 .ov-trigger-btn:hover { background: #f4f4f4; color: #333; }
+.dark .ov-trigger-btn:hover { background: #3f3f46; color: #f4f4f5; }
 .ov-trigger-btn.active { background: #dbeafe; color: #1d4ed8; }
+.dark .ov-trigger-btn.active { background: #1e3a8a; color: #93c5fd; }
 
 /* Hover tooltip via CSS — shows station number + name */
 .ov-trigger-btn::after {
@@ -303,7 +318,7 @@ html.dark:not(.dracula):not(.dracula-laser) .leaflet-control-attribution {
 	width: min(240px, calc(100vw - 24px));
 	background: #ffffff;
 	border: 1px solid #e2e8f0;
-	border-radius: 14px;
+	border-radius: 0.75rem; /* rounded-xl */
 	box-shadow: 0 12px 36px rgba(15,23,42,0.15);
 	overflow: hidden;
 	display: flex;
@@ -326,7 +341,7 @@ html.dark:not(.dracula):not(.dracula-laser) .leaflet-control-attribution {
 	width: 22px; height: 22px;
 	display: flex; align-items: center; justify-content: center;
 	background: none; border: 1px solid transparent; color: #94a3b8;
-	cursor: pointer; border-radius: 5px; transition: all 0.15s;
+	cursor: pointer; border-radius: 0.375rem; transition: all 0.15s;
 	flex-shrink: 0;
 }
 .ov-close-btn:hover { background: #fee2e2; color: #dc2626; border-color: #fecaca; }
@@ -342,7 +357,7 @@ html.dark:not(.dracula):not(.dracula-laser) .leaflet-control-attribution {
 .ov-tb-cat {
 	width: 30px; height: 30px;
 	display: flex; align-items: center; justify-content: center;
-	border-radius: 7px; border: none; background: transparent;
+	border-radius: 0.375rem; border: none; background: transparent;
 	color: #64748b; cursor: pointer; transition: all 0.12s;
 	position: relative;
 }
@@ -357,7 +372,7 @@ html.dark:not(.dracula):not(.dracula-laser) .leaflet-control-attribution {
 .ov-tb-act {
 	width: 28px; height: 28px; flex-shrink: 0;
 	display: flex; align-items: center; justify-content: center;
-	border-radius: 6px; border: 1px solid #e2e8f0; background: transparent;
+	border-radius: 0.375rem; border: 1px solid #e2e8f0; background: transparent;
 	color: #64748b; cursor: pointer; transition: all 0.12s;
 }
 .ov-tb-act:hover { background: #f1f5f9; }
@@ -381,7 +396,7 @@ html.dark:not(.dracula):not(.dracula-laser) .leaflet-control-attribution {
 .ov-subtoolbar-color { flex-direction: column; align-items: stretch; gap: 7px; }
 .ov-sub-btn {
 	display: flex; align-items: center; gap: 4px;
-	padding: 4px 7px; border-radius: 6px;
+	padding: 4px 7px; border-radius: 0.375rem;
 	border: 1px solid transparent; background: transparent;
 	font-size: 11px; font-weight: 500; color: #334155;
 	cursor: pointer; transition: all 0.12s;
@@ -409,7 +424,7 @@ html.dark:not(.dracula):not(.dracula-laser) .leaflet-control-attribution {
 .ov-custom-row { display: flex; align-items: center; gap: 8px; }
 .ov-custom-input {
 	width: 28px; height: 24px;
-	border: 1px solid #e2e8f0; border-radius: 5px;
+	border: 1px solid #e2e8f0; border-radius: 0.375rem;
 	padding: 1px; cursor: pointer; background: #fff;
 }
 .ov-custom-label { font-size: 10px; color: #64748b; }
@@ -418,7 +433,7 @@ html.dark:not(.dracula):not(.dracula-laser) .leaflet-control-attribution {
 /* ── Badges ── */
 .ov-badge {
 	font-size: 9px; padding: 1px 5px;
-	border-radius: 10px; background: #dbeafe;
+	border-radius: 9999px; background: #dbeafe;
 	color: #2563eb; font-weight: 700; line-height: 1.4;
 }
 
@@ -432,7 +447,7 @@ html.dark:not(.dracula):not(.dracula-laser) .leaflet-control-attribution {
 .ov-element-list { display: flex; flex-direction: column; gap: 4px; }
 .ov-element-row {
 	display: flex; align-items: center; gap: 5px;
-	padding: 5px 7px; border-radius: 8px;
+	padding: 5px 7px; border-radius: 0.5rem;
 	font-size: 10px; color: #334155;
 	background: #f8fafc; transition: background 0.12s;
 }
@@ -441,7 +456,7 @@ html.dark:not(.dracula):not(.dracula-laser) .leaflet-control-attribution {
 .ov-element-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ov-rename {
 	cursor: text;
-	border-radius: 3px;
+	border-radius: 0.25rem;
 	outline: none;
 	padding: 0 2px;
 	margin: 0 -2px;
@@ -461,7 +476,7 @@ html.dark:not(.dracula):not(.dracula-laser) .leaflet-control-attribution {
 	width: 18px; height: 18px;
 	display: flex; align-items: center; justify-content: center;
 	border: none; background: none; color: #cbd5e1;
-	cursor: pointer; border-radius: 4px; transition: all 0.12s; flex-shrink: 0;
+	cursor: pointer; border-radius: 0.25rem; transition: all 0.12s; flex-shrink: 0;
 }
 .ov-element-delete:hover { background: #fee2e2; color: #dc2626; }
 .ov-empty { font-size: 10px; color: #94a3b8; text-align: center; padding: 8px; }
@@ -574,7 +589,7 @@ html.dark:not(.dracula):not(.dracula-laser) .leaflet-control-attribution {
 	display: flex !important;
 	align-items: center !important;
 	justify-content: center !important;
-	color: #334155 !important;
+	color: #000000 !important;
 }
 
 .dark .leaflet-control-layers-toggle {
@@ -857,4 +872,37 @@ button[title="Favorit umschalten"]:active::before,
 
 .star-pop-anim .mdi {
 	animation: star-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
+}
+
+/* ===== SECTION 4: SPLIT PANE RESIZER ===== */
+
+/* CSS variable so both light and dark modes can be handled cleanly */
+:root { --divider-color: #e2e8f0; }
+html.dark { --divider-color: #27272a; }
+
+#splitDivider {
+	/* Expand the interactive hit area without affecting layout */
+	margin: 0 -3px;
+	padding: 0 3px;
+	box-sizing: content-box;
+}
+
+/* Wider, coloured bar while hovering or dragging */
+#splitDivider:hover #splitDividerBar,
+body.split-dragging #splitDividerBar {
+	width: 3px !important;
+	background: #3b82f6 !important;
+}
+
+/* While dragging: prevent any text-selection cursor leaking */
+body.split-dragging {
+	cursor: col-resize !important;
+	user-select: none !important;
+	-webkit-user-select: none !important;
+}
+body.split-dragging * {
+	pointer-events: none !important;
+}
+body.split-dragging #splitDivider {
+	pointer-events: all !important;
 }
