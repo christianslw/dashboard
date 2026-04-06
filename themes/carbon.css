@@ -594,6 +594,24 @@ html.carbon.dark #filterMenuPanel .bg-red-900\/30     { background-color: rgba(2
 html.carbon.dark #filterMenuPanel .dark\:text-red-300 { color: #ff8389 !important; }
 
 /* ══════════════════════════════════════════════════════════════════
+   OVERLAY PANEL — CARBON BASE
+   Reset Carbon 8pt button sizing for fixed-size icon-only buttons.
+   The global html.carbon button rule sets padding-inline:15px which
+   collapses 30px-wide icon buttons to 0px content area.
+   ══════════════════════════════════════════════════════════════════ */
+html.carbon .ov-tb-cat,
+html.carbon .ov-tb-act,
+html.carbon .ov-close-btn,
+html.carbon .ov-trigger-btn {
+    min-height: unset !important;
+    padding: 0 !important;
+}
+html.carbon .ov-sub-btn {
+    min-height: unset !important;
+    padding: 4px 7px !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
    OVERLAY PANEL — CARBON DARK
    ══════════════════════════════════════════════════════════════════ */
 html.carbon.dark .ov-panel {
@@ -612,19 +630,27 @@ html.carbon.dark .ov-toolbar {
     background: #0d0d0d !important;
     border-color: #1a1a1a !important;
 }
-html.carbon.dark .ov-tb-cat         { color: #8d8d8d !important; border-radius: 0 !important; }
+html.carbon.dark .ov-tb-cat         { color: #c6c6c6 !important; border-radius: 0 !important; }
 html.carbon.dark .ov-tb-cat:hover   { background: #161616 !important; color: #f4f4f4 !important; }
 html.carbon.dark .ov-tb-cat.active  { background: rgba(69,137,255,0.15) !important; color: #78a9ff !important; }
+/* Ensure SVG icons inside toolbar category buttons are visible */
+html.carbon.dark .ov-tb-cat svg     { stroke: #c6c6c6 !important; fill: none !important; }
 html.carbon.dark .ov-tb-sep         { background: #1a1a1a !important; }
-html.carbon.dark .ov-tb-act         { color: #8d8d8d !important; border-color: #1a1a1a !important; }
-html.carbon.dark .ov-tb-act:hover   { background: #161616 !important; }
+html.carbon.dark .ov-tb-act         { color: #a8a8a8 !important; border-color: #1a1a1a !important; }
+html.carbon.dark .ov-tb-act svg     { stroke: #a8a8a8 !important; fill: none !important; }
+html.carbon.dark .ov-tb-act:hover   { background: #161616 !important; color: #f4f4f4 !important; }
+html.carbon.dark .ov-tb-act:hover svg { stroke: #f4f4f4 !important; }
 html.carbon.dark .ov-subtoolbar {
     background: #111111 !important;
     border-color: #1a1a1a !important;
 }
-html.carbon.dark .ov-sub-btn        { color: #a8a8a8 !important; border-radius: 0 !important; }
+html.carbon.dark .ov-sub-btn        { color: #c6c6c6 !important; border-radius: 0 !important; }
 html.carbon.dark .ov-sub-btn:hover  { background: #161616 !important; color: #f4f4f4 !important; }
 html.carbon.dark .ov-sub-btn.active { background: rgba(69,137,255,0.15) !important; border-color: #4589ff !important; color: #78a9ff !important; }
+/* MDI icon glyphs inside sub-toolbar buttons */
+html.carbon.dark .ov-sub-btn .mdi   { color: #c6c6c6 !important; }
+/* currentColor SVG icons inside sub-toolbar buttons */
+html.carbon.dark .ov-sub-btn svg[stroke="currentColor"] { stroke: #c6c6c6 !important; }
 html.carbon.dark .ov-body           { background: #0d0d0d !important; }
 html.carbon.dark .ov-element-row    { background: #0e0e0e !important; color: #c6c6c6 !important; }
 html.carbon.dark .ov-element-row:hover { background: #161616 !important; }
@@ -662,6 +688,21 @@ html.carbon.dark .leaflet-control-layers label       { color: #c6c6c6 !important
 html.carbon.dark .leaflet-control-layers-separator   { border-color: #1a1a1a !important; }
 html.carbon.dark .leaflet-control-layers-group-name  { color: #8d8d8d !important; }
 
+/* Cancel the invert() filter from styles.css dark fallback */
+html.carbon.dark .leaflet-control-zoom-in,
+html.carbon.dark .leaflet-control-zoom-out,
+html.carbon.dark .leaflet-control-attribution { filter: none !important; }
+
+/* Zoom bar container */
+html.carbon.dark .leaflet-control-zoom.leaflet-bar {
+    background: #141414 !important;
+    border: 1px solid #1a1a1a !important;
+}
+
+/* Zoom buttons — duplicate with .leaflet-container prefix to beat Leaflet-Draw selectors */
+html.carbon.dark .leaflet-container .leaflet-bar a,
+html.carbon.dark .leaflet-container .leaflet-control-zoom-in,
+html.carbon.dark .leaflet-container .leaflet-control-zoom-out,
 html.carbon.dark .leaflet-bar a,
 html.carbon.dark .leaflet-control-zoom-in,
 html.carbon.dark .leaflet-control-zoom-out {
@@ -675,8 +716,13 @@ html.carbon.dark .leaflet-control-zoom-out {
     line-height: 30px !important;
     transition: background var(--motion-fast-01) var(--motion-standard), color var(--motion-fast-01) var(--motion-standard) !important;
 }
+html.carbon.dark .leaflet-container .leaflet-bar a:first-child,
+html.carbon.dark .leaflet-container .leaflet-bar a:last-child,
 html.carbon.dark .leaflet-bar a:first-child,
 html.carbon.dark .leaflet-bar a:last-child { border-radius: 0 !important; }
+html.carbon.dark .leaflet-container .leaflet-bar a:hover,
+html.carbon.dark .leaflet-container .leaflet-control-zoom-in:hover,
+html.carbon.dark .leaflet-container .leaflet-control-zoom-out:hover,
 html.carbon.dark .leaflet-bar a:hover,
 html.carbon.dark .leaflet-control-zoom-in:hover,
 html.carbon.dark .leaflet-control-zoom-out:hover {
@@ -691,12 +737,15 @@ html.carbon.dark .leaflet-control-zoom-out:active {
     color: #ffffff !important;
 }
 
+/* Attribution banner */
+html.carbon.dark .leaflet-container .leaflet-control-attribution,
 html.carbon.dark .leaflet-control-attribution {
     background: rgba(8,8,8,0.95) !important;
     border: 1px solid #1a1a1a !important;
     color: #6f6f6f !important;
     font-size: 10px !important;
 }
+html.carbon.dark .leaflet-container .leaflet-control-attribution a,
 html.carbon.dark .leaflet-control-attribution a { color: #78a9ff !important; }
 
 /* ══════════════════════════════════════════════════════════════════
