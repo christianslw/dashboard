@@ -1,0 +1,31 @@
+# ─── HTML ────────────────────────────────────────────────────────────────────
+# Always revalidate the document — never serve a stale HTML page.
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# ─── Application JS ──────────────────────────────────────────────────────────
+# Serve from cache immediately, revalidate silently in background.
+# Users always get the cached copy on repeat loads (instant), and the
+# background revalidation ensures at most one load lag after a deploy.
+/standorte.js
+  Cache-Control: public, max-age=0, stale-while-revalidate=86400
+
+/js/*
+  Cache-Control: public, max-age=0, stale-while-revalidate=86400
+
+# ─── Themes ──────────────────────────────────────────────────────────────────
+# Theme CSS changes only on intentional deploy — cache for 24 h, SWR 7 days.
+/themes/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+# ─── Static resources (icons, fonts) ─────────────────────────────────────────
+# These never change without a new filename — long cache is safe.
+/res/*
+  Cache-Control: public, max-age=604800, stale-while-revalidate=2592000
+
+# ─── styles.css ──────────────────────────────────────────────────────────────
+/styles.css
+  Cache-Control: public, max-age=0, stale-while-revalidate=86400
