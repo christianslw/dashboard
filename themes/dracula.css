@@ -1,27 +1,45 @@
 /* ===================================================================
    SWR Standort Dashboard — Dracula (Aura) Theme
    CSS class: "dracula" on <html>
+
+   HOW THIS FILE WORKS
+   ────────────────────────────────────────────────────────────────
+   styles.css contains:
+     • THEME BRIDGE  — scoped to :is(html.dracula, …) once for all themes
+     • DRACULA SHARED STRUCTURE — inputs, buttons, Leaflet, etc.
+       shared with dracula-laser via :is(html.dracula, html.dracula-laser)
+
+   This file only needs to:
+     1. Define the internal --primary/--surface/… palette variables
+     2. Set --theme-focus-ring / --theme-focus-glow tokens
+     3. Override the few things that differ from dracula-laser
    =================================================================== */
 
-/* --- CSS Variables --- */
+/* -------------------------------------------------------------------
+   PALETTE — light mode
+   ------------------------------------------------------------------- */
 html.dracula:not(.dark) {
-	--primary: #9b51e0;
-	--primary-light: #b070f0;
-	--primary-dark: #6b33a8;
-	--accent: #00a878;         /* Dunkles Mintgrün für Light Mode */
-	--accent-light: #20c997;
-	--warning: #f08c00;
-	--error: #d32f2f;
-	--background: #f4f4f8;
-	--background-alt: #e9e9f0; /* Stärkerer Kontrast für Listen-Elemente */
-	--surface: #ffffff;
-	--border: #d1cde0;         /* Etwas dunklere Rahmen für Sichtbarkeit */
-	--highlight: rgba(0, 168, 120, 0.15); /* Mintgrüner Highlight */
-	--text-primary: #1f1e29;
-	--text-secondary: #3b3947; /* Dunkler für bessere Lesbarkeit */
-	--text-muted: #5a576b;
-	--pink: #d81b60;
-	--blue: #0288d1;
+	--primary:        #9b51e0;
+	--primary-light:  #b070f0;
+	--primary-dark:   #6b33a8;
+	--accent:         #00a878;
+	--accent-light:   #20c997;
+	--warning:        #f08c00;
+	--error:          #d32f2f;
+	--background:     #f4f4f8;
+	--background-alt: #e9e9f0;
+	--surface:        #ffffff;
+	--border:         #d1cde0;
+	--highlight:      rgba(0, 168, 120, 0.15);
+	--text-primary:   #1f1e29;
+	--text-secondary: #3b3947;
+	--text-muted:     #5a576b;
+	--pink:           #d81b60;
+	--blue:           #0288d1;
+	/* Focus tokens */
+	--theme-focus-ring: rgba(162, 119, 255, 0.15);
+	--theme-focus-glow: rgba(162, 119, 255, 0.40);
+	/* DWD warning levels */
 	--dwd-level-1: #c8a82e;
 	--dwd-level-2: #d97825;
 	--dwd-level-3: #c45572;
@@ -32,24 +50,31 @@ html.dracula:not(.dark) {
 	--dwd-level-4-filter: brightness(0) saturate(100%) invert(44%) sepia(50%) saturate(2400%) hue-rotate(248deg) brightness(95%) contrast(96%);
 }
 
+/* -------------------------------------------------------------------
+   PALETTE — dark mode
+   ------------------------------------------------------------------- */
 html.dracula.dark {
-	--primary: #a277ff;       /* Lila: Primärer Akzent */
-	--primary-light: #c084fc;
-	--primary-dark: #8F5BFF;
-	--accent: #61ffca;        /* Mintgrün: Sekundärer Akzent */
-	--accent-light: #8EFFD9;
-	--warning: #ffca85;       /* Orange/Pfirsich: Warnungen */
-	--error: #ff6767;         /* Rot: Fehler */
-	--background: #140e1a;    /* Haupt-Hintergrund */
-	--background-alt: #100b15;/* Sekundärer Hintergrund */
-	--surface: #191120;       /* Tertiärer Hintergrund (Panels, Sidebar) */
-	--border: #3b334b;
-	--highlight: #3D375E7F;   /* Markierungen, Textauswahl, Hover */
-	--text-primary: #edecee;  /* Standard-Textfarbe */
-	--text-secondary: #cdccce;/* Sekundärer Text */
-	--text-muted: #64548e;    /* Gedämpftes Lila (Kommentare) */
-	--pink: #f694ff;          /* Pink: Badges, Controls */
-	--blue: #82e2ff;          /* Hellblau: Spezielle Typen/Klassen */
+	--primary:        #a277ff;
+	--primary-light:  #c084fc;
+	--primary-dark:   #8F5BFF;
+	--accent:         #61ffca;
+	--accent-light:   #8EFFD9;
+	--warning:        #ffca85;
+	--error:          #ff6767;
+	--background:     #140e1a;
+	--background-alt: #100b15;
+	--surface:        #191120;
+	--border:         #3b334b;
+	--highlight:      #3D375E7F;
+	--text-primary:   #edecee;
+	--text-secondary: #cdccce;
+	--text-muted:     #64548e;
+	--pink:           #f694ff;
+	--blue:           #82e2ff;
+	/* Focus tokens */
+	--theme-focus-ring: rgba(162, 119, 255, 0.15);
+	--theme-focus-glow: rgba(162, 119, 255, 0.40);
+	/* DWD warning levels */
 	--dwd-level-1: #ffca85;
 	--dwd-level-2: #ffa070;
 	--dwd-level-3: #ff7890;
@@ -60,49 +85,12 @@ html.dracula.dark {
 	--dwd-level-4-filter: brightness(0) saturate(100%) invert(70%) sepia(28%) saturate(3000%) hue-rotate(225deg) brightness(108%) contrast(102%);
 }
 
-/* --- Body --- */
-html.dracula body {
-	background: var(--background) !important;
-}
+/* -------------------------------------------------------------------
+   DRACULA-ONLY OVERRIDES
+   (things that differ from dracula-laser or add visual effects on top)
+   ------------------------------------------------------------------- */
 
-/* --- Surface / Background Colors --- */
-html.dracula .bg-white {
-	background: var(--surface) !important;
-	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
-	color: var(--text-primary) !important;
-}
-
-html.dracula .dark\:bg-zinc-950,
-html.dracula .dark\:bg-oled {
-	background: var(--background-alt) !important;
-	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
-}
-
-html.dracula .bg-slate-50 { background: var(--background-alt) !important; }
-html.dracula .bg-slate-50\/50 { background-color: var(--background-alt) !important; }
-html.dracula .bg-slate-100 { background: var(--background) !important; }
-html.dracula .bg-slate-200 { background: var(--surface) !important; }
-html.dracula .bg-slate-900 { background-color: var(--background) !important; color: var(--text-primary) !important; }
-
-html.dracula .dark\:bg-zinc-800 { background: var(--surface) !important; filter: brightness(1.2); }
-html.dracula .dark\:bg-zinc-900 { background: var(--surface) !important; }
-html.dracula .dark\:bg-zinc-950 { background: var(--background-alt) !important; }
-
-html.dracula .dark\:bg-zinc-900,
-html.dracula .dark\:bg-zinc-900\/50 {
-	background-color: var(--surface) !important;
-}
-
-html.dracula .hover\:bg-slate-50:hover { background-color: var(--highlight) !important; filter: none; }
-html.dracula .hover\:bg-slate-100:hover { background-color: var(--highlight) !important; filter: none; }
-html.dracula .dark\:hover\:bg-zinc-800:hover { background: var(--highlight) !important; }
-html.dracula .dark\:hover\:bg-zinc-700:hover { background: var(--highlight) !important; }
-html.dracula .dark\:hover\:bg-zinc-900:hover { background-color: var(--highlight) !important; }
-
-html.dracula .bg-blue-100 { background: var(--primary) !important; opacity: 0.2; }
-html.dracula .bg-blue-500,
-html.dracula .dark\:bg-blue-600,
-html.dracula .dark\:bg-blue-500 { background: var(--primary) !important; color: var(--background) !important; font-weight: bold !important; border-color: var(--primary) !important; }
+/* Primary button: dracula uses --accent (mint) with a glow */
 html.dracula .bg-blue-600 {
 	background: var(--accent) !important;
 	color: var(--surface) !important;
@@ -115,172 +103,21 @@ html.dracula .bg-blue-600:hover {
 	box-shadow: 0 6px 20px var(--accent) !important;
 	transform: translateY(-1px);
 }
+
+/* bg-blue-100 uses --primary with opacity */
+html.dracula .bg-blue-100 { background: var(--primary) !important; opacity: 0.2; }
 html.dracula .bg-blue-900 { background: var(--background-alt) !important; }
 
-html.dracula .dark\:bg-blue-900\/50 { background: var(--border) !important; }
-html.dracula .dark\:hover\:bg-blue-100:hover { background: var(--highlight) !important; }
-html.dracula .dark\:hover\:bg-blue-900:hover { background: var(--highlight) !important; }
-html.dracula .dark\:hover\:bg-blue-900\/50:hover { background: var(--highlight) !important; }
-html.dracula .hover\:bg-blue-100:hover { background-color: var(--highlight) !important; }
-
-html.dracula .bg-yellow-100 { background: rgba(255, 202, 133, 0.1) !important; }
-
-/* --- Border Colors --- */
-html.dracula .border-slate-200,
-html.dracula .border-slate-300,
-html.dracula .dark\:border-zinc-700,
-html.dracula .dark\:border-zinc-800 {
-	border-color: var(--border) !important;
-}
-
-html.dracula .border-blue-500 { border-color: var(--primary) !important; }
-html.dracula .border-b { border-bottom-color: var(--border) !important; }
-
-html.dracula .divide-slate-100 > * + *,
-html.dracula .dark\:divide-zinc-800 > * + * { border-color: var(--border) !important; }
-
-/* --- Text Colors --- */
-html.dracula .text-slate-300,
-html.dracula .text-slate-400,
-html.dracula .text-slate-500,
-html.dracula .text-slate-600,
-html.dracula .text-slate-700,
-html.dracula .dark\:text-zinc-300,
-html.dracula .dark\:text-zinc-400,
-html.dracula .dark\:text-zinc-600 { color: var(--text-secondary) !important; }
-
-html.dracula .text-slate-900,
-html.dracula .dark\:text-zinc-100,
-html.dracula .dark\:text-zinc-200,
-html.dracula .hover\:text-slate-800,
-html.dracula .dark\:hover\:text-zinc-200 { color: var(--text-primary) !important; }
-
+/* Accent text: dracula maps blue text → --accent */
 html.dracula .text-blue-600,
-html.dracula .dark\:text-blue-400,
-html.dracula .text-green-500,
-html.dracula .text-green-600,
-html.dracula .dark\:text-green-500 { color: var(--accent) !important; }
+html.dracula .dark\:text-blue-400 { color: var(--accent) !important; }
 
-html.dracula .hover\:text-slate-700,
-html.dracula .dark\:hover\:text-zinc-300 { color: var(--text-secondary) !important; }
-
-html.dracula .dark\:text-zinc-200:hover { color: #ffffff !important; } /* Reines Weiß für starken Kontrast */
-
-html.dracula .text-green-500 { color: var(--accent) !important; }
-html.dracula .text-green-600,
-html.dracula .dark\:text-green-500 { color: var(--accent) !important; }
-
-html.dracula .text-yellow-500,
-html.dracula .text-yellow-600,
-html.dracula .dark\:text-yellow-300,
-html.dracula .dark\:text-yellow-400,
-html.dracula .text-orange-600,
-html.dracula .dark\:text-orange-400,
-html.dracula .text-orange-700 { color: var(--warning) !important; }
-
-html.dracula .text-red-500,
-html.dracula .text-red-600,
-html.dracula .dark\:text-red-400,
-html.dracula .text-red-700 { color: var(--error) !important; }
-
-html.dracula .text-amber-500,
-html.dracula .dark\:text-amber-500,
-html.dracula .hover\:text-amber-500:hover { color: var(--pink) !important; }
-
-/* --- Font Weight Text Overrides --- */
-html.dracula [class*="font-semibold"],
-html.dracula [class*="font-bold"] { color: var(--text-primary) !important; } 
-html.dracula.dark [class*="font-semibold"],
-html.dracula.dark [class*="font-bold"] { color: #ffffff !important; } /* Reines Weiß auf fetten Texten im Dark Mode */
-html.dracula [class*="font-normal"] { color: var(--text-secondary) !important; }
-
-/* --- Warning / Alert Backgrounds --- */
-html.dracula .bg-red-50\/50 { background-color: var(--error) !important; opacity: 0.1; }
-html.dracula .bg-orange-50\/50 { background-color: var(--warning) !important; opacity: 0.1; }
-html.dracula .dark\:bg-red-900\/20 { background-color: var(--error) !important; opacity: 0.15; }
-html.dracula .dark\:bg-orange-900\/20 { background-color: var(--warning) !important; opacity: 0.15; }
-html.dracula .border-red-200,
-html.dracula .dark\:border-red-900\/50 { border-color: rgba(255, 103, 103, 0.3) !important; }
-html.dracula .border-orange-200,
-html.dracula .dark\:border-orange-900\/50 { border-color: rgba(255, 202, 133, 0.3) !important; }
-
-/* --- Input / Form Styles --- */
-html.dracula input[type="text"],
-html.dracula textarea {
-	background: var(--surface) !important;
-	border: 2px solid var(--border) !important;
-	color: var(--text-primary) !important;
-	transition: all 0.2s ease !important;
-}
-html.dracula input[type="text"]:focus,
-html.dracula textarea:focus {
-	border-color: var(--primary) !important;
-	outline: none !important;
-	box-shadow: 0 0 0 3px rgba(162, 119, 255, 0.15) !important;
-}
-html.dracula input[type="text"]::placeholder,
-html.dracula textarea::placeholder { color: var(--text-muted) !important; opacity: 0.6; }
-
-html.dracula input[type="radio"],
-html.dracula input[type="checkbox"] {
-	accent-color: var(--primary) !important;
-	background: transparent !important;
-	border: 1px solid var(--border) !important;
-}
-html.dracula input[type="radio"]:checked,
-html.dracula input[type="checkbox"]:checked {
-	background: var(--primary) !important;
-	border-color: var(--primary) !important;
-}
-
-html.dracula select {
-	background: var(--surface) !important;
-	border: 1px solid var(--border) !important;
-	color: var(--text-primary) !important;
-}
-html.dracula select:hover { border-color: var(--primary) !important; }
-html.dracula select:focus {
-	outline: none !important;
-	border-color: var(--primary) !important;
-	box-shadow: 0 0 0 3px rgba(162, 119, 255, 0.15) !important;
-}
-
-/* --- Scrollbar --- */
-html.dracula ::-webkit-scrollbar-thumb { background: var(--primary) !important; opacity: 0.3; border-radius: 2px; }
-html.dracula ::-webkit-scrollbar-thumb:hover { background: var(--primary-light) !important; }
-html.dracula ::-webkit-scrollbar-track { background: var(--background) !important; }
-
-/* --- Button Styles --- */
-html.dracula button,
-html.dracula a[class*="border"] {
-	background: transparent !important;
-	border-color: var(--border) !important;
-	color: var(--text-secondary) !important;
-	transition: all 0.2s ease !important;
-}
+/* Button hover — dracula uses highlight */
 html.dracula button:hover,
 html.dracula a[class*="border"]:hover {
 	background-color: var(--highlight) !important;
 	border-color: var(--accent) !important;
 	color: var(--text-primary) !important;
-}
-html.dracula button:active,
-html.dracula .active\:bg-blue-500.active\:text-white:active {
-	background-color: var(--primary) !important;
-	border-color: var(--primary) !important;
-	color: var(--background) !important;
-}
-
-html.dracula a[id*="btn"],
-html.dracula button:not(.text-xs):not([title="Suchen"]):not([title*="Favorit"]):not([title*="Navigation"]):not(#clearSearchBtn):not([onclick^="close"]) {
-	background: transparent !important;
-	border: 1px solid var(--border) !important;
-	color: var(--text-secondary) !important;
-	padding: 0.75rem !important;
-	border-radius: 0.375rem !important;
-	text-align: center !important;
-	font-size: 0.875rem !important;
-	font-weight: 500 !important;
 }
 html.dracula a[id*="btn"]:hover,
 html.dracula button:not(.text-xs):not([title="Suchen"]):not([title*="Favorit"]):not([title*="Navigation"]):not(#clearSearchBtn):not([onclick^="close"]):hover {
@@ -289,43 +126,6 @@ html.dracula button:not(.text-xs):not([title="Suchen"]):not([title*="Favorit"]):
 	color: var(--text-primary) !important;
 	box-shadow: 0 0 12px var(--highlight) !important;
 }
-
-html.dracula button svg,
-html.dracula a svg { color: inherit !important; }
-
-html.dracula .group:hover { background-color: var(--highlight) !important; }
-
-html.dracula .rounded-md { border-radius: 0.375rem !important; }
-html.dracula button, html.dracula input { border-radius: 0.375rem !important; }
-
-/* --- Link Styles --- */
-html.dracula a { color: var(--primary) !important; text-decoration: none !important; }
-html.dracula a:hover { color: var(--primary-light) !important; }
-html.dracula .hover\:text-blue-600:hover { color: var(--accent) !important; }
-html.dracula .hover\:text-blue-700:hover { color: var(--accent-light) !important; }
-
-/* --- Favorite Star Styling --- */
-html.dracula .opacity-100.text-amber-500 { color: var(--pink) !important; opacity: 1 !important; }
-html.dracula button[onclick*="toggleFavorite"] { color: var(--pink) !important; }
-html.dracula button[onclick*="toggleFavorite"]:hover { color: var(--pink) !important; }
-html.dracula button[title="Favorit umschalten"].text-amber-500 { color: var(--pink) !important; }
-html.dracula #dashFavoriteBtn { color: inherit !important; }
-html.dracula #dashFavoriteBtn.text-amber-500 { color: var(--pink) !important; }
-html.dracula #dashFavoriteBtn:hover { color: var(--pink) !important; }
-
-/* --- Dashboard-Specific --- */
-html.dracula #weatherTemp { color: var(--accent) !important; }
-html.dracula #driveTimeValue { color: var(--accent) !important; }
-html.dracula #weatherDesc { color: var(--text-muted) !important; }
-html.dracula .text-sm.font-medium { color: var(--text-secondary) !important; }
-
-html.dracula button[onclick="editWayInstructions()"],
-html.dracula .bg-slate-200.dark\:bg-zinc-800 {
-	background-color: var(--surface) !important;
-	border: 1px solid var(--border) !important;
-	color: var(--text-secondary) !important;
-	transition: all 0.2s ease !important;
-}
 html.dracula button[onclick="editWayInstructions()"]:hover,
 html.dracula .bg-slate-200.dark\:bg-zinc-800:hover {
 	background-color: var(--highlight) !important;
@@ -333,107 +133,19 @@ html.dracula .bg-slate-200.dark\:bg-zinc-800:hover {
 	color: var(--text-primary) !important;
 }
 
-/* --- Shadows --- */
-html.dracula .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important; }
-html.dracula .shadow-xl { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3) !important; }
-html.dracula .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2) !important; }
+/* Links — dracula colours them with --primary */
+html.dracula a { color: var(--primary) !important; text-decoration: none !important; }
+html.dracula a:hover { color: var(--primary-light) !important; }
+html.dracula .hover\:text-blue-600:hover { color: var(--accent) !important; }
 
-/* --- Focus States --- */
-html.dracula *:focus,
-html.dracula input:focus,
-html.dracula button:focus,
-html.dracula input:focus-visible {
-	outline: none !important;
-	border-color: var(--primary) !important;
-	box-shadow: 0 0 0 3px rgba(162, 119, 255, 0.15) !important;
-}
+/* Extra dark-mode rule: pure white on bold/semibold text */
+html.dracula.dark [class*="font-semibold"],
+html.dracula.dark [class*="font-bold"] { color: #ffffff !important; }
 
-/* --- Modal Overlays --- */
+/* Modal overlay */
 html.dracula .fixed.inset-0:not(#mainMap):not(#resultList) { background: rgba(16, 11, 21, 0.8) !important; }
-html.dracula [class*="modal"] {
-	background: var(--surface) !important;
-	border-color: var(--border) !important;
-	color: var(--text-primary) !important;
-}
-html.dracula button#clearSearchBtn,
-html.dracula button[onclick^="close"] {
-	background: transparent !important;
-	border: none !important;
-	padding: 0.25rem !important; /* matches p-1 */
-	box-shadow: none !important;
-}
-html.dracula button#clearSearchBtn:hover,
-html.dracula button[onclick^="close"]:hover {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-}
 
-/* --- Code / Monospace --- */
-html.dracula code,
-html.dracula [class*="font-mono"] {
-	background: var(--background-alt) !important;
-	color: var(--accent) !important;
-	padding: 0.25rem 0.5rem !important;
-	border-radius: 0.25rem !important;
-}
-
-/* --- Tooltip --- */
-html.dracula [role="tooltip"],
-html.dracula [class*="tooltip"] {
-	background: var(--background-alt) !important;
-	color: var(--text-primary) !important;
-	border: 1px solid var(--border) !important;
-}
-
-
-/* ===== LEAFLET CONTROLS — dracula THEME ===== */
-
-html.dracula .leaflet-control-layers {
-	background: var(--surface) !important;
-	border: 1px solid var(--border) !important;
-	border-radius: 0.375rem !important;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
-	padding: 0 !important;
-}
-
-html.dracula .leaflet-control-layers-toggle {
-	width: 32px !important;
-	height: 32px !important;
-	background: var(--surface) !important;
-	background-color: var(--surface) !important;
-	border: 1px solid var(--border) !important;
-	border-radius: 0.375rem !important;
-	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
-	background-image: none !important;
-	cursor: pointer !important;
-	transition: all 0.2s ease !important;
-	display: flex !important;
-	align-items: center !important;
-	justify-content: center !important;
-}
-
-html.dracula .leaflet-control-layers-toggle::after {
-	content: "" !important;
-	display: block !important;
-	width: 16px !important;
-	height: 16px !important;
-	background-color: var(--text-primary) !important;
-	-webkit-mask: url("data:image/svg+xml,%3Csvg version='1.1' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 122.88 105.02'%3E%3Cg%3E%3Cpath fill='currentColor' d='M97.25,40.58l23.85,10.28c1.48,0.64,2.17,2.36,1.53,3.85c-0.32,0.75-0.93,1.3-1.63,1.57l-23.19,9.39l23.29,10.04 c1.48,0.64,2.17,2.36,1.53,3.84c-0.32,0.75-0.93,1.3-1.63,1.57l-58.52,23.69c-0.73,0.3-1.52,0.27-2.2,0L1.83,81.05 c-1.5-0.61-2.22-2.31-1.61-3.81c0.33-0.82,0.99-1.4,1.76-1.67l22.97-9.96l-23.12-9.4c-1.5-0.61-2.22-2.31-1.61-3.81 c0.33-0.82,0.99-1.4,1.76-1.67l23.53-10.21L1.83,30.9c-1.5-0.61-2.22-2.31-1.61-3.81c0.33-0.82,0.99-1.4,1.76-1.67L60.02,0.24 c0.77-0.33,1.6-0.31,2.31,0l0-0.01l58.77,25.32c1.48,0.64,2.17,2.36,1.53,3.84c-0.32,0.75-0.93,1.3-1.63,1.57L97.25,40.58 L97.25,40.58z M112.36,53.47l-22.73-9.79L62.49,54.66c-0.73,0.3-1.52,0.27-2.2,0L33.08,43.6L10.47,53.4L61.39,74.1L112.36,53.47 L112.36,53.47z M90.19,68.75l-27.7,11.21c-0.73,0.3-1.52,0.27-2.2,0L32.52,68.68l-22.05,9.56l50.92,20.69l50.97-20.63L90.19,68.75 L90.19,68.75z M61.17,6.1l-50.7,21.99l50.92,20.69l50.97-20.63L61.17,6.1L61.17,6.1z'/%3E%3C/g%3E%3C/svg%3E") no-repeat center / contain;
-	mask: url("data:image/svg+xml,%3Csvg version='1.1' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 122.88 105.02'%3E%3Cg%3E%3Cpath fill='currentColor' d='M97.25,40.58l23.85,10.28c1.48,0.64,2.17,2.36,1.53,3.85c-0.32,0.75-0.93,1.3-1.63,1.57l-23.19,9.39l23.29,10.04 c1.48,0.64,2.17,2.36,1.53,3.84c-0.32,0.75-0.93,1.3-1.63,1.57l-58.52,23.69c-0.73,0.3-1.52,0.27-2.2,0L1.83,81.05 c-1.5-0.61-2.22-2.31-1.61-3.81c0.33-0.82,0.99-1.4,1.76-1.67l22.97-9.96l-23.12-9.4c-1.5-0.61-2.22-2.31-1.61-3.81 c0.33-0.82,0.99-1.4,1.76-1.67l23.53-10.21L1.83,30.9c-1.5-0.61-2.22-2.31-1.61-3.81c0.33-0.82,0.99-1.4,1.76-1.67L60.02,0.24 c0.77-0.33,1.6-0.31,2.31,0l0-0.01l58.77,25.32c1.48,0.64,2.17,2.36,1.53,3.84c-0.32,0.75-0.93,1.3-1.63,1.57L97.25,40.58 L97.25,40.58z M112.36,53.47l-22.73-9.79L62.49,54.66c-0.73,0.3-1.52,0.27-2.2,0L33.08,43.6L10.47,53.4L61.39,74.1L112.36,53.47 L112.36,53.47z M90.19,68.75l-27.7,11.21c-0.73,0.3-1.52,0.27-2.2,0L32.52,68.68l-22.05,9.56l50.92,20.69l50.97-20.63L90.19,68.75 L90.19,68.75z M61.17,6.1l-50.7,21.99l50.92,20.69l50.97-20.63L61.17,6.1L61.17,6.1z'/%3E%3C/g%3E%3C/svg%3E") no-repeat center / contain;
-	transition: all 0.2s ease !important;
-}
-
-html.dracula .leaflet-control-layers-toggle:hover::after {
-	background-color: var(--primary) !important;
-}
-
-html.dracula .leaflet-control-layers-toggle:hover {
-	background-color: var(--background) !important;
-	border-color: var(--primary) !important;
-	box-shadow: 0 0 12px rgba(162, 119, 255, 0.4) !important;
-}
-
+/* Settings modal active states */
 html.dracula.dark #settingsModal .bg-blue-100,
 html.dracula.dark #settingsModal .dark\:bg-blue-900\/50 {
 	background-color: rgba(162, 119, 255, 0.1) !important;
@@ -443,7 +155,6 @@ html.dracula.dark #settingsModal .dark\:bg-blue-900\/50 {
 	font-weight: 600 !important;
 	box-shadow: inset 0 0 0 1px rgba(162, 119, 255, 0.25) !important;
 }
-
 html.dracula:not(.dark) #settingsModal .bg-blue-100,
 html.dracula:not(.dark) #settingsModal .dark\:bg-blue-900\/50 {
 	background-color: rgba(0, 168, 120, 0.1) !important;
@@ -452,298 +163,11 @@ html.dracula:not(.dark) #settingsModal .dark\:bg-blue-900\/50 {
 	opacity: 1 !important;
 	font-weight: 600 !important;
 }
-
 html.dracula.dark #settingsModal .text-blue-700,
-html.dracula.dark #settingsModal .dark\:text-blue-300 {
-	color: var(--primary) !important;
-}
-
+html.dracula.dark #settingsModal .dark\:text-blue-300 { color: var(--primary) !important; }
 html.dracula.dark #settingsModal button.bg-white,
 html.dracula.dark #settingsModal button.dark\:bg-zinc-900 {
 	background-color: var(--background) !important;
 	border-color: var(--border) !important;
 	color: var(--text-secondary) !important;
-}
-
-html.dracula .leaflet-control-layers-list {
-	padding: 10px !important;
-}
-
-html.dracula .leaflet-control-layers label {
-	font-size: 0.8125rem !important;
-	font-weight: 500 !important;
-	color: var(--text-secondary) !important;
-	margin-bottom: 6px !important;
-	cursor: pointer !important;
-	display: flex !important;
-	align-items: center !important;
-	gap: 6px !important;
-}
-
-html.dracula .leaflet-control-layers label:hover {
-	color: var(--text-primary) !important;
-}
-
-/* ── Tailwind-style radio (base layers) ── */
-html.dracula .leaflet-control-layers input[type="radio"] {
-	appearance: none !important;
-	-webkit-appearance: none !important;
-	width: 1rem !important;
-	height: 1rem !important;
-	min-width: 1rem !important;
-	border-radius: 9999px !important;
-	border: 2px solid var(--border) !important;
-	background-color: var(--bg-secondary, #282a36) !important;
-	cursor: pointer !important;
-	transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s !important;
-	display: inline-flex !important;
-	align-items: center !important;
-	justify-content: center !important;
-	flex-shrink: 0 !important;
-	position: relative !important;
-}
-html.dracula .leaflet-control-layers input[type="radio"]::after {
-	content: '' !important;
-	display: block !important;
-	width: 6px !important;
-	height: 6px !important;
-	border-radius: 9999px !important;
-	background: transparent !important;
-	transition: background 0.15s !important;
-}
-html.dracula .leaflet-control-layers input[type="radio"]:checked {
-	border-color: var(--primary) !important;
-	background-color: var(--primary) !important;
-}
-html.dracula .leaflet-control-layers input[type="radio"]:checked::after {
-	background: #ffffff !important;
-}
-html.dracula .leaflet-control-layers input[type="radio"]:hover:not(:checked) {
-	border-color: var(--text-muted, #6272a4) !important;
-}
-html.dracula .leaflet-control-layers input[type="radio"]:focus {
-	outline: none !important;
-	box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 35%, transparent) !important;
-}
-
-/* ── Tailwind-style checkbox (overlay layers) ── */
-html.dracula .leaflet-control-layers input[type="checkbox"] {
-	appearance: none !important;
-	-webkit-appearance: none !important;
-	width: 1rem !important;
-	height: 1rem !important;
-	min-width: 1rem !important;
-	border-radius: 0.25rem !important;
-	border: 2px solid var(--border) !important;
-	background-color: var(--bg-secondary, #282a36) !important;
-	cursor: pointer !important;
-	transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s !important;
-	display: inline-flex !important;
-	align-items: center !important;
-	justify-content: center !important;
-	flex-shrink: 0 !important;
-	position: relative !important;
-}
-html.dracula .leaflet-control-layers input[type="checkbox"]::after {
-	content: '' !important;
-	display: block !important;
-	width: 5px !important;
-	height: 9px !important;
-	border: 2px solid transparent !important;
-	border-top: none !important;
-	border-left: none !important;
-	transform: rotate(45deg) translateY(-1px) !important;
-	transition: border-color 0.15s !important;
-}
-html.dracula .leaflet-control-layers input[type="checkbox"]:checked {
-	border-color: var(--primary) !important;
-	background-color: var(--primary) !important;
-}
-html.dracula .leaflet-control-layers input[type="checkbox"]:checked::after {
-	border-color: #ffffff !important;
-}
-html.dracula .leaflet-control-layers input[type="checkbox"]:hover:not(:checked) {
-	border-color: var(--text-muted, #6272a4) !important;
-}
-html.dracula .leaflet-control-layers input[type="checkbox"]:focus {
-	outline: none !important;
-	box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 35%, transparent) !important;
-}
-
-html.dracula .leaflet-control-layers-separator {
-	border-color: var(--border) !important;
-	margin: 6px 0 !important;
-}
-
-html.dracula .leaflet-control-layers-group-name {
-	font-weight: 600 !important;
-	font-size: 0.75rem !important;
-	text-transform: uppercase !important;
-	letter-spacing: 0.05em !important;
-	color: var(--primary) !important;
-	margin-top: 10px !important;
-	margin-bottom: 6px !important;
-}
-
-/* Leaflet zoom buttons — dracula */
-html.dracula .leaflet-container .leaflet-control-zoom.leaflet-bar {
-	border: none !important;
-	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
-	border-radius: 0.375rem !important;
-	background: transparent !important;
-}
-
-html.dracula .leaflet-bar a,
-html.dracula .leaflet-container .leaflet-touch .leaflet-bar a,
-html.dracula .leaflet-container .leaflet-bar a,
-html.dracula .leaflet-container .leaflet-control-zoom-in,
-html.dracula .leaflet-container .leaflet-control-zoom-out {
-	background: var(--surface) !important;
-	background-color: var(--surface) !important;
-	border: 1px solid var(--border) !important;
-	border-bottom: 1px solid var(--border) !important;
-	color: var(--text-primary) !important;
-	width: 32px !important;
-	height: 32px !important;
-	line-height: 30px !important;
-	font-size: 20px !important;
-	font-weight: bold !important;
-	text-align: center !important;
-	border-radius: 0 !important;
-	transition: all 0.2s ease !important;
-	text-decoration: none !important;
-}
-
-html.dracula .leaflet-bar a:first-child,
-html.dracula .leaflet-container .leaflet-touch .leaflet-bar a:first-child,
-html.dracula .leaflet-container .leaflet-bar a:first-child {
-	border-top-left-radius: 0.375rem !important;
-	border-top-right-radius: 0.375rem !important;
-	border-bottom: none !important;
-}
-
-html.dracula .leaflet-bar a:last-child,
-html.dracula .leaflet-container .leaflet-touch .leaflet-bar a:last-child,
-html.dracula .leaflet-container .leaflet-bar a:last-child {
-	border-bottom-left-radius: 0.375rem !important;
-	border-bottom-right-radius: 0.375rem !important;
-}
-
-html.dracula .leaflet-bar a:hover,
-html.dracula .leaflet-container .leaflet-touch .leaflet-bar a:hover,
-html.dracula .leaflet-container .leaflet-bar a:hover,
-html.dracula .leaflet-container .leaflet-control-zoom-in:hover,
-html.dracula .leaflet-container .leaflet-control-zoom-out:hover {
-	background: var(--background) !important;
-	background-color: var(--background) !important;
-	border-color: var(--primary) !important;
-	color: var(--primary) !important;
-}
-
-html.dracula .leaflet-control-zoom-in:active,
-html.dracula .leaflet-control-zoom-out:active {
-	background: var(--primary) !important;
-	border-color: var(--primary) !important;
-	color: #ffffff !important;
-}
-
-html.dracula.dark .leaflet-bar a,
-html.dracula.dark .leaflet-container .leaflet-touch .leaflet-bar a,
-html.dracula.dark .leaflet-container .leaflet-bar a,
-html.dracula.dark .leaflet-container .leaflet-control-zoom-in,
-html.dracula.dark .leaflet-container .leaflet-control-zoom-out {
-	background: var(--background) !important;
-	background-color: var(--background) !important;
-	color: var(--text-secondary) !important;
-}
-
-html.dracula.dark .leaflet-bar a:hover,
-html.dracula.dark .leaflet-container .leaflet-touch .leaflet-bar a:hover,
-html.dracula.dark .leaflet-container .leaflet-bar a:hover,
-html.dracula.dark .leaflet-container .leaflet-control-zoom-in:hover,
-html.dracula.dark .leaflet-container .leaflet-control-zoom-out:hover {
-	background: var(--border) !important;
-	background-color: var(--border) !important;
-	color: var(--primary) !important;
-}
-
-html.dracula.dark .leaflet-control-zoom-in:active,
-html.dracula.dark .leaflet-control-zoom-out:active {
-	color: var(--background) !important;
-}
-
-html.dracula .leaflet-control-zoom {
-	border: none !important;
-	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
-	border-radius: 0.375rem !important;
-	padding: 2px !important;
-	background: transparent !important;
-}
-
-/* Leaflet attribution — dracula */
-html.dracula .leaflet-control-attribution {
-	background: var(--surface) !important;
-	border: 1px solid var(--border) !important;
-	color: var(--text-muted) !important;
-	font-size: 0.7rem !important;
-	border-radius: 0.375rem !important;
-	padding: 4px 8px !important;
-	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
-}
-
-html.dracula .leaflet-control-attribution a {
-	color: var(--primary) !important;
-	text-decoration: none !important;
-	transition: color 0.2s ease !important;
-}
-
-html.dracula .leaflet-control-attribution a:hover {
-	color: var(--primary-light) !important;
-	text-decoration: underline !important;
-}
-
-
-/* ===== dracula FILTER CHIPS (DRACULA SEMANTIC) ===== */
-
-html.dracula #filterMenuPanel .border-green-500,
-html.dracula.dark #filterMenuPanel .border-green-500 {
-	border-color: var(--accent) !important;
-}
-
-html.dracula #filterMenuPanel .bg-green-100,
-html.dracula.dark #filterMenuPanel .dark\:bg-green-900\/30 {
-	background-color: rgba(97, 255, 202, 0.18) !important;
-}
-
-html.dracula #filterMenuPanel .text-green-700,
-html.dracula.dark #filterMenuPanel .dark\:text-green-300 {
-	color: var(--accent) !important;
-}
-
-html.dracula #filterMenuPanel .border-red-500,
-html.dracula.dark #filterMenuPanel .border-red-500 {
-	border-color: var(--pink) !important;
-}
-
-html.dracula #filterMenuPanel .bg-red-100,
-html.dracula.dark #filterMenuPanel .dark\:bg-red-900\/30 {
-	background-color: rgba(246, 148, 255, 0.18) !important;
-}
-
-html.dracula #filterMenuPanel .text-red-700,
-html.dracula.dark #filterMenuPanel .dark\:text-red-300 {
-	color: var(--pink) !important;
-}
-
-/* --- List item selection --- */
-html.dracula .list-item-selected {
-	background-color: var(--highlight) !important;
-	border-left: 2px solid var(--accent) !important;
-	box-shadow: inset 2px 0 0 var(--accent) !important;
-	padding-left: calc(0.75rem - 2px) !important;
-	color: var(--text-primary) !important;
-}
-
-html.dracula.dark .list-item-selected {
-	background-color: var(--highlight) !important;
 }

@@ -1,9 +1,42 @@
 /* ===================================================================
    SWR Standort Dashboard — Kirschblüte Theme
    CSS class: "kirschbluete" on <html>
+
+   HOW THIS FILE WORKS
+   ────────────────────────────────────────────────────────────────
+   Generic Tailwind utility overrides (surfaces, borders, text,
+   accent colours) are handled by the THEME BRIDGE in styles.css.
+   This file only defines:
+     1. --theme-* token values (all colours come from here)
+     2. Kirschblüte-specific visual effects that aren't in the bridge
    =================================================================== */
 
+/* -------------------------------------------------------------------
+   THEME TOKENS — light mode
+   ------------------------------------------------------------------- */
 html.kirschbluete:not(.dark) {
+    /* Surfaces */
+    --theme-bg:               #fff4f8;
+    --theme-surface:          #ffffff;
+    --theme-surface-alt:      #ffffff;
+    --theme-hover:            #fffafb;
+    /* Borders */
+    --theme-border:           #fce6ed;
+    --theme-border-subtle:    #fce6ed;
+    /* Text */
+    --theme-text-primary:     #3b252b;
+    --theme-text-secondary:   #5c434b;
+    --theme-text-muted:       #b8a2a9;
+    /* Accent (cherry pink) */
+    --theme-accent:           #e88ba4;
+    --theme-accent-hover:     #d1748d;
+    --theme-accent-text:      #e88ba4;
+    --theme-accent-bg:        #fef0f4;
+    --theme-accent-bg-hover:  #fce1e8;
+    /* Focus / glow */
+    --theme-focus-ring:       rgba(255, 107, 158, 0.40);
+    --theme-focus-glow:       rgba(255, 107, 158, 0.40);
+    /* DWD warning levels */
     --dwd-level-1: #d4af30;
     --dwd-level-2: #e07e40;
     --dwd-level-3: #d85878;
@@ -14,7 +47,32 @@ html.kirschbluete:not(.dark) {
     --dwd-level-4-filter: brightness(0) saturate(100%) invert(52%) sepia(28%) saturate(2000%) hue-rotate(234deg) brightness(94%) contrast(90%);
 }
 
+/* -------------------------------------------------------------------
+   THEME TOKENS — dark mode
+   ------------------------------------------------------------------- */
 html.kirschbluete.dark {
+    /* Surfaces */
+    --theme-bg:               #0d0814;
+    --theme-surface:          #1a1224;
+    --theme-surface-alt:      #1a1224;
+    --theme-hover:            #241933;
+    /* Borders */
+    --theme-border:           #3b264d;
+    --theme-border-subtle:    #2a1b38;
+    /* Text */
+    --theme-text-primary:     #fff0f5;
+    --theme-text-secondary:   #ffb8d2;
+    --theme-text-muted:       #c48eab;
+    /* Accent */
+    --theme-accent:           #ff3377;
+    --theme-accent-hover:     #ff6699;
+    --theme-accent-text:      #ff3377;
+    --theme-accent-bg:        #381228;
+    --theme-accent-bg-hover:  #4f1536;
+    /* Focus / glow */
+    --theme-focus-ring:       rgba(255, 51, 119, 0.50);
+    --theme-focus-glow:       rgba(255, 51, 119, 0.40);
+    /* DWD warning levels */
     --dwd-level-1: #f5cc60;
     --dwd-level-2: #ff9a60;
     --dwd-level-3: #ff6888;
@@ -25,15 +83,14 @@ html.kirschbluete.dark {
     --dwd-level-4-filter: brightness(0) saturate(100%) invert(74%) sepia(24%) saturate(2800%) hue-rotate(222deg) brightness(110%) contrast(100%);
 }
 
+/* -------------------------------------------------------------------
+   FLOATING CHERRY PETALS
+   ------------------------------------------------------------------- */
 html.kirschbluete body {
     position: relative;
     overflow-x: hidden;
 }
 
-html.kirschbluete:not(.dark) body { background-color: #fff4f8 !important; }
-html.kirschbluete.dark body { background-color: #0d0814 !important; }
-
-/* Floating Petals Effect */
 html.kirschbluete body::before,
 html.kirschbluete body::after {
     content: "🌸";
@@ -44,153 +101,51 @@ html.kirschbluete body::after {
     opacity: 0.6;
     animation: cherry-float 10s linear infinite;
 }
-
-html.kirschbluete body::before {
-    left: 10%;
-    top: -50px;
-    animation-delay: 0s;
-}
-
-html.kirschbluete body::after {
-    right: 20%;
-    top: -50px;
-    animation-delay: 5s;
-    font-size: 15px;
-}
+html.kirschbluete body::before { left: 10%;  top: -50px; animation-delay: 0s; }
+html.kirschbluete body::after  { right: 20%; top: -50px; animation-delay: 5s; font-size: 15px; }
 
 @keyframes cherry-float {
-    0% {
-        transform: translateY(0) rotate(0);
-        opacity: 0;
-    }
-
-    10% { opacity: 0.6; }
-    90% { opacity: 0.6; }
-
-    100% {
-        transform: translateY(110vh) rotate(360deg);
-        opacity: 0;
-    }
+    0%   { transform: translateY(0) rotate(0); opacity: 0; }
+    10%  { opacity: 0.6; }
+    90%  { opacity: 0.6; }
+    100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
 }
 
-/* More dracula elements - SURFACES */
-html.kirschbluete:not(.dark) .bg-white, html.kirschbluete:not(.dark) .bg-slate-50, html.kirschbluete:not(.dark) .bg-slate-100 {
-    background-color: #ffffff !important;
-    color: #5c434b !important;
+/* -------------------------------------------------------------------
+   SURFACES — extra box-shadow / border effects on top of the bridge
+   ------------------------------------------------------------------- */
+html.kirschbluete:not(.dark) .bg-white,
+html.kirschbluete:not(.dark) .bg-slate-50,
+html.kirschbluete:not(.dark) .bg-slate-100 {
     box-shadow: 0 8px 32px rgba(232, 139, 164, 0.15) !important;
     border: 2px solid #fffafb !important;
 }
-
-html.kirschbluete.dark .bg-white, html.kirschbluete.dark .bg-slate-50, html.kirschbluete.dark .bg-slate-100,
-html.kirschbluete.dark .dark\:bg-zinc-950, html.kirschbluete.dark .dark\:bg-zinc-900, html.kirschbluete.dark .dark\:bg-oled, html.kirschbluete.dark .dark\:bg-zinc-800 {
-    background-color: #1a1224 !important;
-    color: #fff0f5 !important;
+html.kirschbluete.dark .bg-white,
+html.kirschbluete.dark .bg-slate-50,
+html.kirschbluete.dark .bg-slate-100,
+html.kirschbluete.dark .dark\:bg-zinc-950,
+html.kirschbluete.dark .dark\:bg-zinc-900,
+html.kirschbluete.dark .dark\:bg-oled,
+html.kirschbluete.dark .dark\:bg-zinc-800 {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
     border: 2px solid #2a1b38 !important;
 }
 
-/* Borders */
-html.kirschbluete:not(.dark) .border-slate-100, html.kirschbluete:not(.dark) .border-slate-200, html.kirschbluete:not(.dark) .border-slate-300 {
-    border-color: #fce6ed !important;
-}
-html.kirschbluete.dark .dark\:border-zinc-700, html.kirschbluete.dark .dark\:border-zinc-800, html.kirschbluete.dark .border-slate-100, html.kirschbluete.dark .border-slate-200, html.kirschbluete.dark .border-slate-300 {
-    border-color: #3b264d !important;
-}
-
-/* Text Colors */
-html.kirschbluete:not(.dark) .text-slate-900, html.kirschbluete:not(.dark) .text-slate-800 { color: #3b252b !important; }
-html.kirschbluete:not(.dark) .text-slate-700, html.kirschbluete:not(.dark) .text-slate-600 { color: #5c434b !important; }
-html.kirschbluete:not(.dark) .text-slate-500, html.kirschbluete:not(.dark) .text-slate-400 { color: #947a82 !important; }
-
-html.kirschbluete.dark .dark\:text-zinc-100, html.kirschbluete.dark .dark\:text-zinc-200, html.kirschbluete.dark .text-slate-900, html.kirschbluete.dark .text-slate-800 { color: #fff0f5 !important; }
-html.kirschbluete.dark .dark\:text-zinc-300, html.kirschbluete.dark .dark\:text-zinc-400, html.kirschbluete.dark .text-slate-700, html.kirschbluete.dark .text-slate-600 { color: #ffb8d2 !important; }
-html.kirschbluete.dark .dark\:text-zinc-500, html.kirschbluete.dark .dark\:text-zinc-600, html.kirschbluete.dark .text-slate-500, html.kirschbluete.dark .text-slate-400 { color: #c48eab !important; }
-
-/* Cherry Pink Accents (#e88ba4) */
-html.kirschbluete:not(.dark) .text-blue-500,
-html.kirschbluete:not(.dark) .text-blue-600,
-html.kirschbluete:not(.dark) .text-blue-700 {
-    color: #e88ba4 !important;
-}
-html.kirschbluete.dark .text-blue-500,
-html.kirschbluete.dark .text-blue-600,
-html.kirschbluete.dark .text-blue-700,
-html.kirschbluete.dark .dark\:text-blue-400,
-html.kirschbluete.dark .dark\:text-blue-300 {
-    color: #ff3377 !important;
-}
-
-html.kirschbluete:not(.dark) .bg-blue-100 {
-    background-color: #fef0f4 !important;
-    color: #e88ba4 !important;
-}
-html.kirschbluete.dark .bg-blue-100,
-html.kirschbluete.dark .dark\:bg-blue-900\/50 {
-    background-color: #381228 !important;
-    color: #ff3377 !important;
-}
-
-html.kirschbluete:not(.dark) .bg-blue-500,
-html.kirschbluete:not(.dark) .bg-blue-600,
-html.kirschbluete:not(.dark) .bg-blue-700 {
-    background-color: #e88ba4 !important;
-    color: #ffffff !important;
-    border-color: #e88ba4 !important;
-}
-html.kirschbluete.dark .bg-blue-500,
-html.kirschbluete.dark .bg-blue-600,
-html.kirschbluete.dark .bg-blue-700 {
-    background-color: #ff3377 !important;
-    color: #ffffff !important;
-    border-color: #ff3377 !important;
-    box-shadow: 0 0 12px rgba(255, 51, 119, 0.4) !important;
-}
-
-html.kirschbluete:not(.dark) .border-blue-500,
-html.kirschbluete:not(.dark) .border-blue-600 {
-    border-color: #e88ba4 !important;
-}
-html.kirschbluete.dark .border-blue-500,
-html.kirschbluete.dark .border-blue-600 {
-    border-color: #ff3377 !important;
-}
-
-/* Hover effects */
-html.kirschbluete:not(.dark) .hover\:text-blue-600:hover {
-    color: #d1748d !important;
-}
-html.kirschbluete.dark .hover\:text-blue-600:hover,
-html.kirschbluete.dark .dark\:hover\:text-blue-400:hover {
-    color: #ff6699 !important;
-}
-
-html.kirschbluete:not(.dark) .hover\:bg-blue-100:hover {
-    background-color: #fce1e8 !important;
-}
-html.kirschbluete.dark .hover\:bg-blue-100:hover,
-html.kirschbluete.dark .dark\:hover\:bg-blue-900\/50:hover,
-html.kirschbluete.dark .dark\:hover\:bg-blue-100:hover {
-    background-color: #4f1536 !important;
-}
-
-html.kirschbluete:not(.dark) .hover\:bg-slate-50:hover {
-    background-color: #fffafb !important;
-}
-html.kirschbluete.dark .hover\:bg-slate-50:hover,
-html.kirschbluete.dark .dark\:hover\:bg-zinc-800:hover {
-    background-color: #241933 !important;
-}
-
+/* -------------------------------------------------------------------
+   LIST ITEM SELECTED — cherry style with 4px border
+   ------------------------------------------------------------------- */
 html.kirschbluete:not(.dark) .list-item-selected {
-    background-color: #fef0f4 !important;
-    border-left: 4px solid #e88ba4 !important;
+    border-left: 4px solid var(--theme-accent) !important;
+    padding-left: calc(0.75rem - 4px) !important;
 }
 html.kirschbluete.dark .list-item-selected {
-    background-color: #381228 !important;
-    border-left: 4px solid #ff3377 !important;
+    border-left: 4px solid var(--theme-accent) !important;
+    padding-left: calc(0.75rem - 4px) !important;
 }
 
-/* Inputs */
+/* -------------------------------------------------------------------
+   INPUTS
+   ------------------------------------------------------------------- */
 html.kirschbluete:not(.dark) input[type="text"],
 html.kirschbluete:not(.dark) textarea,
 html.kirschbluete:not(.dark) select {
@@ -207,7 +162,6 @@ html.kirschbluete.dark select {
     border: 2px solid #3b264d !important;
     transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) !important;
 }
-
 html.kirschbluete:not(.dark) input[type="text"]:focus,
 html.kirschbluete:not(.dark) textarea:focus,
 html.kirschbluete:not(.dark) select:focus {
@@ -225,15 +179,12 @@ html.kirschbluete.dark select:focus {
     transform: scale(1.02);
 }
 
-/* Round styling for dracula kirschbluete */
-html.kirschbluete .rounded-md {
-    border-radius: 16px !important;
-}
-
+/* -------------------------------------------------------------------
+   ROUNDED STYLING — softer corners
+   ------------------------------------------------------------------- */
+html.kirschbluete .rounded-md { border-radius: 16px !important; }
 html.kirschbluete input,
-html.kirschbluete button {
-    border-radius: 12px !important;
-}
+html.kirschbluete button { border-radius: 12px !important; }
 
 html.kirschbluete a[id*="btn"],
 html.kirschbluete button:not(.text-xs):not([title="Suchen"]):not([title*="Favorit"]):not([title*="Navigation"]):not(#clearSearchBtn):not([onclick^="close"]) {
@@ -241,70 +192,39 @@ html.kirschbluete button:not(.text-xs):not([title="Suchen"]):not([title*="Favori
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
     border: 2px solid transparent !important;
 }
-
 html.kirschbluete button:hover,
 html.kirschbluete a[id*="btn"]:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 12px rgba(232, 139, 164, 0.25) !important;
 }
 
-/* Scrollbars - Bright Pink */
-html.kirschbluete ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-}
-
-html.kirschbluete:not(.dark) ::-webkit-scrollbar-track {
-    background: #fff4f8 !important;
-    border-radius: 10px;
-}
-html.kirschbluete.dark ::-webkit-scrollbar-track {
-    background: #0d0814 !important;
-    border-radius: 10px;
-}
-
+/* -------------------------------------------------------------------
+   SCROLLBARS — bright cherry pink
+   ------------------------------------------------------------------- */
+html.kirschbluete ::-webkit-scrollbar { width: 10px; height: 10px; }
+html.kirschbluete:not(.dark) ::-webkit-scrollbar-track { background: #fff4f8 !important; border-radius: 10px; }
+html.kirschbluete.dark      ::-webkit-scrollbar-track { background: #0d0814 !important; border-radius: 10px; }
 html.kirschbluete:not(.dark) ::-webkit-scrollbar-thumb {
-    background: #ff6b9e !important;
-    border-radius: 10px;
+    background: #ff6b9e !important; border-radius: 10px;
     border: 2px solid #fff4f8;
 }
 html.kirschbluete.dark ::-webkit-scrollbar-thumb {
-    background: #ff3377 !important;
-    border-radius: 10px;
+    background: #ff3377 !important; border-radius: 10px;
     border: 2px solid #0d0814;
 }
+html.kirschbluete:not(.dark) ::-webkit-scrollbar-thumb:hover { background: #ff4785 !important; }
+html.kirschbluete.dark       ::-webkit-scrollbar-thumb:hover { background: #ff6699 !important; }
 
-html.kirschbluete:not(.dark) ::-webkit-scrollbar-thumb:hover {
-    background: #ff4785 !important;
-}
-html.kirschbluete.dark ::-webkit-scrollbar-thumb:hover {
-    background: #ff6699 !important;
-}
-
-/* Header Title */
+/* -------------------------------------------------------------------
+   HEADER SVG — cherry pink SWR logo
+   ------------------------------------------------------------------- */
 html.kirschbluete h1 svg path,
-html.kirschbluete.dark h1 svg path {
-    fill: #ff6b9e !important;
-    transition: all 0.8s ease-in-out;
-}
+html.kirschbluete.dark h1 svg path { fill: #ff6b9e !important; transition: all 0.8s ease-in-out; }
+html.kirschbluete h1:hover svg { transform: rotate(2deg) scale(1.1); }
 
-html.kirschbluete h1:hover svg {
-    transform: rotate(2deg) scale(1.1);
-}
-
-/* Fix Filter Chips */
-html.kirschbluete .text-slate-400 {
-    color: #b8a2a9 !important;
-}
-
-html.kirschbluete .border-red-500 {
-    border-color: #f3a6b6 !important;
-}
-
-html.kirschbluete .bg-red-100 {
-    background: #ffe6eb !important;
-}
-
-html.kirschbluete .text-red-700 {
-    color: #d66b86 !important;
-}
+/* -------------------------------------------------------------------
+   FILTER CHIPS
+   ------------------------------------------------------------------- */
+html.kirschbluete .border-red-500 { border-color: #f3a6b6 !important; }
+html.kirschbluete .bg-red-100     { background: #ffe6eb !important; }
+html.kirschbluete .text-red-700   { color: #d66b86 !important; }

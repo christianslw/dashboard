@@ -1,9 +1,42 @@
 /* ===================================================================
    SWR Standort Dashboard — SWR MS Theme
    CSS class: "swr-ms" on <html>
+
+   HOW THIS FILE WORKS
+   ────────────────────────────────────────────────────────────────
+   Generic Tailwind utility overrides (surfaces, borders, text,
+   accent colours) are handled by the THEME BRIDGE in styles.css.
+   This file only defines:
+     1. --theme-* token values  (all colours come from here)
+     2. SWR-specific overrides that aren't covered by the bridge
    =================================================================== */
 
+/* -------------------------------------------------------------------
+   THEME TOKENS — light mode
+   ------------------------------------------------------------------- */
 html.swr-ms:not(.dark) {
+    /* Surfaces */
+    --theme-bg:               #f4f6f9;
+    --theme-surface:          #ffffff;
+    --theme-surface-alt:      #ffffff;
+    --theme-hover:            #f8fafc;
+    /* Borders */
+    --theme-border:           #e2e8f0;
+    --theme-border-subtle:    #e2e8f0;
+    /* Text */
+    --theme-text-primary:     #0f172a;
+    --theme-text-secondary:   #334155;
+    --theme-text-muted:       #64748b;
+    /* Accent (SWR corporate navy) */
+    --theme-accent:           #003366;
+    --theme-accent-hover:     #002244;
+    --theme-accent-text:      #003366;
+    --theme-accent-bg:        #e6f0fa;
+    --theme-accent-bg-hover:  #d1e2f3;
+    /* Focus / glow */
+    --theme-focus-ring:       rgba(0, 51, 102, 0.20);
+    --theme-focus-glow:       rgba(0, 51, 102, 0.30);
+    /* DWD warning levels */
     --dwd-level-1: #c09800;
     --dwd-level-2: #d47015;
     --dwd-level-3: #c83535;
@@ -14,7 +47,32 @@ html.swr-ms:not(.dark) {
     --dwd-level-4-filter: brightness(0) saturate(100%) invert(30%) sepia(22%) saturate(1600%) hue-rotate(240deg) brightness(88%) contrast(96%);
 }
 
+/* -------------------------------------------------------------------
+   THEME TOKENS — dark mode
+   ------------------------------------------------------------------- */
 html.swr-ms.dark {
+    /* Surfaces */
+    --theme-bg:               #0c1524;
+    --theme-surface:          #152238;
+    --theme-surface-alt:      #152238;
+    --theme-hover:            #1e293b;
+    /* Borders */
+    --theme-border:           #273959;
+    --theme-border-subtle:    #273959;
+    /* Text */
+    --theme-text-primary:     #f8fafc;
+    --theme-text-secondary:   #cbd5e1;
+    --theme-text-muted:       #94a3b8;
+    /* Accent */
+    --theme-accent:           #004488;
+    --theme-accent-hover:     #003366;
+    --theme-accent-text:      #4da6ff;
+    --theme-accent-bg:        #002244;
+    --theme-accent-bg-hover:  #003366;
+    /* Focus / glow */
+    --theme-focus-ring:       rgba(0, 51, 102, 0.20);
+    --theme-focus-glow:       rgba(0, 51, 102, 0.30);
+    /* DWD warning levels */
     --dwd-level-1: #f0ca48;
     --dwd-level-2: #ff9840;
     --dwd-level-3: #ff5c5c;
@@ -25,54 +83,9 @@ html.swr-ms.dark {
     --dwd-level-4-filter: brightness(0) saturate(100%) invert(56%) sepia(36%) saturate(2500%) hue-rotate(236deg) brightness(99%) contrast(96%);
 }
 
-/* Light Mode Base Context */
-html.swr-ms body { background-color: #f4f6f9 !important; }
-
-/* Main layout overrides */
-html.swr-ms .bg-white,
-html.swr-ms .bg-slate-50,
-html.swr-ms .bg-slate-100 { 
-    background-color: #ffffff !important; 
-    color: #1e293b !important;
-}
-
-html.swr-ms .border-slate-100,
-html.swr-ms .border-slate-200,
-html.swr-ms .border-slate-300 {
-    border-color: #e2e8f0 !important;
-}
-
-html.swr-ms .text-slate-900, html.swr-ms .text-slate-800 { color: #0f172a !important; }
-html.swr-ms .text-slate-700, html.swr-ms .text-slate-600 { color: #334155 !important; }
-html.swr-ms .text-slate-500, html.swr-ms .text-slate-400 { color: #64748b !important; }
-
-/* Dark Mode Context */
-html.swr-ms.dark body { background-color: #0c1524 !important; } /* SWR Dark Navy */
-
-html.swr-ms.dark .dark\:bg-zinc-950,
-html.swr-ms.dark .dark\:bg-zinc-900,
-html.swr-ms.dark .dark\:bg-oled,
-html.swr-ms.dark .dark\:bg-zinc-800,
-html.swr-ms.dark .bg-white,
-html.swr-ms.dark .bg-slate-50,
-html.swr-ms.dark .bg-slate-100 { 
-    background-color: #152238 !important; /* Panel Dark Navy */
-    color: #f8fafc !important;
-}
-
-html.swr-ms.dark .dark\:border-zinc-700,
-html.swr-ms.dark .dark\:border-zinc-800,
-html.swr-ms.dark .border-slate-100,
-html.swr-ms.dark .border-slate-200,
-html.swr-ms.dark .border-slate-300 {
-    border-color: #273959 !important;
-}
-
-html.swr-ms.dark .dark\:text-zinc-100, html.swr-ms.dark .dark\:text-zinc-200, html.swr-ms.dark .text-slate-900, html.swr-ms.dark .text-slate-800 { color: #f8fafc !important; }
-html.swr-ms.dark .dark\:text-zinc-300, html.swr-ms.dark .dark\:text-zinc-400, html.swr-ms.dark .text-slate-700, html.swr-ms.dark .text-slate-600 { color: #cbd5e1 !important; }
-html.swr-ms.dark .dark\:text-zinc-500, html.swr-ms.dark .dark\:text-zinc-600, html.swr-ms.dark .text-slate-500, html.swr-ms.dark .text-slate-400 { color: #94a3b8 !important; }
-
-/* SWR Media Services Header - the hallmark of the theme */
+/* -------------------------------------------------------------------
+   SWR MEDIA SERVICES HEADER — the signature corporate blue header
+   ------------------------------------------------------------------- */
 html.swr-ms .p-3.border-b.bg-slate-50\/50,
 html.swr-ms .p-5.border-b.bg-slate-50\/50,
 html.swr-ms.dark .p-3.border-b.dark\:bg-zinc-900\/50,
@@ -89,158 +102,105 @@ html.swr-ms .border-b.bg-slate-50\/50 .text-slate-500,
 html.swr-ms.dark .border-b.dark\:bg-zinc-900\/50 h1,
 html.swr-ms.dark .border-b.dark\:bg-zinc-900\/50 span,
 html.swr-ms.dark .border-b.dark\:bg-zinc-900\/50 .dark\:text-zinc-100,
-html.swr-ms.dark .border-b.dark\:bg-zinc-900\/50 .dark\:text-zinc-400 {
-    color: #ffffff !important;
-}
+html.swr-ms.dark .border-b.dark\:bg-zinc-900\/50 .dark\:text-zinc-400 { color: #ffffff !important; }
 
 html.swr-ms .border-b.bg-slate-50\/50 h1 svg path,
-html.swr-ms.dark .border-b.dark\:bg-zinc-900\/50 h1 svg path {
-    fill: #ffffff !important;
-    color: #ffffff !important;
-}
+html.swr-ms.dark .border-b.dark\:bg-zinc-900\/50 h1 svg path { fill: #ffffff !important; color: #ffffff !important; }
 
 html.swr-ms .border-b.bg-slate-50\/50 button:not(#filterMenuButton),
 html.swr-ms.dark .border-b.dark\:bg-zinc-900\/50 button:not(#filterMenuButton) {
     border-color: rgba(255,255,255,0.4) !important;
     color: #ffffff !important;
 }
-
 html.swr-ms .border-b.bg-slate-50\/50 button:not(#filterMenuButton):hover,
 html.swr-ms.dark .border-b.dark\:bg-zinc-900\/50 button:not(#filterMenuButton):hover {
     background-color: rgba(255,255,255,0.15) !important;
 }
 
-/* Fix Search input in header */
+/* Search input in header */
 html.swr-ms:not(.dark) .border-b.bg-slate-50\/50 input[type="text"] {
-    background-color: #ffffff !important;
-    color: #0f172a !important;
-    border: none !important;
+    background-color: #ffffff !important; color: #0f172a !important; border: none !important;
 }
 html.swr-ms.dark .border-b.dark\:bg-zinc-900\/50 input[type="text"] {
-    background-color: #0c1524 !important;
-    color: #f8fafc !important;
-    border: 1px solid #273959 !important;
+    background-color: #0c1524 !important; color: #f8fafc !important; border: 1px solid #273959 !important;
 }
 
-/* Fix Search SVG */
+/* Search SVG */
 html.swr-ms .border-b.bg-slate-50\/50 .relative.group > svg,
-html.swr-ms.dark .border-b.dark\:bg-zinc-900\/50 .relative.group > svg {
-    color: #64748b !important;
-}
+html.swr-ms.dark .border-b.dark\:bg-zinc-900\/50 .relative.group > svg { color: #64748b !important; }
 
-/* Fix Filter Button in Header */
+/* Filter button in header */
 html.swr-ms:not(.dark) button#filterMenuButton {
-    background-color: #ffffff !important;
-    color: #0f172a !important;
-    border: 1px solid #cbd5e1 !important;
+    background-color: #ffffff !important; color: #0f172a !important; border: 1px solid #cbd5e1 !important;
 }
 html.swr-ms.dark button#filterMenuButton {
-    background-color: #152238 !important;
-    color: #f8fafc !important;
-    border: 1px solid #273959 !important;
+    background-color: #152238 !important; color: #f8fafc !important; border: 1px solid #273959 !important;
 }
-
 html.swr-ms:not(.dark) button#filterMenuButton span,
 html.swr-ms:not(.dark) button#filterMenuButton svg { color: #0f172a !important; }
 html.swr-ms.dark button#filterMenuButton span,
 html.swr-ms.dark button#filterMenuButton svg { color: #f8fafc !important; }
+html.swr-ms button#filterMenuButton #activeFilterCount { color: #ffffff !important; background-color: #003366 !important; }
 
-html.swr-ms button#filterMenuButton #activeFilterCount {
-    color: #ffffff !important;
-    background-color: #003366 !important;
-}
-
-/* Location Fix */
+/* Location label in header */
 html.swr-ms .border-b.bg-slate-50\/50 #userLocLabel,
-html.swr-ms.dark .border-b.dark\:bg-zinc-900\/50 #userLocLabel {
-    color: #ffffff !important;
-}
+html.swr-ms.dark .border-b.dark\:bg-zinc-900\/50 #userLocLabel { color: #ffffff !important; }
 
-/* Base Form Inputs inside main app */
-html.swr-ms:not(.dark) input[type="text"], 
-html.swr-ms:not(.dark) textarea, 
+/* -------------------------------------------------------------------
+   BASE FORM INPUTS
+   ------------------------------------------------------------------- */
+html.swr-ms:not(.dark) input[type="text"],
+html.swr-ms:not(.dark) textarea,
 html.swr-ms:not(.dark) select {
     background-color: #ffffff !important;
     color: #0f172a !important;
     border: 1px solid #cbd5e1 !important;
     border-radius: 0 !important;
 }
-html.swr-ms.dark input[type="text"], 
-html.swr-ms.dark textarea, 
+html.swr-ms.dark input[type="text"],
+html.swr-ms.dark textarea,
 html.swr-ms.dark select {
     background-color: #0c1524 !important;
     color: #f8fafc !important;
     border: 1px solid #273959 !important;
     border-radius: 0 !important;
 }
-
-html.swr-ms input[type="text"]:focus, 
-html.swr-ms textarea:focus, 
+html.swr-ms input[type="text"]:focus,
+html.swr-ms textarea:focus,
 html.swr-ms select:focus {
     border-color: #003366 !important;
     box-shadow: 0 0 0 2px rgba(0, 51, 102, 0.2) !important;
     outline: none !important;
 }
 
-/* SWR Accent Color replaces Tailwind Blue */
-html.swr-ms:not(.dark) .text-blue-500, html.swr-ms:not(.dark) .text-blue-600, html.swr-ms:not(.dark) .text-blue-700 {
-    color: #003366 !important;
-}
-html.swr-ms.dark .dark\:text-blue-400, html.swr-ms.dark .dark\:text-blue-300 {
-    color: #4da6ff !important;
-}
-
-html.swr-ms:not(.dark) .bg-blue-100 {
-    background-color: #e6f0fa !important;
-    color: #003366 !important;
-}
-html.swr-ms.dark .dark\:bg-blue-900\/50, html.swr-ms.dark .bg-blue-100 {
-    background-color: #002244 !important;
-    color: #99ccff !important;
-}
-
-html.swr-ms:not(.dark) .bg-blue-500, html.swr-ms:not(.dark) .bg-blue-600, html.swr-ms:not(.dark) .bg-blue-700 {
-    background-color: #003366 !important;
-    color: #ffffff !important;
-    border-color: #003366 !important;
-}
-html.swr-ms.dark .bg-blue-500, html.swr-ms.dark .bg-blue-600, html.swr-ms.dark .bg-blue-700 {
-    background-color: #004488 !important;
-    color: #ffffff !important;
-    border-color: #004488 !important;
-}
-
-html.swr-ms .border-blue-500, html.swr-ms .border-blue-600 {
-    border-color: #003366 !important;
-}
-html.swr-ms.dark .border-blue-500, html.swr-ms.dark .border-blue-600 {
-    border-color: #4da6ff !important;
-}
-
-/* Active states and borders */
-html.swr-ms:not(.dark) .list-item-selected {
-    background-color: #f1f5f9 !important;
-    border-left: 4px solid #003366 !important;
-}
-html.swr-ms.dark .list-item-selected {
-    background-color: #0c1524 !important;
-    border-left: 4px solid #4da6ff !important;
-}
-
-html.swr-ms:not(.dark) .hover\:bg-slate-50:hover { background-color: #f8fafc !important; }
-html.swr-ms.dark .dark\:hover\:bg-zinc-800:hover { background-color: #1e293b !important; }
-
-html.swr-ms:not(.dark) .hover\:text-blue-600:hover { color: #002244 !important; }
-html.swr-ms.dark .dark\:hover\:text-blue-400:hover { color: #80bfff !important; }
-
-html.swr-ms:not(.dark) .hover\:bg-blue-100:hover { background-color: #d1e2f3 !important; }
-html.swr-ms.dark .dark\:hover\:bg-blue-900\/50:hover { background-color: #003366 !important; }
-
-/* SWR Corporate Square Borders */
+/* -------------------------------------------------------------------
+   CORPORATE SQUARE BORDERS — no rounded corners
+   ------------------------------------------------------------------- */
 html.swr-ms .rounded-md { border-radius: 2px !important; }
 html.swr-ms button:not(.rounded-full) { border-radius: 2px !important; }
-html.swr-ms button, html.swr-ms a[class*="border"] { transition: all 0.2s !important; }
+html.swr-ms button,
+html.swr-ms a[class*="border"] { transition: all 0.2s !important; }
 
-/* Favoriten Toggle Farbe anpassen in SWR Thema */
+/* -------------------------------------------------------------------
+   LIST ITEM SELECTED — SWR navy
+   ------------------------------------------------------------------- */
+html.swr-ms:not(.dark) .list-item-selected {
+    border-left: 4px solid #003366 !important;
+    padding-left: calc(0.75rem - 4px) !important;
+}
+html.swr-ms.dark .list-item-selected {
+    border-left: 4px solid #4da6ff !important;
+    padding-left: calc(0.75rem - 4px) !important;
+}
+
+/* -------------------------------------------------------------------
+   HOVER STATES — keep these since hover text-blue conflicts
+   ------------------------------------------------------------------- */
+html.swr-ms:not(.dark) .hover\:text-blue-600:hover { color: #002244 !important; }
+html.swr-ms.dark .dark\:hover\:text-blue-400:hover  { color: #80bfff !important; }
+
+/* -------------------------------------------------------------------
+   FAVORITE STAR
+   ------------------------------------------------------------------- */
 html.swr-ms:not(.dark) .text-amber-500 { color: #cc8400 !important; }
-html.swr-ms.dark .text-amber-500 { color: #ffb833 !important; }
+html.swr-ms.dark       .text-amber-500 { color: #ffb833 !important; }

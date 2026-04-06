@@ -2,6 +2,612 @@
    SWR Standort Dashboard — styles.css (Base Styles)
    =================================================================== */
 
+/* ===== SECTION 0: THEME TOKEN CONTRACT =====
+   Defines --theme-* variables with defaults matching the standard
+   Tailwind light/dark palette so the "standard" theme needs no file.
+   Custom themes only need to override these tokens — all the actual
+   selector overrides live in the bridge below, written only ONCE.
+   =========================================================== */
+
+:root {
+    /* Surfaces */
+    --theme-bg:               #f8fafc;   /* page backdrop */
+    --theme-surface:          #ffffff;   /* cards / panels */
+    --theme-surface-alt:      #f1f5f9;   /* secondary sections */
+    --theme-hover:            #f1f5f9;   /* hover backgrounds */
+    /* Borders */
+    --theme-border:           #e2e8f0;
+    --theme-border-subtle:    #cbd5e1;
+    /* Text */
+    --theme-text-primary:     #0f172a;
+    --theme-text-secondary:   #334155;
+    --theme-text-muted:       #64748b;
+    /* Accent */
+    --theme-accent:           #2563eb;
+    --theme-accent-hover:     #1d4ed8;
+    --theme-accent-text:      #2563eb;
+    --theme-accent-bg:        rgba(37, 99, 235, 0.10);
+    --theme-accent-bg-hover:  rgba(37, 99, 235, 0.15);
+    /* Focus / glow — used for input rings and Leaflet toggle glow */
+    --theme-focus-ring:       rgba(59, 130, 246, 0.25);
+    --theme-focus-glow:       rgba(59, 130, 246, 0.40);
+}
+
+html.dark {
+    --theme-bg:               #09090b;
+    --theme-surface:          #18181b;
+    --theme-surface-alt:      #27272a;
+    --theme-hover:            #3f3f46;
+    --theme-border:           #3f3f46;
+    --theme-border-subtle:    #27272a;
+    --theme-text-primary:     #f4f4f5;
+    --theme-text-secondary:   #d4d4d8;
+    --theme-text-muted:       #a1a1aa;
+    --theme-accent:           #3b82f6;
+    --theme-accent-hover:     #60a5fa;
+    --theme-accent-text:      #93c5fd;
+    --theme-accent-bg:        rgba(59, 130, 246, 0.10);
+    --theme-accent-bg-hover:  rgba(59, 130, 246, 0.15);
+    --theme-focus-ring:       rgba(59, 130, 246, 0.25);
+    --theme-focus-glow:       rgba(59, 130, 246, 0.40);
+}
+
+/* ===================================================================
+   THEME BRIDGE
+   All repeated Tailwind utility overrides live here ONCE, scoped to
+   any active custom theme.  Theme files only define --theme-* values.
+   =================================================================== */
+
+/* -- Body -- */
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) body {
+    background-color: var(--theme-bg) !important;
+    color: var(--theme-text-primary) !important;
+}
+
+/* -- Surfaces -- */
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .bg-white {
+    background-color: var(--theme-surface) !important;
+}
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .bg-slate-50,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .bg-slate-50\/50 {
+    background-color: var(--theme-surface-alt) !important;
+}
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .bg-slate-100,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .bg-slate-200 {
+    background-color: var(--theme-surface-alt) !important;
+}
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:bg-zinc-950,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:bg-oled {
+    background-color: var(--theme-bg) !important;
+}
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:bg-zinc-900,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:bg-zinc-900\/50 {
+    background-color: var(--theme-surface) !important;
+}
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:bg-zinc-800 {
+    background-color: var(--theme-surface-alt) !important;
+}
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .bg-slate-200.dark\:bg-zinc-800 {
+    background-color: var(--theme-surface-alt) !important;
+}
+
+/* -- Hover backgrounds -- */
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .hover\:bg-slate-50:hover,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .hover\:bg-slate-100:hover {
+    background-color: var(--theme-hover) !important;
+}
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:hover\:bg-zinc-800:hover,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:hover\:bg-zinc-700:hover,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:hover\:bg-zinc-900:hover {
+    background-color: var(--theme-hover) !important;
+}
+
+/* -- Borders -- */
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .border-slate-100,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .border-slate-200,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .border-slate-300,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:border-zinc-700,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:border-zinc-800 {
+    border-color: var(--theme-border) !important;
+}
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .divide-slate-100 > * + *,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:divide-zinc-800 > * + * {
+    border-color: var(--theme-border) !important;
+}
+
+/* -- Text -- */
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .text-slate-900,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .text-slate-800,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:text-zinc-100,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:text-zinc-200 {
+    color: var(--theme-text-primary) !important;
+}
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .text-slate-700,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .text-slate-600,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:text-zinc-300,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:text-zinc-400 {
+    color: var(--theme-text-secondary) !important;
+}
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .text-slate-500,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .text-slate-400,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:text-zinc-500,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:text-zinc-600 {
+    color: var(--theme-text-muted) !important;
+}
+
+/* -- Accent text -- */
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .text-blue-500,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .text-blue-600,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .text-blue-700,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:text-blue-400,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:text-blue-300 {
+    color: var(--theme-accent-text) !important;
+}
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .hover\:text-blue-600:hover,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:hover\:text-blue-400:hover {
+    color: var(--theme-accent-hover) !important;
+}
+
+/* -- Accent backgrounds -- */
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .bg-blue-100,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:bg-blue-900\/50 {
+    background-color: var(--theme-accent-bg) !important;
+    color: var(--theme-accent-text) !important;
+}
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .hover\:bg-blue-100:hover,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:hover\:bg-blue-100:hover,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:hover\:bg-blue-900:hover,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:hover\:bg-blue-900\/50:hover {
+    background-color: var(--theme-accent-bg-hover) !important;
+}
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .bg-blue-500,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .bg-blue-600,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .bg-blue-700 {
+    background-color: var(--theme-accent) !important;
+    border-color: var(--theme-accent) !important;
+    color: #ffffff !important;
+}
+
+/* -- Accent borders -- */
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .border-blue-500,
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .border-blue-600 {
+    border-color: var(--theme-accent) !important;
+}
+
+/* -- List item selected (base; themes can add on top) -- */
+:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .list-item-selected {
+    background-color: var(--theme-accent-bg) !important;
+    border-left-color: var(--theme-accent) !important;
+}
+
+/* ===================================================================
+   DRACULA SHARED STRUCTURE
+   dracula and dracula-laser share the same internal variable names
+   (--primary, --surface, --background, etc.) so all structural rules
+   are written once here with :is() and the different token values
+   in each theme file do the rest.
+   =================================================================== */
+
+/* Body */
+:is(html.dracula, html.dracula-laser) body { background: var(--background) !important; }
+
+/* Surfaces — dracula-specific extra effects on top of bridge */
+:is(html.dracula, html.dracula-laser) .bg-white {
+    background: var(--surface) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
+    color: var(--text-primary) !important;
+}
+:is(html.dracula, html.dracula-laser) .dark\:bg-zinc-950,
+:is(html.dracula, html.dracula-laser) .dark\:bg-oled {
+    background: var(--background-alt) !important;
+}
+:is(html.dracula, html.dracula-laser) .bg-slate-50,
+:is(html.dracula, html.dracula-laser) .bg-slate-50\/50     { background: var(--background-alt) !important; }
+:is(html.dracula, html.dracula-laser) .bg-slate-100        { background: var(--background) !important; }
+:is(html.dracula, html.dracula-laser) .bg-slate-200        { background: var(--surface) !important; }
+:is(html.dracula, html.dracula-laser) .bg-slate-900        { background-color: var(--background) !important; color: var(--text-primary) !important; }
+:is(html.dracula, html.dracula-laser) .dark\:bg-zinc-900,
+:is(html.dracula, html.dracula-laser) .dark\:bg-zinc-900\/50 { background-color: var(--surface) !important; }
+:is(html.dracula, html.dracula-laser) .dark\:bg-zinc-800  { background: var(--surface) !important; filter: brightness(1.2); }
+
+/* Hover */
+:is(html.dracula, html.dracula-laser) .hover\:bg-slate-50:hover,
+:is(html.dracula, html.dracula-laser) .hover\:bg-slate-100:hover,
+:is(html.dracula, html.dracula-laser) .dark\:hover\:bg-zinc-800:hover,
+:is(html.dracula, html.dracula-laser) .dark\:hover\:bg-zinc-700:hover,
+:is(html.dracula, html.dracula-laser) .dark\:hover\:bg-zinc-900:hover { background: var(--highlight) !important; filter: none; }
+
+/* Borders */
+:is(html.dracula, html.dracula-laser) .border-slate-200,
+:is(html.dracula, html.dracula-laser) .border-slate-300,
+:is(html.dracula, html.dracula-laser) .dark\:border-zinc-700,
+:is(html.dracula, html.dracula-laser) .dark\:border-zinc-800 { border-color: var(--border) !important; }
+:is(html.dracula, html.dracula-laser) .border-b             { border-bottom-color: var(--border) !important; }
+:is(html.dracula, html.dracula-laser) .divide-slate-100 > * + *,
+:is(html.dracula, html.dracula-laser) .dark\:divide-zinc-800 > * + * { border-color: var(--border) !important; }
+
+/* Text */
+:is(html.dracula, html.dracula-laser) .text-slate-900,
+:is(html.dracula, html.dracula-laser) .dark\:text-zinc-100,
+:is(html.dracula, html.dracula-laser) .dark\:text-zinc-200,
+:is(html.dracula, html.dracula-laser) .hover\:text-slate-800,
+:is(html.dracula, html.dracula-laser) .dark\:hover\:text-zinc-200 { color: var(--text-primary) !important; }
+:is(html.dracula, html.dracula-laser) .text-slate-300,
+:is(html.dracula, html.dracula-laser) .text-slate-400,
+:is(html.dracula, html.dracula-laser) .text-slate-500,
+:is(html.dracula, html.dracula-laser) .text-slate-600,
+:is(html.dracula, html.dracula-laser) .text-slate-700,
+:is(html.dracula, html.dracula-laser) .dark\:text-zinc-300,
+:is(html.dracula, html.dracula-laser) .dark\:text-zinc-400,
+:is(html.dracula, html.dracula-laser) .dark\:text-zinc-600 { color: var(--text-secondary) !important; }
+:is(html.dracula, html.dracula-laser) .hover\:text-slate-700,
+:is(html.dracula, html.dracula-laser) .dark\:hover\:text-zinc-300 { color: var(--text-secondary) !important; }
+
+/* Accent */
+:is(html.dracula, html.dracula-laser) .text-green-500,
+:is(html.dracula, html.dracula-laser) .text-green-600,
+:is(html.dracula, html.dracula-laser) .dark\:text-green-500 { color: var(--accent) !important; }
+:is(html.dracula, html.dracula-laser) .text-yellow-500,
+:is(html.dracula, html.dracula-laser) .text-yellow-600,
+:is(html.dracula, html.dracula-laser) .dark\:text-yellow-300,
+:is(html.dracula, html.dracula-laser) .dark\:text-yellow-400,
+:is(html.dracula, html.dracula-laser) .text-orange-600,
+:is(html.dracula, html.dracula-laser) .dark\:text-orange-400,
+:is(html.dracula, html.dracula-laser) .text-orange-700 { color: var(--warning) !important; }
+:is(html.dracula, html.dracula-laser) .text-red-500,
+:is(html.dracula, html.dracula-laser) .text-red-600,
+:is(html.dracula, html.dracula-laser) .dark\:text-red-400,
+:is(html.dracula, html.dracula-laser) .text-red-700 { color: var(--error) !important; }
+:is(html.dracula, html.dracula-laser) .text-amber-500,
+:is(html.dracula, html.dracula-laser) .dark\:text-amber-500,
+:is(html.dracula, html.dracula-laser) .hover\:text-amber-500:hover { color: var(--pink) !important; }
+:is(html.dracula, html.dracula-laser) .bg-blue-500,
+:is(html.dracula, html.dracula-laser) .dark\:bg-blue-600,
+:is(html.dracula, html.dracula-laser) .dark\:bg-blue-500 { background: var(--primary) !important; color: var(--background) !important; font-weight: bold !important; border-color: var(--primary) !important; }
+:is(html.dracula, html.dracula-laser) .dark\:bg-blue-900\/50 { background: var(--border) !important; }
+:is(html.dracula, html.dracula-laser) .dark\:hover\:bg-blue-100:hover,
+:is(html.dracula, html.dracula-laser) .dark\:hover\:bg-blue-900:hover,
+:is(html.dracula, html.dracula-laser) .dark\:hover\:bg-blue-900\/50:hover,
+:is(html.dracula, html.dracula-laser) .hover\:bg-blue-100:hover { background: var(--highlight) !important; }
+:is(html.dracula, html.dracula-laser) .border-blue-500  { border-color: var(--primary) !important; }
+:is(html.dracula, html.dracula-laser) .bg-yellow-100    { background: rgba(255, 202, 133, 0.1) !important; }
+:is(html.dracula, html.dracula-laser) .bg-red-50\/50    { background-color: var(--error) !important; opacity: 0.1; }
+:is(html.dracula, html.dracula-laser) .bg-orange-50\/50 { background-color: var(--warning) !important; opacity: 0.1; }
+:is(html.dracula, html.dracula-laser) .dark\:bg-red-900\/20    { background-color: var(--error) !important; opacity: 0.15; }
+:is(html.dracula, html.dracula-laser) .dark\:bg-orange-900\/20 { background-color: var(--warning) !important; opacity: 0.15; }
+:is(html.dracula, html.dracula-laser) .border-red-200,
+:is(html.dracula, html.dracula-laser) .dark\:border-red-900\/50 { border-color: rgba(255, 103, 103, 0.3) !important; }
+:is(html.dracula, html.dracula-laser) .border-orange-200,
+:is(html.dracula, html.dracula-laser) .dark\:border-orange-900\/50 { border-color: rgba(255, 202, 133, 0.3) !important; }
+
+/* Font weight */
+:is(html.dracula, html.dracula-laser) [class*="font-semibold"],
+:is(html.dracula, html.dracula-laser) [class*="font-bold"] { color: var(--text-primary) !important; }
+:is(html.dracula, html.dracula-laser) [class*="font-normal"] { color: var(--text-secondary) !important; }
+
+/* Inputs & Forms */
+:is(html.dracula, html.dracula-laser) input[type="text"],
+:is(html.dracula, html.dracula-laser) textarea {
+    background: var(--surface) !important;
+    border: 2px solid var(--border) !important;
+    color: var(--text-primary) !important;
+    transition: all 0.2s ease !important;
+}
+:is(html.dracula, html.dracula-laser) input[type="text"]:focus,
+:is(html.dracula, html.dracula-laser) textarea:focus {
+    border-color: var(--primary) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 3px var(--theme-focus-ring) !important;
+}
+:is(html.dracula, html.dracula-laser) input[type="text"]::placeholder,
+:is(html.dracula, html.dracula-laser) textarea::placeholder { color: var(--text-muted) !important; opacity: 0.6; }
+:is(html.dracula, html.dracula-laser) input[type="radio"],
+:is(html.dracula, html.dracula-laser) input[type="checkbox"] {
+    accent-color: var(--primary) !important;
+    background: transparent !important;
+    border: 1px solid var(--border) !important;
+}
+:is(html.dracula, html.dracula-laser) input[type="radio"]:checked,
+:is(html.dracula, html.dracula-laser) input[type="checkbox"]:checked {
+    background: var(--primary) !important;
+    border-color: var(--primary) !important;
+}
+:is(html.dracula, html.dracula-laser) select {
+    background: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text-primary) !important;
+}
+:is(html.dracula, html.dracula-laser) select:hover { border-color: var(--primary) !important; }
+:is(html.dracula, html.dracula-laser) select:focus {
+    outline: none !important;
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px var(--theme-focus-ring) !important;
+}
+
+/* Scrollbars */
+:is(html.dracula, html.dracula-laser) ::-webkit-scrollbar-thumb { background: var(--primary) !important; border-radius: 2px; }
+:is(html.dracula, html.dracula-laser) ::-webkit-scrollbar-thumb:hover { background: var(--primary-light) !important; }
+:is(html.dracula, html.dracula-laser) ::-webkit-scrollbar-track { background: var(--background) !important; }
+
+/* Buttons */
+:is(html.dracula, html.dracula-laser) button,
+:is(html.dracula, html.dracula-laser) a[class*="border"] {
+    background: transparent !important;
+    border-color: var(--border) !important;
+    color: var(--text-secondary) !important;
+    transition: all 0.2s ease !important;
+}
+:is(html.dracula, html.dracula-laser) button:active {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: var(--background) !important;
+}
+:is(html.dracula, html.dracula-laser) a[id*="btn"],
+:is(html.dracula, html.dracula-laser) button:not(.text-xs):not([title="Suchen"]):not([title*="Favorit"]):not([title*="Navigation"]):not(#clearSearchBtn):not([onclick^="close"]) {
+    background: transparent !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text-secondary) !important;
+    padding: 0.75rem !important;
+    border-radius: 0.375rem !important;
+    text-align: center !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+}
+:is(html.dracula, html.dracula-laser) button svg,
+:is(html.dracula, html.dracula-laser) a svg { color: inherit !important; }
+:is(html.dracula, html.dracula-laser) .group:hover { background-color: var(--highlight) !important; }
+:is(html.dracula, html.dracula-laser) .rounded-md { border-radius: 0.375rem !important; }
+:is(html.dracula, html.dracula-laser) button,
+:is(html.dracula, html.dracula-laser) input { border-radius: 0.375rem !important; }
+
+/* Links */
+:is(html.dracula, html.dracula-laser) .hover\:text-blue-700:hover { color: var(--accent-light) !important; }
+
+/* Favorites */
+:is(html.dracula, html.dracula-laser) .opacity-100.text-amber-500                   { color: var(--pink) !important; opacity: 1 !important; }
+:is(html.dracula, html.dracula-laser) button[title="Favorit umschalten"].text-amber-500 { color: var(--pink) !important; }
+:is(html.dracula, html.dracula-laser) #dashFavoriteBtn                               { color: inherit !important; }
+:is(html.dracula, html.dracula-laser) #dashFavoriteBtn.text-amber-500                { color: var(--pink) !important; }
+:is(html.dracula, html.dracula-laser) #dashFavoriteBtn:hover                         { color: var(--pink) !important; }
+
+/* Dashboard */
+:is(html.dracula, html.dracula-laser) #weatherTemp,
+:is(html.dracula, html.dracula-laser) #driveTimeValue { color: var(--accent) !important; }
+:is(html.dracula, html.dracula-laser) #weatherDesc    { color: var(--text-muted) !important; }
+:is(html.dracula, html.dracula-laser) .text-sm.font-medium { color: var(--text-secondary) !important; }
+:is(html.dracula, html.dracula-laser) button[onclick="editWayInstructions()"],
+:is(html.dracula, html.dracula-laser) .bg-slate-200.dark\:bg-zinc-800 {
+    background-color: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text-secondary) !important;
+    transition: all 0.2s ease !important;
+}
+
+/* Shadows */
+:is(html.dracula, html.dracula-laser) .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important; }
+:is(html.dracula, html.dracula-laser) .shadow-xl   { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3) !important; }
+:is(html.dracula, html.dracula-laser) .shadow-sm   { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2) !important; }
+
+/* Focus */
+:is(html.dracula, html.dracula-laser) *:focus,
+:is(html.dracula, html.dracula-laser) input:focus,
+:is(html.dracula, html.dracula-laser) button:focus,
+:is(html.dracula, html.dracula-laser) input:focus-visible {
+    outline: none !important;
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px var(--theme-focus-ring) !important;
+}
+
+/* Modals */
+:is(html.dracula, html.dracula-laser) [class*="modal"] {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+    color: var(--text-primary) !important;
+}
+:is(html.dracula, html.dracula-laser) button#clearSearchBtn,
+:is(html.dracula, html.dracula-laser) button[onclick^="close"] {
+    background: transparent !important; border: none !important;
+    padding: 0.25rem !important; box-shadow: none !important;
+}
+:is(html.dracula, html.dracula-laser) button#clearSearchBtn:hover,
+:is(html.dracula, html.dracula-laser) button[onclick^="close"]:hover {
+    background: transparent !important; border: none !important; box-shadow: none !important;
+}
+
+/* Code */
+:is(html.dracula, html.dracula-laser) code,
+:is(html.dracula, html.dracula-laser) [class*="font-mono"] {
+    background: var(--background-alt) !important;
+    color: var(--accent) !important;
+    padding: 0.25rem 0.5rem !important;
+    border-radius: 0.25rem !important;
+}
+
+/* Tooltips */
+:is(html.dracula, html.dracula-laser) [role="tooltip"],
+:is(html.dracula, html.dracula-laser) [class*="tooltip"] {
+    background: var(--background-alt) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border) !important;
+}
+
+/* List item selection */
+:is(html.dracula, html.dracula-laser) .list-item-selected {
+    background-color: var(--highlight) !important;
+    border-left: 2px solid var(--accent) !important;
+    box-shadow: inset 2px 0 0 var(--accent) !important;
+    padding-left: calc(0.75rem - 2px) !important;
+    color: var(--text-primary) !important;
+}
+:is(html.dracula, html.dracula-laser).dark .list-item-selected { background-color: var(--highlight) !important; }
+
+/* Filter chips */
+:is(html.dracula, html.dracula-laser) #filterMenuPanel .border-green-500,
+:is(html.dracula, html.dracula-laser).dark #filterMenuPanel .border-green-500 { border-color: var(--accent) !important; }
+:is(html.dracula, html.dracula-laser) #filterMenuPanel .bg-green-100,
+:is(html.dracula, html.dracula-laser).dark #filterMenuPanel .dark\:bg-green-900\/30 { background-color: rgba(97, 255, 202, 0.18) !important; }
+:is(html.dracula, html.dracula-laser) #filterMenuPanel .text-green-700,
+:is(html.dracula, html.dracula-laser).dark #filterMenuPanel .dark\:text-green-300 { color: var(--accent) !important; }
+:is(html.dracula, html.dracula-laser) #filterMenuPanel .border-red-500,
+:is(html.dracula, html.dracula-laser).dark #filterMenuPanel .border-red-500 { border-color: var(--pink) !important; }
+:is(html.dracula, html.dracula-laser) #filterMenuPanel .bg-red-100,
+:is(html.dracula, html.dracula-laser).dark #filterMenuPanel .dark\:bg-red-900\/30 { background-color: rgba(246, 148, 255, 0.18) !important; }
+:is(html.dracula, html.dracula-laser) #filterMenuPanel .text-red-700,
+:is(html.dracula, html.dracula-laser).dark #filterMenuPanel .dark\:text-red-300 { color: var(--pink) !important; }
+
+/* ───────────────────────────────────────────────────
+   DRACULA SHARED LEAFLET CONTROLS
+   Both themes use the same variable names so this block
+   covers all of their Leaflet theming in one place.
+   ─────────────────────────────────────────────────── */
+:is(html.dracula, html.dracula-laser) .leaflet-control-layers {
+    background: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 0.375rem !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+    padding: 0 !important;
+}
+:is(html.dracula, html.dracula-laser) .leaflet-control-layers-toggle {
+    width: 32px !important; height: 32px !important;
+    background: var(--surface) !important;
+    background-color: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 0.375rem !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+    background-image: none !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    display: flex !important; align-items: center !important; justify-content: center !important;
+}
+:is(html.dracula, html.dracula-laser) .leaflet-control-layers-toggle::after {
+    content: "" !important;
+    display: block !important; width: 16px !important; height: 16px !important;
+    background-color: var(--text-primary) !important;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg version='1.1' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 122.88 105.02'%3E%3Cg%3E%3Cpath fill='currentColor' d='M97.25,40.58l23.85,10.28c1.48,0.64,2.17,2.36,1.53,3.85c-0.32,0.75-0.93,1.3-1.63,1.57l-23.19,9.39l23.29,10.04 c1.48,0.64,2.17,2.36,1.53,3.84c-0.32,0.75-0.93,1.3-1.63,1.57l-58.52,23.69c-0.73,0.3-1.52,0.27-2.2,0L1.83,81.05 c-1.5-0.61-2.22-2.31-1.61-3.81c0.33-0.82,0.99-1.4,1.76-1.67l22.97-9.96l-23.12-9.4c-1.5-0.61-2.22-2.31-1.61-3.81 c0.33-0.82,0.99-1.4,1.76-1.67l23.53-10.21L1.83,30.9c-1.5-0.61-2.22-2.31-1.61-3.81c0.33-0.82,0.99-1.4,1.76-1.67L60.02,0.24 c0.77-0.33,1.6-0.31,2.31,0l0-0.01l58.77,25.32c1.48,0.64,2.17,2.36,1.53,3.84c-0.32,0.75-0.93,1.3-1.63,1.57L97.25,40.58 L97.25,40.58z M112.36,53.47l-22.73-9.79L62.49,54.66c-0.73,0.3-1.52,0.27-2.2,0L33.08,43.6L10.47,53.4L61.39,74.1L112.36,53.47 L112.36,53.47z M90.19,68.75l-27.7,11.21c-0.73,0.3-1.52,0.27-2.2,0L32.52,68.68l-22.05,9.56l50.92,20.69l50.97-20.63L90.19,68.75 L90.19,68.75z M61.17,6.1l-50.7,21.99l50.92,20.69l50.97-20.63L61.17,6.1L61.17,6.1z'/%3E%3C/g%3E%3C/svg%3E") no-repeat center / contain;
+    mask: url("data:image/svg+xml,%3Csvg version='1.1' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 122.88 105.02'%3E%3Cg%3E%3Cpath fill='currentColor' d='M97.25,40.58l23.85,10.28c1.48,0.64,2.17,2.36,1.53,3.85c-0.32,0.75-0.93,1.3-1.63,1.57l-23.19,9.39l23.29,10.04 c1.48,0.64,2.17,2.36,1.53,3.84c-0.32,0.75-0.93,1.3-1.63,1.57l-58.52,23.69c-0.73,0.3-1.52,0.27-2.2,0L1.83,81.05 c-1.5-0.61-2.22-2.31-1.61-3.81c0.33-0.82,0.99-1.4,1.76-1.67l22.97-9.96l-23.12-9.4c-1.5-0.61-2.22-2.31-1.61-3.81 c0.33-0.82,0.99-1.4,1.76-1.67l23.53-10.21L1.83,30.9c-1.5-0.61-2.22-2.31-1.61-3.81c0.33-0.82,0.99-1.4,1.76-1.67L60.02,0.24 c0.77-0.33,1.6-0.31,2.31,0l0-0.01l58.77,25.32c1.48,0.64,2.17,2.36,1.53,3.84c-0.32,0.75-0.93,1.3-1.63,1.57L97.25,40.58 L97.25,40.58z M112.36,53.47l-22.73-9.79L62.49,54.66c-0.73,0.3-1.52,0.27-2.2,0L33.08,43.6L10.47,53.4L61.39,74.1L112.36,53.47 L112.36,53.47z M90.19,68.75l-27.7,11.21c-0.73,0.3-1.52,0.27-2.2,0L32.52,68.68l-22.05,9.56l50.92,20.69l50.97-20.63L90.19,68.75 L90.19,68.75z M61.17,6.1l-50.7,21.99l50.92,20.69l50.97-20.63L61.17,6.1L61.17,6.1z'/%3E%3C/g%3E%3C/svg%3E") no-repeat center / contain;
+    transition: all 0.2s ease !important;
+}
+:is(html.dracula, html.dracula-laser) .leaflet-control-layers-toggle:hover::after { background-color: var(--primary) !important; }
+:is(html.dracula, html.dracula-laser) .leaflet-control-layers-toggle:hover {
+    background-color: var(--background) !important;
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 12px var(--theme-focus-glow) !important;
+}
+:is(html.dracula, html.dracula-laser) .leaflet-control-layers-list { padding: 10px !important; }
+:is(html.dracula, html.dracula-laser) .leaflet-control-layers label {
+    font-size: 0.8125rem !important; font-weight: 500 !important;
+    color: var(--text-secondary) !important; margin-bottom: 6px !important;
+    cursor: pointer !important; display: flex !important; align-items: center !important; gap: 6px !important;
+}
+:is(html.dracula, html.dracula-laser) .leaflet-control-layers label:hover { color: var(--text-primary) !important; }
+:is(html.dracula, html.dracula-laser) .leaflet-control-layers input[type="radio"] {
+    appearance: none !important; -webkit-appearance: none !important;
+    width: 1rem !important; height: 1rem !important; min-width: 1rem !important;
+    border-radius: 9999px !important; border: 2px solid var(--border) !important;
+    background-color: var(--surface) !important; cursor: pointer !important;
+    transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s !important;
+    display: inline-flex !important; align-items: center !important; justify-content: center !important;
+    flex-shrink: 0 !important; position: relative !important;
+}
+:is(html.dracula, html.dracula-laser) .leaflet-control-layers input[type="radio"]::after {
+    content: '' !important; display: block !important;
+    width: 6px !important; height: 6px !important;
+    border-radius: 9999px !important; background: transparent !important; transition: background 0.15s !important;
+}
+:is(html.dracula, html.dracula-laser) .leaflet-control-layers input[type="radio"]:checked { border-color: var(--primary) !important; background-color: var(--primary) !important; }
+:is(html.dracula, html.dracula-laser) .leaflet-control-layers input[type="radio"]:checked::after { background: #ffffff !important; }
+:is(html.dracula, html.dracula-laser) .leaflet-control-layers input[type="radio"]:hover:not(:checked) { border-color: var(--text-muted) !important; }
+:is(html.dracula, html.dracula-laser) .leaflet-control-layers input[type="radio"]:focus { outline: none !important; box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 35%, transparent) !important; }
+:is(html.dracula, html.dracula-laser) .leaflet-control-layers input[type="checkbox"] {
+    appearance: none !important; -webkit-appearance: none !important;
+    width: 1rem !important; height: 1rem !important; min-width: 1rem !important;
+    border-radius: 0.25rem !important; border: 2px solid var(--border) !important;
+    background-color: var(--surface) !important; cursor: pointer !important;
+    transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s !important;
+    display: inline-flex !important; align-items: center !important; justify-content: center !important;
+    flex-shrink: 0 !important; position: relative !important;
+}
+:is(html.dracula, html.dracula-laser) .leaflet-control-layers input[type="checkbox"]::after {
+    content: '' !important; display: block !important;
+    width: 5px !important; height: 9px !important;
+    border: 2px solid transparent !important; border-top: none !important; border-left: none !important;
+    transform: rotate(45deg) translateY(-1px) !important; transition: border-color 0.15s !important;
+}
+:is(html.dracula, html.dracula-laser) .leaflet-control-layers input[type="checkbox"]:checked { border-color: var(--primary) !important; background-color: var(--primary) !important; }
+:is(html.dracula, html.dracula-laser) .leaflet-control-layers input[type="checkbox"]:checked::after { border-color: #ffffff !important; }
+:is(html.dracula, html.dracula-laser) .leaflet-control-layers input[type="checkbox"]:hover:not(:checked) { border-color: var(--text-muted) !important; }
+:is(html.dracula, html.dracula-laser) .leaflet-control-layers input[type="checkbox"]:focus { outline: none !important; box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 35%, transparent) !important; }
+:is(html.dracula, html.dracula-laser) .leaflet-control-layers-separator { border-color: var(--border) !important; margin: 6px 0 !important; }
+:is(html.dracula, html.dracula-laser) .leaflet-control-layers-group-name {
+    font-weight: 600 !important; font-size: 0.75rem !important;
+    text-transform: uppercase !important; letter-spacing: 0.05em !important;
+    color: var(--primary) !important; margin-top: 10px !important; margin-bottom: 6px !important;
+}
+:is(html.dracula, html.dracula-laser) .leaflet-container .leaflet-control-zoom.leaflet-bar,
+:is(html.dracula, html.dracula-laser) .leaflet-control-zoom {
+    border: none !important; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+    border-radius: 0.375rem !important; padding: 2px !important; background: transparent !important;
+}
+:is(html.dracula, html.dracula-laser) .leaflet-bar a,
+:is(html.dracula, html.dracula-laser) .leaflet-container .leaflet-touch .leaflet-bar a,
+:is(html.dracula, html.dracula-laser) .leaflet-container .leaflet-bar a,
+:is(html.dracula, html.dracula-laser) .leaflet-container .leaflet-control-zoom-in,
+:is(html.dracula, html.dracula-laser) .leaflet-container .leaflet-control-zoom-out {
+    background: var(--surface) !important; background-color: var(--surface) !important;
+    border: 1px solid var(--border) !important; border-bottom: 1px solid var(--border) !important;
+    color: var(--text-primary) !important;
+    width: 32px !important; height: 32px !important; line-height: 30px !important;
+    font-size: 20px !important; font-weight: bold !important; text-align: center !important;
+    border-radius: 0 !important; transition: all 0.2s ease !important; text-decoration: none !important;
+}
+:is(html.dracula, html.dracula-laser) .leaflet-bar a:first-child,
+:is(html.dracula, html.dracula-laser) .leaflet-container .leaflet-touch .leaflet-bar a:first-child,
+:is(html.dracula, html.dracula-laser) .leaflet-container .leaflet-bar a:first-child {
+    border-top-left-radius: 0.375rem !important; border-top-right-radius: 0.375rem !important; border-bottom: none !important;
+}
+:is(html.dracula, html.dracula-laser) .leaflet-bar a:last-child,
+:is(html.dracula, html.dracula-laser) .leaflet-container .leaflet-touch .leaflet-bar a:last-child,
+:is(html.dracula, html.dracula-laser) .leaflet-container .leaflet-bar a:last-child {
+    border-bottom-left-radius: 0.375rem !important; border-bottom-right-radius: 0.375rem !important;
+}
+:is(html.dracula, html.dracula-laser) .leaflet-bar a:hover,
+:is(html.dracula, html.dracula-laser) .leaflet-container .leaflet-touch .leaflet-bar a:hover,
+:is(html.dracula, html.dracula-laser) .leaflet-container .leaflet-bar a:hover,
+:is(html.dracula, html.dracula-laser) .leaflet-container .leaflet-control-zoom-in:hover,
+:is(html.dracula, html.dracula-laser) .leaflet-container .leaflet-control-zoom-out:hover {
+    background: var(--background) !important; background-color: var(--background) !important;
+    border-color: var(--primary) !important; color: var(--primary) !important;
+}
+:is(html.dracula, html.dracula-laser) .leaflet-control-zoom-in:active,
+:is(html.dracula, html.dracula-laser) .leaflet-control-zoom-out:active {
+    background: var(--primary) !important; border-color: var(--primary) !important; color: #ffffff !important;
+}
+:is(html.dracula, html.dracula-laser).dark .leaflet-bar a,
+:is(html.dracula, html.dracula-laser).dark .leaflet-container .leaflet-touch .leaflet-bar a,
+:is(html.dracula, html.dracula-laser).dark .leaflet-container .leaflet-bar a,
+:is(html.dracula, html.dracula-laser).dark .leaflet-container .leaflet-control-zoom-in,
+:is(html.dracula, html.dracula-laser).dark .leaflet-container .leaflet-control-zoom-out {
+    background: var(--background) !important; background-color: var(--background) !important;
+    color: var(--text-secondary) !important;
+}
+:is(html.dracula, html.dracula-laser).dark .leaflet-bar a:hover,
+:is(html.dracula, html.dracula-laser).dark .leaflet-container .leaflet-touch .leaflet-bar a:hover,
+:is(html.dracula, html.dracula-laser).dark .leaflet-container .leaflet-bar a:hover,
+:is(html.dracula, html.dracula-laser).dark .leaflet-container .leaflet-control-zoom-in:hover,
+:is(html.dracula, html.dracula-laser).dark .leaflet-container .leaflet-control-zoom-out:hover {
+    background: var(--border) !important; background-color: var(--border) !important; color: var(--primary) !important;
+}
+:is(html.dracula, html.dracula-laser).dark .leaflet-control-zoom-in:active,
+:is(html.dracula, html.dracula-laser).dark .leaflet-control-zoom-out:active { color: var(--background) !important; }
+:is(html.dracula, html.dracula-laser) .leaflet-control-attribution {
+    background: var(--surface) !important; border: 1px solid var(--border) !important;
+    color: var(--text-muted) !important; font-size: 0.7rem !important;
+    border-radius: 0.375rem !important; padding: 4px 8px !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+}
+:is(html.dracula, html.dracula-laser) .leaflet-control-attribution a { color: var(--primary) !important; text-decoration: none !important; transition: color 0.2s ease !important; }
+:is(html.dracula, html.dracula-laser) .leaflet-control-attribution a:hover { color: var(--primary-light) !important; text-decoration: underline !important; }
+
 /* ===== SECTION 1: BASE STYLES ===== */
 
 html { font-size: 12px; } /* 75% zoom scaling. Browser default is 16px. Tailwind uses rems, so this scales the entire UI down. */
