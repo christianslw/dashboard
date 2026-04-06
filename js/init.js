@@ -88,18 +88,22 @@ window.onload = async () => {
     applyThemeAndAppearance();
 
     // ── 2. Cloudflare backend sync ─────────────────────────────────────────────
-    // All three fetches are independent — run them in parallel to avoid
-    // stacking round-trips (settings → fahrtanweisungen → standorte was ~3 RTTs).
     let backendHasStandorte = false;
     if (typeof window.__cfSync !== 'undefined') {
-        [, , backendHasStandorte] = await Promise.all([
-            window.__cfSync.loadSettingsFromBackend(),
+        // Settings are user-specific (can't be edge-cached) and take a full RTT.
+        // Fire the fetch without awaiting it — local settings from localStorage are
+        // already applied above. If the backend has something different it will
+        // re-apply and re-render automatically when the promise resolves.
+        window.__cfSync.loadSettingsFromBackend().then(() => {
+            applyThemeAndAppearance();
+        });
+
+        // Fahrtanweisungen and standorte ARE edge-cached — await them because
+        // the list needs standorte data before it can render.
+        [, backendHasStandorte] = await Promise.all([
             window.__cfSync.loadFahrtanweisungen(),
             window.__cfSync.loadStandorteFromBackend(),
         ]);
-
-        // Re-apply theme in case the backend had a different value
-        applyThemeAndAppearance();
 
         // Start watching for local setting changes and push them to the backend
         window.__cfSync.startSettingsSync();
