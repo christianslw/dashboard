@@ -1,6 +1,4 @@
-// ==========================================
-// Filters
-// ==========================================
+// ─── Filters ───────────────────────────────────────────────────────────────────────
 
 function loadFilterState() {
     try {
@@ -159,9 +157,9 @@ function _positionPanel(panel, btn, panelWidth) {
 
 function _animateClosePanel(panel, callback) {
     if (!panel || panel.classList.contains('hidden')) { callback && callback(); return; }
-    // Cancel the open animation so the close transition isn't overridden
+    // Cancel open animation before closing
     panel.style.animation = 'none';
-    // Force reflow to ensure the cancel takes effect before we transition
+    // Force reflow so cancel takes effect before transition
     void panel.offsetHeight;
     panel.style.transition = 'opacity 0.13s ease-in, transform 0.13s ease-in';
     panel.style.opacity = '0';
@@ -184,7 +182,7 @@ function toggleFilterMenu() {
     if (panel.classList.contains('hidden')) {
         _positionPanel(panel, btn, 480);
         panel.classList.remove('hidden');
-        // Force animation restart in case it's been played before
+        // Restart animation (in case it was played before)
         panel.style.animation = 'none';
         void panel.offsetHeight;
         panel.style.animation = '';
@@ -250,9 +248,7 @@ function getFilteredStandorte() {
     return applySorting(filtered);
 }
 
-// ==========================================
-// Sort Menu
-// ==========================================
+// ─── Sort Menu ──────────────────────────────────────────────────────────────────────
 
 const SORT_FIELDS = [
     { field: 'default',  label: 'Standard' },
@@ -286,7 +282,7 @@ function toggleSortMenu() {
         renderSortOptions();
         _positionPanel(panel, btn, 240);
         panel.classList.remove('hidden');
-        // Force animation restart in case it's been played before
+        // Restart animation (in case it was played before)
         panel.style.animation = 'none';
         void panel.offsetHeight;
         panel.style.animation = '';

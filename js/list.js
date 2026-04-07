@@ -1,6 +1,4 @@
-// ==========================================
-// List View & Synchronization
-// ==========================================
+// ─── List View ───────────────────────────────────────────────────────────────────────
 
 function filterStandorte() {
     const searchInput = document.getElementById("searchInput");
@@ -124,9 +122,7 @@ function renderList(liste) {
     }
 }
 
-// ==========================================
-// List & Map Synchronization
-// ==========================================
+// ─── List & Map Synchronization ────────────────────────────────────────────────────────
 
 function openRouteNavigation(nummer) {
     const standort = standorte.find(s => String(s.nummer) === String(nummer));

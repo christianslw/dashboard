@@ -1,9 +1,6 @@
 /**
  * /api/standorte/:nummer
- *
- * GET    — fetch one standort record (no auth)
- * PUT    — create or update a standort record (ADMIN only)
- * DELETE — remove a standort record (ADMIN only)
+ * GET — fetch one standort (no auth) | PUT / DELETE — admin only
  */
 
 function isAdmin(request, env) {
@@ -14,7 +11,7 @@ function isAdmin(request, env) {
 }
 
 async function rebuildIndex(env) {
-    // Rebuild the standorte:_index list from all standort: keys in KV
+    // Rebuild standorte:_index from all standort: keys
     const list = await env.STANDORTE_KV.list({ prefix: 'standort:' });
     const numbers = list.keys.map(k => k.name.slice('standort:'.length));
     await env.STANDORTE_KV.put('standorte:_index', JSON.stringify(numbers));
@@ -54,7 +51,7 @@ export async function onRequestPut({ params, env, request }) {
         return Response.json({ error: 'Missing required fields: nummer, lat, lon' }, { status: 400 });
     }
 
-    // Read existing record to preserve user-added fahrtanweisung (not admin-managed)
+        // Preserve existing fahrtanweisung (not admin-managed)
     const existing = await env.STANDORTE_KV.get(`standort:${nummer}`, { type: 'json' });
 
     const record = {

@@ -1,6 +1,4 @@
-// ==========================================
-// Tutorial Modal
-// ==========================================
+// ─── Tutorial Modal ───────────────────────────────────────────────────────────────────
 
 function openTutorial() {
     document.getElementById('tutorialModal').classList.remove('hidden');

@@ -1,15 +1,6 @@
-/* ===================================================================
-   SWR Standort Dashboard — Kirschblüte Theme
-   CSS class: "kirschbluete" on <html>
-
-   HOW THIS FILE WORKS
-   ────────────────────────────────────────────────────────────────
-   Generic Tailwind utility overrides (surfaces, borders, text,
-   accent colours) are handled by the THEME BRIDGE in styles.css.
-   This file only defines:
-     1. --theme-* token values (all colours come from here)
-     2. Kirschblüte-specific visual effects that aren't in the bridge
-   =================================================================== */
+/* Kirschblüte Theme — CSS class: "kirschbluete" on <html>
+   Theme bridge (Tailwind overrides) lives in styles.css.
+   This file: --theme-* token values + Kirschblüte-specific effects. */
 
 /* -------------------------------------------------------------------
    THEME TOKENS — light mode

@@ -1,6 +1,4 @@
-// ==========================================
-// Dashboard & Way Instructions
-// ==========================================
+// ─── Dashboard & Way Instructions ────────────────────────────────────────────
 
 let dashMobileMapInstance = null;
 let dashMobileTileLayer = null;
@@ -46,7 +44,7 @@ function openDashboard(nummer) {
     const ordnerLink = standort.link.includes("/_standortinfo") ? standort.link.split("/_standortinfo")[0] : standort.link;
     document.getElementById("btnOrdner").href = ordnerLink;
 
-    // Navigation: use Hauptzufahrt waypoint if set in the overlay for this standort
+    // Use Hauptzufahrt as nav waypoint if set
     const hzEntry = getHauptzufahrtEntryPoint(standort.nummer);
     if (hzEntry && navMode !== 'apple') {
         const dest = `${standort.lat},${standort.lon}`;
@@ -58,7 +56,7 @@ function openDashboard(nummer) {
         document.getElementById("btnRoute").title = '';
     }
 
-    // Update Hauptzufahrt info notice
+    // Update Hauptzufahrt notice badge
     const notice = document.getElementById('hauptzufahrtNotice');
     if (notice) {
         if (hzEntry) {
@@ -88,7 +86,7 @@ function openDashboard(nummer) {
 }
 
 function setupMobileMap(standort) {
-    // Initialisierung, falls noch nicht geschehen
+    // Init map on first call
     if (!dashMobileMapInstance) {
         dashMobileMapInstance = L.map('dashMobileMap', {
             zoomControl: true,
@@ -96,8 +94,7 @@ function setupMobileMap(standort) {
         });
     }
 
-    // Tile-Layer aktualisieren falls das Theme gewechselt wurde
-    // Dark mode appearance is handled via CSS inversion on the osm-tiles class
+    // Refresh tile layer if theme changed
     if (dashMobileTileLayer) {
         dashMobileMapInstance.removeLayer(dashMobileTileLayer);
     }
@@ -106,7 +103,7 @@ function setupMobileMap(standort) {
         className: 'osm-tiles'
     }).addTo(dashMobileMapInstance);
 
-    // Alte Marker & Routen entfernen
+    // Remove old markers and routes
     if (dashMobileMarker) {
         dashMobileMapInstance.removeLayer(dashMobileMarker);
     }
@@ -115,13 +112,13 @@ function setupMobileMap(standort) {
         dashMobileRouteLayer = null;
     }
 
-    // Alte Overlays entfernen und neu erstellen
+    // Rebuild overlay layer group
     if (dashMobileOverlayGroup) {
         dashMobileMapInstance.removeLayer(dashMobileOverlayGroup);
     }
     dashMobileOverlayGroup = L.layerGroup().addTo(dashMobileMapInstance);
 
-    // Marker-Farbe basierend auf Standort-Präfix (identisch zu updateMapMarkers)
+    // Marker color by station prefix (matches updateMapMarkers)
     const markerColors = {
         1: '#8b5cf6', 2: '#10b981', 3: '#f59e0b', 4: '#ef4444',
         5: '#ec4899', 6: '#06b6d4', 8: '#6366f1', 9: '#eab308'
@@ -138,7 +135,7 @@ function setupMobileMap(standort) {
 
     dashMobileMarker = L.marker([standort.lat, standort.lon], { icon: mobileIcon }).addTo(dashMobileMapInstance);
 
-    // Overlays rendern (Hauptzufahrt, Schranken, etc.)
+    // Render overlays (Hauptzufahrt, barriers, etc.)
     if (typeof getOverlayPayloadForStandort === 'function' && typeof createLayerFromFeature === 'function') {
         const payload = getOverlayPayloadForStandort(standort.nummer);
         if (payload && payload.features) {
@@ -186,9 +183,7 @@ function setupMobileMap(standort) {
         dashMobileMapInstance.setView([standort.lat, standort.lon], 13);
     }
 
-    // WICHTIG: Behebt Leaflet-Rendering-Fehler in versteckten Modals.
-    // Nach invalidateSize die Ansicht erneut setzen, da die Kartengröße
-    // beim ersten Aufruf noch unbekannt war (Modal war versteckt).
+    // Fix Leaflet rendering bug in hidden modals — invalidate + re-fit after delay
     setTimeout(() => {
         if (!dashMobileMapInstance) return;
         dashMobileMapInstance.invalidateSize();
@@ -276,9 +271,7 @@ function copyCoords() {
     setTimeout(() => btnText.innerText = oldText, 2000);
 }
 
-// ==========================================
-// Way Instructions (Route Notes)
-// ==========================================
+// ─── Way Instructions ──────────────────────────────────────────────────────────────
 
 function getWayInstructions(nummer) {
     const stored = localStorage.getItem(`wayInstructions_${nummer}`);
@@ -341,12 +334,9 @@ function deleteWayInstructions() {
     }
 }
 
-// ─── HAUPTZUFAHRT helper ──────────────────────────────────────────────────────
-// Returns the entry-point coordinate (farthest from the station) of the
-// Hauptzufahrt LineString overlay for a standort, or null if none is set.
-// The "farthest from station" heuristic works because Hauptzufahrt routes are
-// drawn FROM the public road TO the station, so the remote end is the approach
-// point a driver should be routed to as an intermediate nav waypoint.
+// ─── Hauptzufahrt helper ───────────────────────────────────────────────────────────────
+// Returns the farthest coordinate on the Hauptzufahrt LineString as the nav
+// entry point (the remote end = driver approach point from the public road).
 
 function getHauptzufahrtEntryPoint(nummer) {
     if (typeof getOverlayPayloadForStandort !== 'function') return null;
@@ -361,7 +351,7 @@ function getHauptzufahrtEntryPoint(nummer) {
 
     const s = standorte.find(st => String(st.nummer) === String(nummer));
     if (!s) {
-        // No station data — just use the first coordinate as entry point
+        // No station data — use first coordinate as entry point
         const c = hz.geometry.coordinates[0];
         return { lat: c[1], lon: c[0] };
     }

@@ -1,10 +1,5 @@
-// ==========================================
-// Tourenplaner (Session-only multi-stop route planner)
-// ==========================================
-// Queue is session-only (not persisted); cleared on page reload.
-// Uses OSRM /trip endpoint for optimised route order.
-// Start and end point: user's set location (userLat/userLon from app.js).
-// ==========================================
+// ─── Tourenplaner ───────────────────────────────────────────────────────────────────
+// Session-only queue; OSRM /trip routing; starts & ends at userLat/userLon.
 
 let plannerQueue      = [];   // [{ nummer, name, lat, lon }]
 let plannerRouteLayer = null; // Leaflet GeoJSON layer for the planned route
@@ -208,9 +203,7 @@ async function runPlannerRoute() {
 
     const hasLocation = !!(userLat && userLon);
 
-    // Build coordinate list:
-    // With user location: [home, stop1, stop2, …, home] → optimised round trip
-    // Without user location: [stop1, …, stopN] → optimised order only
+    // With user location: [home, stop1, …, home] round trip; without: [stop1, …, stopN] only
     const allPoints = hasLocation
         ? [{ lat: userLat, lon: userLon }, ...plannerQueue, { lat: userLat, lon: userLon }]
         : plannerQueue;
@@ -234,9 +227,8 @@ async function runPlannerRoute() {
         const mins    = Math.round(trip.duration / 60);
         const timeStr = mins < 60 ? `${mins} Min` : `${Math.floor(mins / 60)}h ${mins % 60}m`;
 
-        // Reconstruct the optimised stop order from OSRM waypoints.
-        // waypoints[i].waypoint_index = position in the trip for input point i.
-        // We exclude the first (home) and last (home) points when hasLocation is true.
+        // Reconstruct optimised stop order from OSRM waypoints (waypoint_index = trip position).
+        // Exclude first/last home points when hasLocation is true.
         let orderedStops = plannerQueue; // fallback: keep manual order
         if (data.waypoints && data.waypoints.length > 0) {
             if (hasLocation) {

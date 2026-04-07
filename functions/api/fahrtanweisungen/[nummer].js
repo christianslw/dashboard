@@ -1,12 +1,8 @@
 /**
- * /api/fahrtanweisungen/:nummer
- *
- * Fahrtanweisung is stored as a field on the standort record in STANDORTE_KV.
- * No separate KV namespace is required.
- *
- * GET    — returns { text, updatedAt } for the standort (no auth)
- * PUT    — patches fahrtanweisung onto the standort record (no auth — team tool)
- * DELETE — removes fahrtanweisung from the standort record (no auth)
+ * /api/fahrtanweisungen/:nummer — stored as a field on the standort record.
+ * GET — returns { text, updatedAt } (no auth)
+ * PUT — patches fahrtanweisung onto standort record (no auth — team tool)
+ * DELETE — removes fahrtanweisung from standort record (no auth)
  */
 
 // ─── GET ─────────────────────────────────────────────────────────────────────

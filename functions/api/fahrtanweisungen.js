@@ -1,9 +1,6 @@
 /**
- * GET /api/fahrtanweisungen
- *
- * Returns all Fahrtanweisungen as { [nummer]: { text, updatedAt } }.
- * Reads standort records from STANDORTE_KV and returns only those
- * that have a fahrtanweisung field set.
+ * GET /api/fahrtanweisungen — all Fahrtanweisungen as { [nummer]: { text, updatedAt } }.
+ * Reads from STANDORTE_KV; returns only entries with a fahrtanweisung field.
  */
 
 export async function onRequestGet({ env }) {
@@ -24,7 +21,7 @@ export async function onRequestGet({ env }) {
 
     const result = Object.fromEntries(entries.filter(Boolean));
     return Response.json(result, {
-        // Cache at Cloudflare edge for 30 s; serve stale for up to 2 min while revalidating.
+        // Cache 30s at edge, stale-while-revalidate 2 min
         headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120' }
     });
 }

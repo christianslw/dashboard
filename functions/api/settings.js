@@ -1,12 +1,7 @@
 /**
- * /api/settings
- *
- * GET  /api/settings?userId=<uid>  — fetch settings for a user
- * PUT  /api/settings               — save settings for a user
- *      Body: { userId: string, settings: { appearance, colorTheme, ... } }
- *
- * No password auth — settings are per-user UUID (privacy but not security).
- * The UUID is generated client-side and stored in localStorage.
+ * GET /api/settings?userId=<uid>  — fetch user settings
+ * PUT /api/settings  { userId, settings }  — save user settings
+ * Per-user UUID auth (localStorage) — privacy only, not security.
  */
 
 const ALLOWED_KEYS = new Set([
@@ -58,7 +53,7 @@ export async function onRequestPut({ env, request }) {
         return Response.json({ error: '`settings` object required' }, { status: 400 });
     }
 
-    // Strip unknown keys to avoid storing arbitrary data
+    // Strip unknown keys
     const sanitized = {};
     for (const key of ALLOWED_KEYS) {
         if (settings[key] !== undefined) sanitized[key] = settings[key];
@@ -69,7 +64,7 @@ export async function onRequestPut({ env, request }) {
         savedAt:   new Date().toISOString(),
     };
 
-    // Store with a 1-year TTL (seconds) — stale data evicted automatically
+    // Store with 1-year TTL — stale data evicted automatically
     await env.SETTINGS_KV.put(
         `settings:${userId}`,
         JSON.stringify(record),

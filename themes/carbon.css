@@ -1,23 +1,11 @@
-/* ===================================================================
-   SWR Standort Dashboard — Carbon Design System Theme
-   CSS class: "carbon" on <html>
-
-   Dark mode:  OLED-black base (#000000) with near-black layers
-   Light mode: Carbon G10 palette (#f4f4f4 base, #ffffff panels)
-
-   Typeface:   IBM Plex Sans (300 / 400 / 500 / 600)
-   Shape:      0 px border-radius everywhere (Carbon productive spec)
-   Sizing:     Carbon 8pt grid — sm buttons 32px, md inputs 40px
-   Motion:     Carbon productive easing + duration tokens
-   Based on:   https://carbondesignsystem.com/elements/
-   =================================================================== */
+/* Carbon Design System Theme — CSS class: "carbon" on <html>
+   OLED-black dark / Carbon G10 light · IBM Plex Sans · 0px radius · 8pt grid
+   https://carbondesignsystem.com/elements/ */
 
 /* ── IBM Plex Sans — Google Fonts ──────────────────────────────── */
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap');
 
-/* ══════════════════════════════════════════════════════════════════
-   CARBON GLOBAL TOKENS  (available on both light and dark)
-   ══════════════════════════════════════════════════════════════════ */
+/* ─── Carbon Global Tokens (light + dark) ─────────────────────────────────────────────── */
 html.carbon {
     /* ── Motion ── */
     --motion-fast-01:         70ms;
@@ -35,9 +23,7 @@ html.carbon {
     --c-height-lg:            48px;
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   DARK MODE — OLED BLACK
-   ══════════════════════════════════════════════════════════════════ */
+/* ─── Dark Mode — OLED Black ────────────────────────────────────────────────────────── */
 html.carbon.dark {
     /* Backgrounds */
     --c-bg:           #000000;   /* pure OLED black */
@@ -103,9 +89,7 @@ html.carbon.dark {
     --theme-focus-glow:       rgba(69, 137, 255, 0.40);
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   LIGHT MODE — CARBON G10
-   ══════════════════════════════════════════════════════════════════ */
+/* ─── Light Mode — Carbon G10 ──────────────────────────────────────────────────── */
 html.carbon:not(.dark) {
     /* Backgrounds */
     --c-bg:           #f4f4f4;   /* G10 background */
@@ -171,10 +155,7 @@ html.carbon:not(.dark) {
     --theme-focus-glow:       rgba(15, 98, 254, 0.40);
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   TYPEFACE & TYPOGRAPHY
-   Carbon: IBM Plex Sans, productive weights 300 / 400 / 500 / 600
-   ══════════════════════════════════════════════════════════════════ */
+/* ─── Typography ─────────────────────────────────────────────────────────────────── */
 html.carbon,
 html.carbon body {
     font-family: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif !important;
@@ -218,9 +199,7 @@ html.carbon button {
     letter-spacing: 0.16px !important;
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   SHAPE — 0 px BORDER RADIUS (Carbon productive spec)
-   ══════════════════════════════════════════════════════════════════ */
+/* ─── Shape — 0px border-radius (Carbon productive) ──────────────────────────── */
 html.carbon .rounded,
 html.carbon .rounded-sm,
 html.carbon .rounded-md,
@@ -277,10 +256,7 @@ html.carbon .ov-tb-cat { border-radius: 0 !important; }
 
 html.carbon ::-webkit-scrollbar-thumb { border-radius: 0 !important; }
 
-/* ══════════════════════════════════════════════════════════════════
-   SIZING — CARBON 8PT GRID
-   sm = 32px (header controls), md = 40px (form inputs)
-   ══════════════════════════════════════════════════════════════════ */
+/* ─── Sizing — Carbon 8pt grid (sm=32px, md=40px) ─────────────────────────────── */
 html.carbon button {
     min-height: var(--c-height-sm);
     padding-inline: 15px;
@@ -328,9 +304,7 @@ html.carbon textarea::placeholder {
     font-weight: 400;
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   DARK MODE — TAILWIND CLASS REMAPS → CARBON OLED TOKENS
-   ══════════════════════════════════════════════════════════════════ */
+/* ─── Dark Mode — Tailwind remaps → Carbon OLED tokens ──────────────────────── */
 html.carbon.dark .dark\:bg-oled       { background-color: #000000 !important; }
 html.carbon.dark .dark\:bg-zinc-950   { background-color: #0d0d0d !important; }
 html.carbon.dark .dark\:bg-zinc-900      { background-color: #0d0d0d !important; }
@@ -379,9 +353,7 @@ html.carbon.dark .dark\:bg-yellow-900\/20     { background-color: rgba(241,194,2
 html.carbon.dark .dark\:border-yellow-700\/50 { border-color: rgba(241,194,27,0.3) !important; }
 html.carbon.dark .dark\:text-yellow-400\/80   { color: rgba(241,194,27,0.8) !important; }
 
-/* ══════════════════════════════════════════════════════════════════
-   LIGHT MODE — TAILWIND CLASS REMAPS → CARBON G10 TOKENS
-   ══════════════════════════════════════════════════════════════════ */
+/* ─── Light Mode — Tailwind remaps → Carbon G10 tokens ──────────────────────── */
 
 
 html.carbon:not(.dark) body { background: var(--c-bg) !important; }
@@ -410,9 +382,7 @@ html.carbon:not(.dark) .bg-blue-100       { background-color: rgba(15,98,254,0.1
 html.carbon:not(.dark) .text-blue-700     { color: #0043ce !important; }
 html.carbon:not(.dark) .hover\:bg-blue-100:hover { background-color: rgba(15,98,254,0.10) !important; }
 
-/* ══════════════════════════════════════════════════════════════════
-   MOTION — CARBON PRODUCTIVE EASING
-   ══════════════════════════════════════════════════════════════════ */
+/* ─── Motion — Carbon productive easing ───────────────────────────────────── */
 html.carbon button,
 html.carbon a,
 html.carbon input,
@@ -447,9 +417,7 @@ html.carbon select:focus {
     border-color: var(--c-interactive) !important;
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   PRIMARY BUTTONS (bg-blue-600)
-   ══════════════════════════════════════════════════════════════════ */
+/* ─── Primary Buttons (bg-blue-600) ─────────────────────────────────────────── */
 html.carbon button.bg-blue-600,
 html.carbon .bg-blue-600 {
     background-color: #0f62fe !important;
@@ -481,9 +449,7 @@ html.carbon .group.p-3 {
     transition: background-color var(--motion-fast-01) var(--motion-standard) !important;
 }
 
-/* ──────────────────────────────────────────────────────────────────
-   SCROLLBAR — CARBON STYLE
-   ────────────────────────────────────────────────────────────────── */
+/* ─── Scrollbar ───────────────────────────────────────────────────────────────────── */
 html.carbon ::-webkit-scrollbar { width: 6px; height: 6px; }
 html.carbon ::-webkit-scrollbar-track { background: transparent; }
 html.carbon.dark ::-webkit-scrollbar-thumb {
@@ -497,9 +463,7 @@ html.carbon:not(.dark) ::-webkit-scrollbar-thumb {
 }
 html.carbon:not(.dark) ::-webkit-scrollbar-thumb:hover { background: #525252; }
 
-/* ──────────────────────────────────────────────────────────────────
-   MODAL OVERLAYS
-   ────────────────────────────────────────────────────────────────── */
+/* ─── Modal Overlays ────────────────────────────────────────────────────────────── */
 html.carbon.dark .fixed.inset-0.bg-slate-900\/50,
 html.carbon.dark .fixed.inset-0.bg-slate-900\/60,
 html.carbon.dark .fixed.inset-0.bg-black\/80 {
@@ -531,9 +495,7 @@ html.carbon .modal-enter-active {
         transform var(--motion-moderate-02) var(--motion-entrance) !important;
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   SETTINGS MODAL — ACTIVE STATES
-   ══════════════════════════════════════════════════════════════════ */
+/* ─── Settings modal — active states ────────────────────────────────────────── */
 html.carbon.dark #settingsModal .bg-blue-100,
 html.carbon.dark #settingsModal .dark\:bg-blue-900\/50 {
     background-color: rgba(69,137,255,0.12) !important;
@@ -569,9 +531,7 @@ html.carbon.dark #appSettingsModal .dark\:text-blue-300 {
     color: #78a9ff !important;
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   LIST ITEM SELECTION — CARBON BLUE LEFT BORDER
-   ══════════════════════════════════════════════════════════════════ */
+/* ─── List item selection — carbon blue left border ───────────────────────── */
 html.carbon .list-item-selected {
     background-color: var(--c-hover) !important;
     border-left: 3px solid var(--c-interactive) !important;
@@ -582,11 +542,9 @@ html.carbon.dark .list-item-selected {
     border-left-color: #4589ff !important;
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   PLANNER ADD BUTTON — hidden unless planner-mode is active
-   The global "html.carbon button" rule sets display:inline-flex
-   which would override the display:none set in styles.css.
-   ══════════════════════════════════════════════════════════════════ */
+/* ─── Planner add button ────────────────────────────────────────────────────────────
+   html.carbon button sets display:inline-flex which overrides the
+   display:none in styles.css — re-hide and re-show explicitly here. */
 html.carbon .planner-add-btn {
     display: none;
 }
@@ -594,9 +552,7 @@ html.carbon body.planner-mode .planner-add-btn {
     display: inline-flex;
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   FILTER CHIPS — ACTIVE AREA CHIPS
-   ══════════════════════════════════════════════════════════════════ */
+/* ─── Filter chips ──────────────────────────────────────────────────────────────── */
 html.carbon.dark #filterMenuPanel .border-green-500 { border-color: #42be65 !important; }
 html.carbon.dark #filterMenuPanel .bg-green-900\/30 { background-color: rgba(66,190,101,0.12) !important; }
 html.carbon.dark #filterMenuPanel .dark\:text-green-300 { color: #6fdc8c !important; }
@@ -605,12 +561,7 @@ html.carbon.dark #filterMenuPanel .border-red-500     { border-color: #ff8389 !i
 html.carbon.dark #filterMenuPanel .bg-red-900\/30     { background-color: rgba(255,131,137,0.12) !important; }
 html.carbon.dark #filterMenuPanel .dark\:text-red-300 { color: #ff8389 !important; }
 
-/* ══════════════════════════════════════════════════════════════════
-   OVERLAY PANEL — CARBON BASE
-   Reset Carbon 8pt button sizing for fixed-size icon-only buttons.
-   The global html.carbon button rule sets padding-inline:15px which
-   collapses 30px-wide icon buttons to 0px content area.
-   ══════════════════════════════════════════════════════════════════ */
+/* ─── Overlay panel — base (reset Carbon 8pt sizing for icon-only buttons) ────── */
 html.carbon .ov-tb-cat,
 html.carbon .ov-tb-act,
 html.carbon .ov-close-btn,
@@ -623,9 +574,7 @@ html.carbon .ov-sub-btn {
     padding: 4px 7px !important;
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   OVERLAY PANEL — CARBON DARK
-   ══════════════════════════════════════════════════════════════════ */
+/* ─── Overlay panel — dark ────────────────────────────────────────────────────────── */
 html.carbon.dark .ov-panel {
     background: #0d0d0d !important;
     border-color: #1a1a1a !important;
@@ -675,9 +624,7 @@ html.carbon.dark .ov-trigger-btn    { background: #141414 !important; color: #c6
 html.carbon.dark .ov-trigger-btn:hover  { background: #222222 !important; color: #f4f4f4 !important; }
 html.carbon.dark .ov-trigger-btn.active { background: rgba(69,137,255,0.15) !important; color: #78a9ff !important; }
 
-/* ══════════════════════════════════════════════════════════════════
-   LEAFLET CONTROLS — DARK
-   ══════════════════════════════════════════════════════════════════ */
+/* ─── Leaflet controls — dark ────────────────────────────────────────────────────── */
 html.carbon.dark .leaflet-control-layers {
     background: #0d0d0d !important;
     border: 1px solid #1a1a1a !important;
@@ -760,9 +707,7 @@ html.carbon.dark .leaflet-control-attribution {
 html.carbon.dark .leaflet-container .leaflet-control-attribution a,
 html.carbon.dark .leaflet-control-attribution a { color: #78a9ff !important; }
 
-/* ══════════════════════════════════════════════════════════════════
-   LEAFLET CONTROLS — LIGHT
-   ══════════════════════════════════════════════════════════════════ */
+/* ─── Leaflet controls — light ───────────────────────────────────────────────────── */
 html.carbon:not(.dark) .leaflet-control-layers {
     background: #ffffff !important;
     border: 1px solid #e0e0e0 !important;
@@ -781,28 +726,17 @@ html.carbon:not(.dark) .leaflet-bar a,
 html.carbon:not(.dark) .leaflet-control-zoom-in,
 html.carbon:not(.dark) .leaflet-control-zoom-out { border-radius: 0 !important; }
 
-/* ══════════════════════════════════════════════════════════════════
-   RADAR TIMELINE
-   ══════════════════════════════════════════════════════════════════ */
+/* ─── Radar timeline ─────────────────────────────────────────────────────────────── */
 html.carbon.dark #radarSlider { background: #1a1a1a !important; }
 html.carbon.dark #radarSlider::-webkit-slider-thumb { background: #4589ff !important; border-color: #0d0d0d !important; }
 
-/* ══════════════════════════════════════════════════════════════════
-   ADMIN PAGE
-   ══════════════════════════════════════════════════════════════════ */
+/* ─── Admin page ─────────────────────────────────────────────────────────────────── */
 html.carbon.dark .bg-slate-100 { background-color: #000000 !important; }
 
-/* ══════════════════════════════════════════════════════════════════
-   DRAW TOOLBAR
-   ══════════════════════════════════════════════════════════════════ */
-/*
-   Leaflet Draw sprite icons are black-on-transparent.
-   filter:invert(1) makes them white; pre-invert the background
-   so it cancels back to the intended dark value after filtering:
-     pre-bg  #ebebeb → invert(1) → #141414  (target bg)
-     pre-bg  #e1e1e1 → invert(1) → #1e1e1e  (target hover)
-     icon px #000000 → invert(1) → #ffffff  (visible on dark)
-*/
+/* ─── Draw toolbar ───────────────────────────────────────────────────────────────── *
+   Leaflet Draw sprite icons are black-on-transparent. filter:invert(1)
+   makes them white; pre-invert bg so it cancels back to the dark value:
+   #ebebeb → invert(1) → #141414 (target), icon px → #ffffff (visible) */
 html.carbon.dark .leaflet-draw-toolbar a {
     background-color: #ebebeb !important;
     border-color: #e5e5e5 !important;
@@ -817,9 +751,7 @@ html.carbon.dark .leaflet-draw-actions a {
     background-color: #ebebeb !important;
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   MDI ICON BUTTON HELPER
-   ══════════════════════════════════════════════════════════════════ */
+/* ─── MDI icon button helper ────────────────────────────────────────────────────── */
 html.carbon .mdi-btn-icon {
     font-size: 1.125rem;
     line-height: 1;

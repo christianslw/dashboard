@@ -1,12 +1,5 @@
-// ==========================================
-// Cloudflare Backend Sync  (js/sync.js)
-// ==========================================
-// Handles:
-//  • User ID generation / persistence
-//  • User settings sync  (pull on boot, push on change)
-//  • Standorte data loading from backend  (admin-managed)
-//  • Overlay version polling + refresh trigger
-// ==========================================
+// ─── Cloudflare Backend Sync (sync.js) ────────────────────────────────────────────────────────
+// User ID · Settings · Standorte · Overlay version polling
 
 (function () {
     'use strict';
@@ -80,12 +73,12 @@
         });
         if (!changed) return;
 
-        // Re-hydrate in-memory state for all modules that read from localStorage
+        // Re-hydrate in-memory state from updated localStorage
         if (typeof loadFavorites === 'function')         loadFavorites();
         if (typeof loadFilterState === 'function')       loadFilterState();
         if (typeof applyThemeAndAppearance === 'function') applyThemeAndAppearance();
 
-        // Re-read global scalar settings used by app.js
+        // Re-read scalar settings used by app.js
         if (typeof sortField !== 'undefined') {
             window.sortField = localStorage.getItem('sortField') || 'default';
             window.sortDir   = localStorage.getItem('sortDir')   || 'asc';
@@ -95,7 +88,7 @@
             window.navMode      = localStorage.getItem('navMode')      || 'google';
         }
 
-        // Re-render list with potentially new sort / filter state
+        // Re-render list with new sort/filter state
         if (typeof filterStandorte === 'function') {
             try { filterStandorte(); } catch { /* ignore if not ready */ }
         }
@@ -140,7 +133,7 @@
         }, 2_000);
     }
 
-    /** Periodically pull settings to sync across devices (same userId). */
+    /** Periodically pull settings to sync across devices. */
     function _startSettingsPoll() {
         if (_settingsPollTimer) clearInterval(_settingsPollTimer);
         _settingsPollTimer = setInterval(loadSettingsFromBackend, SETTINGS_POLL_MS);
@@ -148,11 +141,7 @@
 
     // ─── STANDORTE ───────────────────────────────────────────────────────────────
 
-    /**
-     * Try to load standorte from the backend.
-     * Returns true on success (data was non-empty).
-     * On failure or empty response the caller should use standorteDaten from standorte.js.
-     */
+    // Try to load standorte from backend; returns true on success (non-empty data).
     async function loadStandorteFromBackend() {
         try {
             const res = await fetch('/api/standorte');
@@ -214,10 +203,7 @@
 
     let _fahrtanweisungenPushTimers = {}; // per-nummer debounce
 
-    /**
-     * Load all Fahrtanweisungen from the backend and write them into localStorage.
-     * Called once on boot.
-     */
+    // Load all Fahrtanweisungen from backend into localStorage. Called once on boot.
     async function loadFahrtanweisungen() {
         try {
             const res = await fetch('/api/fahrtanweisungen');
@@ -235,11 +221,7 @@
         } catch { /* silent — localStorage fallback remains */ }
     }
 
-    /**
-     * Push a single Fahrtanweisung to the backend (debounced 500 ms per nummer).
-     * @param {string|number} nummer
-     * @param {string} text
-     */
+    // Push a Fahrtanweisung to backend (debounced 500 ms per nummer).
     function pushFahrtanweisung(nummer, text) {
         const key = String(nummer);
         if (_fahrtanweisungenPushTimers[key]) clearTimeout(_fahrtanweisungenPushTimers[key]);
@@ -255,10 +237,7 @@
         }, 500);
     }
 
-    /**
-     * Delete a Fahrtanweisung from the backend immediately.
-     * @param {string|number} nummer
-     */
+    // Delete a Fahrtanweisung from the backend immediately.
     async function deleteFahrtanweisung(nummer) {
         try {
             await fetch(`/api/fahrtanweisungen/${encodeURIComponent(String(nummer))}`, {
@@ -269,7 +248,7 @@
 
     // ─── PROBE ───────────────────────────────────────────────────────────────────
 
-    /** Quick check to see if the CF backend is reachable at all. */
+    // Quick reachability check against the CF backend.
     async function probeBackend() {
         try {
             const res = await fetch('/api/overlays/version');

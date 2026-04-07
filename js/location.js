@@ -1,6 +1,4 @@
-// ==========================================
-// Start Location Logic
-// ==========================================
+// ─── Start Location ───────────────────────────────────────────────────────────────────
 
 const GPS_UPDATE_INTERVAL = 5 * 60 * 1000; // every 5 minutes
 const GPS_MOVE_THRESHOLD_KM = 0.15;         // only re-filter if moved > 150 m

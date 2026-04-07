@@ -1,6 +1,4 @@
-// ==========================================
-// Leaflet Map & Clustering
-// ==========================================
+// ─── Leaflet Map & Clustering ────────────────────────────────────────────────────────────
 
 let osmLayer, cartoDBPositronLayer;
 const RADAR_MAX_NATIVE_ZOOM = 10;
@@ -51,7 +49,7 @@ function initLeafletMap() {
     leafletMap = L.map('mainMap').setView([48.6, 9.2], 7);
 
     const isDarkMode = document.documentElement.classList.contains('dark');
-    const useDarkMap = isDarkMode; // Respect appearance mode regardless of theme
+    const useDarkMap = isDarkMode;
 
     osmLayer = L.tileLayer(getThemeAwareOsmUrl(), {
         attribution: '© OpenStreetMap contributors',
@@ -126,11 +124,10 @@ function initLeafletMap() {
         zIndex: 150
     });
 
-    // Rain radar overlay group (populated on demand by loadRadarFrames)
+    // Rain radar overlay group (lazy-populated via loadRadarFrames)
     radarOverlayGroup = L.layerGroup();
 
-    // Lightning strike overlay (Blitzortung community tiles — no API key needed)
-    // Note: community-provided endpoint; may require fallback to lightningmaps.org if unavailable
+    // Lightning overlay (Blitzortung community tiles, no API key)
     const lightningLayer = L.tileLayer(
         'https://map.blitzortung.org/L/{z}/{x}/{y}.png',
         {
@@ -152,7 +149,7 @@ function initLeafletMap() {
     L.control.layers(baseLayers, overlayLayers, { position: 'topright' }).addTo(leafletMap);
     restoreActiveOverlayLayers(overlayLayers);
 
-    // Inject local icons into Leaflet controls (layers toggle + zoom buttons)
+    // Inject MDI icons into Leaflet controls
     requestAnimationFrame(function() {
         const defs = [
             { sel: '.leaflet-control-layers-toggle', icon: 'layers-outline' },
@@ -376,9 +373,7 @@ function focusMapOnStandort(nummer) {
         leafletMap.setView([standort.lat, standort.lon], 13, { animate: true });
     }
 }
-// ==========================================
-// Rain Radar (RainViewer)
-// ==========================================
+// ─── Rain Radar (RainViewer) ─────────────────────────────────────────────────────────────────
 
 async function loadRadarFrames() {
     radarFrames = [];

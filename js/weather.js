@@ -1,6 +1,4 @@
-// ==========================================
-// DWD Warnings & Weather
-// ==========================================
+// ─── DWD Warnings & Weather ────────────────────────────────────────────────────────────
 
 async function fetchDWD(lat, lon) {
     const cacheKey = `${lat.toFixed(1)}_${lon.toFixed(1)}`;
@@ -261,7 +259,7 @@ async function fetchWeather(lat, lon) {
         if (iconEl) iconEl.innerHTML = `<svg class="w-8 h-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>`;
     }
 
-    // ── 24h hourly forecast (isolated — failure must not affect current weather) ─
+    // 24h hourly forecast (isolated — failure must not affect current weather)
     try {
         const res2 = await fetch(
             `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +

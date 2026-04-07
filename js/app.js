@@ -1,6 +1,4 @@
-// ==========================================
-// Global State & Configuration
-// ==========================================
+// ─── Global State & Configuration ────────────────────────────────────────────
 
 let standorte = typeof standorteDaten !== 'undefined' ? standorteDaten : [
     {nummer: "8100", name: "Aalen", lat: 48.860833, lon: 10.1375, link: "https://suedwestrundfunk.sharepoint.com/.../8100_2013xxxx_Tagebuch.xlsx"},
@@ -29,9 +27,7 @@ const warningsCache = {}, routeCache = {};
 
 // Backend sync is handled by js/sync.js  (window.__cfSync)
 
-// ==========================================
-// Theme and Appearance
-// ==========================================
+// ─── Theme & Appearance ──────────────────────────────────────────────────────
 
 const customThemes = [
     { id: 'standard', label: 'Standard', file: '' },
@@ -127,9 +123,7 @@ function openSettingsModal() {
 function closeSettingsModal() {
     document.getElementById('settingsModal').classList.add('hidden');
 }
-// ==========================================
-// App Settings (Tagebuch & Navigation Preferences)
-// ==========================================
+// ─── App Settings (Tagebuch & Navigation) ───────────────────────────────────
 
 let tagebuchMode = localStorage.getItem('tagebuchMode') || 'web';   // 'web' | 'excel'
 let navMode      = localStorage.getItem('navMode')      || 'google'; // 'google' | 'apple'

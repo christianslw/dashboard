@@ -1,9 +1,6 @@
 /**
- * GET /api/admin/fahrtanweisungen
- *
- * Returns all standorte that have a fahrtanweisung set, with full history.
- * Admin auth required.
- * KV namespace: STANDORTE_KV
+ * GET /api/admin/fahrtanweisungen — all standorte with a fahrtanweisung, with full history.
+ * Admin auth required. KV namespace: STANDORTE_KV
  */
 
 function isAdmin(request, env) {

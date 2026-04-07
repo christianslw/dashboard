@@ -1,15 +1,8 @@
 /**
- * POST /api/admin/seed
- *
- * Bulk-seeds the STANDORTE_KV store from a JSON array of standort objects.
- * Used once (or whenever standorte.js is updated) to migrate the static JS
- * data into the backend so it can be managed through the admin panel.
- *
- * Body: { standorte: [ { nummer, name, lat, lon, link, zufahrt, ... }, ... ] }
- * Auth: Bearer <ADMIN_SECRET>
- *
- * Existing records are OVERWRITTEN. Records not in the payload are deleted
- * only when the optional `replace` flag is set to true.
+ * POST /api/admin/seed — bulk-seed STANDORTE_KV from a JSON array.
+ * Body: { standorte: [ { nummer, name, lat, lon, link, ... } ], replace?: boolean }
+ * Auth: Bearer <ADMIN_SECRET> | Existing fahrtanweisungen are preserved.
+ * replace=true purges KV entries absent from the payload.
  */
 
 function isAdmin(request, env) {
@@ -53,14 +46,14 @@ export async function onRequestPost({ env, request }) {
     const numbers = [];
     const now = new Date().toISOString();
 
-    // CF KV has no batch put API — chunk into parallel writes to stay within limits
+    // CF KV has no batch put API — chunk into parallel writes
     const CHUNK = 50;
     for (let i = 0; i < records.length; i += CHUNK) {
         await Promise.all(
             records.slice(i, i + CHUNK).map(async r => {
                 const nummer = String(r.nummer);
                 numbers.push(nummer);
-                // Read existing record to preserve user-added fahrtanweisung
+                    // Preserve existing fahrtanweisung when overwriting
                 const existing = await env.STANDORTE_KV.get(`standort:${nummer}`, { type: 'json' });
                 const record = {
                     nummer,

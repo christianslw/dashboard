@@ -1,6 +1,4 @@
-// ==========================================
-// Initialization (runs after all modules loaded)
-// ==========================================
+// ─── Initialization (runs after all modules loaded) ──────────────────────────────────
 
 // ── Split-pane resizer ────────────────────────────────────────────────────────
 function initSplitPane() {
@@ -26,7 +24,7 @@ function initSplitPane() {
         }
     }
     applyWidth();
-    // Notify Leaflet of the initial container size right after the list width is set
+    // Notify Leaflet of initial container size after list width is set
     requestAnimationFrame(() => {
         if (typeof leafletMap !== 'undefined' && leafletMap) {
             leafletMap.invalidateSize({ animate: false });
@@ -57,7 +55,7 @@ function initSplitPane() {
         dragging = false;
         document.body.classList.remove('split-dragging');
         localStorage.setItem(STORAGE_KEY, list.offsetWidth);
-        // Tell Leaflet to repaint — it doesn't watch container size on its own
+        // Tell Leaflet to repaint — it doesn't auto-watch container size
         if (typeof leafletMap !== 'undefined' && leafletMap) {
             setTimeout(() => leafletMap.invalidateSize({ animate: false }), 50);
         }
@@ -90,22 +88,19 @@ window.onload = async () => {
     // ── 2. Cloudflare backend sync ─────────────────────────────────────────────
     let backendHasStandorte = false;
     if (typeof window.__cfSync !== 'undefined') {
-        // Settings are user-specific (can't be edge-cached) and take a full RTT.
-        // Fire the fetch without awaiting it — local settings from localStorage are
-        // already applied above. If the backend has something different it will
-        // re-apply and re-render automatically when the promise resolves.
+        // Settings are user-specific (not edge-cached); fire without awaiting —
+        // local settings already applied above; backend re-applies on resolve.
         window.__cfSync.loadSettingsFromBackend().then(() => {
             applyThemeAndAppearance();
         });
 
-        // Fahrtanweisungen and standorte ARE edge-cached — await them because
-        // the list needs standorte data before it can render.
+        // Fahrtanweisungen and standorte are edge-cached — await before rendering list.
         [, backendHasStandorte] = await Promise.all([
             window.__cfSync.loadFahrtanweisungen(),
             window.__cfSync.loadStandorteFromBackend(),
         ]);
 
-        // Start watching for local setting changes and push them to the backend
+        // Start watching local setting changes and push to backend
         window.__cfSync.startSettingsSync();
     }
 
@@ -113,9 +108,7 @@ window.onload = async () => {
     loadFavorites();
     loadFilterState();
 
-    // ── 4. Load standorte ──────────────────────────────────────────────────────
-    // backendHasStandorte already resolved above via Promise.all.
-    // Fall back to the bundled standorte.js if the backend has no data.
+    // ── 4. Load standorte (falls back to bundled standorte.js if backend empty) ─
     if (backendHasStandorte) {
         standorte = window.standorte;
     } else {

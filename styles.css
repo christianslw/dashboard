@@ -1,13 +1,10 @@
 /* ===================================================================
-   SWR Standort Dashboard — styles.css (Base Styles)
+   SWR Standort Dashboard — styles.css
    =================================================================== */
 
-/* ===== SECTION 0: THEME TOKEN CONTRACT =====
-   Defines --theme-* variables with defaults matching the standard
-   Tailwind light/dark palette so the "standard" theme needs no file.
-   Custom themes only need to override these tokens — all the actual
-   selector overrides live in the bridge below, written only ONCE.
-   =========================================================== */
+/* ─── Theme Token Contract ─────────────────────────────────────────────────────────────
+   --theme-* defaults match standard Tailwind palette (no extra file needed).
+   Custom themes only override these; Tailwind overrides live in the bridge. */
 
 :root {
     /* Surfaces */
@@ -52,11 +49,8 @@ html.dark {
     --theme-focus-glow:       rgba(59, 130, 246, 0.40);
 }
 
-/* ===================================================================
-   THEME BRIDGE
-   All repeated Tailwind utility overrides live here ONCE, scoped to
-   any active custom theme.  Theme files only define --theme-* values.
-   =================================================================== */
+/* ─── Theme Bridge ───────────────────────────────────────────────────────────────────
+   All Tailwind overrides, written once. Theme files only define --theme-*. */
 
 /* -- Body -- */
 :is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) body {
@@ -180,13 +174,9 @@ html.dark {
     border-left-color: var(--theme-accent) !important;
 }
 
-/* ===================================================================
-   DRACULA SHARED STRUCTURE
-   dracula and dracula-laser share the same internal variable names
-   (--primary, --surface, --background, etc.) so all structural rules
-   are written once here with :is() and the different token values
-   in each theme file do the rest.
-   =================================================================== */
+/* ─── Dracula Shared Structure ──────────────────────────────────────────────────────
+   dracula + dracula-laser share internal vars (—primary, —surface, etc.);
+   rules are written once with :is() — theme files supply different values. */
 
 /* Body */
 :is(html.dracula, html.dracula-laser) body { background: var(--background) !important; }
@@ -644,11 +634,7 @@ html.dark {
 .modal-enter { opacity: 0; transform: scale(0.99) translateY(5px); }
 .modal-enter-active { opacity: 1; transform: scale(1) translateY(0); transition: all 0.2s ease-out; }
 
-/* ===================================================================
-   UI PANEL ANIMATIONS
-   Standard for all themes. Individual themes may override the
-   animation-name or redefine @keyframes if needed.
-   =================================================================== */
+/* ─── UI Panel Animations (all themes; override animation-name per-theme if needed) */
 
 /* --- Shared keyframes --- */
 
@@ -876,11 +862,8 @@ html.dark:not(.dracula):not(.dracula-laser) .leaflet-control-attribution {
 	color: #d4d4d8 !important;
 }
 
-/* ==========================================
-   Overlay Sidebar v3 (ov-*)
-   Panel is appended to <body> (position: fixed) to avoid
-   overflow:hidden clipping from map container wrappers.
-   ========================================== */
+/* ─── Overlay Sidebar v3 (ov-*) ───────────────────────────────────────────────
+   Panel is appended to <body> (position: fixed) to escape overflow:hidden. */
 
 .ov-control { overflow: visible !important; }
 .ov-hidden  { display: none !important; }
@@ -935,10 +918,7 @@ html.dark:not(.dracula):not(.dracula-laser) .leaflet-control-attribution {
 }
 .ov-trigger-btn:hover::after { opacity: 1; }
 
-/* ==========================================================================
-   OVERLAY PANEL — CSS CUSTOM PROPERTIES
-   Edit these to retheme the entire sidebar and tooltips in one place.
-   ========================================================================== */
+/* ─── Overlay Panel — CSS Custom Properties (retheme sidebar + tooltips here) */
 :root {
     /* Panel chrome */
     --ov-bg:            #ffffff;

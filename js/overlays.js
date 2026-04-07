@@ -1,8 +1,5 @@
-// ==========================================
-// Standort Overlays v2 — Modern Sidebar
-// Anfahrt · Markierungen · Zonen · Farbpalette · Undo
-// Backend-ready (Supabase), localStorage fallback
-// ==========================================
+// ─── Standort Overlays v2 ─────────────────────────────────────────────────────
+// Anfahrt · Markers · Zones · Color palette · Undo · Backend + localStorage
 
 // ─── CONSTANTS ───────────────────────────────────────────
 
@@ -318,9 +315,8 @@ function setOverlayStoreFromRemote(remote) {
 }
 window.setOverlayStoreFromRemote = setOverlayStoreFromRemote;
 
-// Note: overlaySyncChannel and overlayPollingTimer variables are preserved
-// in the state section for compatibility but are no longer actively used —
-// real-time sync is now handled by the polling in js/sync.js.
+// Note: overlaySyncChannel and overlayPollingTimer are kept for compatibility
+// but unused — real-time sync is handled by polling in js/sync.js.
 
 function subscribeLocalOverlayChanges() {
     window.addEventListener('storage', e => {

@@ -1,11 +1,5 @@
-// ==========================================
-// SWR Standort Dashboard — Service Worker
-// ==========================================
-// Strategy:
-//   App shell (HTML/CSS/local JS/fonts) → Cache-first (precached on install)
-//   /api/standorte, /api/fahrtanweisungen, /api/overlays → Network-first, cache fallback
-//   External CDN (Leaflet, Tailwind, tiles) → Network-only with opportunistic caching
-// ==========================================
+// ─── SWR Standort Dashboard — Service Worker ─────────────────────────────────
+// App shell → cache-first | /api/* → network-first | CDN → network-only
 
 const CACHE_NAME = 'swr-standorte-v1';
 

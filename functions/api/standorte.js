@@ -1,9 +1,6 @@
 /**
- * GET /api/standorte
- * Returns all standort records from KV.
- * If the KV store is empty the response is an empty array — the frontend
- * falls back to the bundled standorte.js in that case.
- * No auth required.
+ * GET /api/standorte — all standort records from KV.
+ * Returns [] if empty (frontend falls back to bundled standorte.js).
  */
 export async function onRequestGet({ env }) {
     try {
@@ -21,9 +18,7 @@ export async function onRequestGet({ env }) {
         );
 
         return Response.json(records.filter(Boolean), {
-            // Cache at Cloudflare edge for 30 s; serve stale for up to 2 min while revalidating.
-            // Admin mutations (PUT/DELETE on /api/standorte/:nr) carry no-store so the edge
-            // cache is bypassed there and the index is always freshly rebuilt.
+            // Cache 30s at edge, stale-while-revalidate 2 min; admin mutations bypass with no-store.
             headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120' }
         });
     } catch (err) {

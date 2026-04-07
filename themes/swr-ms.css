@@ -1,15 +1,6 @@
-/* ===================================================================
-   SWR Standort Dashboard — SWR MS Theme
-   CSS class: "swr-ms" on <html>
-
-   HOW THIS FILE WORKS
-   ────────────────────────────────────────────────────────────────
-   Generic Tailwind utility overrides (surfaces, borders, text,
-   accent colours) are handled by the THEME BRIDGE in styles.css.
-   This file only defines:
-     1. --theme-* token values  (all colours come from here)
-     2. SWR-specific overrides that aren't covered by the bridge
-   =================================================================== */
+/* SWR MS Theme — CSS class: "swr-ms" on <html>
+   Theme bridge (Tailwind overrides) lives in styles.css.
+   This file: --theme-* token values + SWR-specific overrides. */
 
 /* -------------------------------------------------------------------
    THEME TOKENS — light mode

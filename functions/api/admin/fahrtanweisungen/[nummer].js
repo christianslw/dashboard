@@ -1,10 +1,7 @@
 /**
- * /api/admin/fahrtanweisungen/:nummer
- *
- * PUT    — overwrite fahrtanweisung, push current value into history (admin)
- * DELETE — remove fahrtanweisung entirely (admin)
- *
- * Admin auth required. KV namespace: STANDORTE_KV
+ * /api/admin/fahrtanweisungen/:nummer (admin auth required)
+ * PUT — overwrite fahrtanweisung, push old value into history
+ * DELETE — remove fahrtanweisung entirely
  */
 
 function isAdmin(request, env) {

@@ -1,11 +1,7 @@
 /**
  * /api/overlays/:nummer
- *
- * GET  — fetch overlay payload for one standort (no auth)
- * PUT  — save/replace overlay payload for one standort (no auth — team tool)
- *
- * Special route: GET /api/overlays/version → returns the global overlay version
- * timestamp used by the frontend's polling mechanism.
+ * GET — overlay payload for one standort; GET /api/overlays/version — global version timestamp
+ * PUT — save/replace overlay payload (no auth — team tool)
  */
 
 // ─── GET ──────────────────────────────────────────────────────────────────────

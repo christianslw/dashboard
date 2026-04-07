@@ -1,19 +1,6 @@
-/* ===================================================================
-   SWR Standort Dashboard — Dracula (Aura) Theme
-   CSS class: "dracula" on <html>
-
-   HOW THIS FILE WORKS
-   ────────────────────────────────────────────────────────────────
-   styles.css contains:
-     • THEME BRIDGE  — scoped to :is(html.dracula, …) once for all themes
-     • DRACULA SHARED STRUCTURE — inputs, buttons, Leaflet, etc.
-       shared with dracula-laser via :is(html.dracula, html.dracula-laser)
-
-   This file only needs to:
-     1. Define the internal --primary/--surface/… palette variables
-     2. Set --theme-focus-ring / --theme-focus-glow tokens
-     3. Override the few things that differ from dracula-laser
-   =================================================================== */
+/* Dracula (Aura) Theme — CSS class: "dracula" on <html>
+   Shared palette vars (--primary, --surface, etc.) with dracula-laser;
+   structural rules in styles.css via :is(). This file: token values only. */
 
 /* -------------------------------------------------------------------
    PALETTE — light mode

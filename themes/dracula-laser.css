@@ -1,16 +1,6 @@
-/* ===================================================================
-   SWR Standort Dashboard — Dracula Laser (Aura Laser Spirit) Theme
-   CSS class: "dracula-laser" on <html>
-
-   HOW THIS FILE WORKS
-   ────────────────────────────────────────────────────────────────
-   All structural rules (inputs, buttons, Leaflet, surfaces, text…)
-   are shared with dracula via the DRACULA SHARED STRUCTURE block in
-   styles.css using :is(html.dracula, html.dracula-laser) selectors.
-
-   This file only defines the palette tokens that are different from
-   dracula, plus two small laser-specific overrides.
-   =================================================================== */
+/* Dracula Laser (Aura Laser Spirit) Theme — CSS class: "dracula-laser" on <html>
+   Structural rules shared with dracula via :is() in styles.css.
+   This file: palette tokens that differ from dracula + 2 laser-specific overrides. */
 
 /* -------------------------------------------------------------------
    PALETTE — light mode
