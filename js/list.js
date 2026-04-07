@@ -71,6 +71,9 @@ function renderList(liste) {
 
         const listItemId = `list-item-${safeNum}`;
         item.id = listItemId;
+
+
+
         item.innerHTML = `
             <div class="flex items-center gap-3 flex-1" onclick="handleListItemClick(event, '${s.nummer}')">
                 <div class="flex-1">
@@ -83,7 +86,14 @@ function renderList(liste) {
                     ${distHtml || `<div class="text-slate-400 text-xs font-mono mt-0.5">${s.lat}, ${s.lon}</div>`}
                 </div>
             </div>
-            <div class="flex items-center">
+            <div class="flex items-center gap-0.5">
+                <button type="button"
+                    data-planner-btn="${s.nummer}"
+                    onclick="togglePlannerFromList('${s.nummer}'); event.stopPropagation();"
+                    class="planner-add-btn p-2 shrink-0 transition-all rounded-md"
+                    title="Zur Tour hinzufügen / entfernen">
+                    <i class="mdi mdi-map-marker-plus planner-add-icon text-xl"></i>
+                </button>
                 <a href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lon}" target="_blank"
                    class="p-2 text-slate-400 hover:text-blue-600 dark:hover:text-blue-500 transition-colors"
                    title="Navigation starten" onclick="event.stopPropagation();">

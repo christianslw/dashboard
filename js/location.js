@@ -93,23 +93,47 @@ function closeLocationModal() {
 }
 
 async function searchCity() {
-    const query = document.getElementById('cityInput').value;
+    const query = document.getElementById('cityInput').value.trim();
     if (!query) return;
     const resBox = document.getElementById('citySearchResults');
     resBox.innerHTML = '<p class="text-sm text-slate-500">Sucht...</p>';
+
+    // Station number lookup: purely numeric, max 4 digits
+    if (/^\d{1,4}$/.test(query)) {
+        const matches = standorte.filter(s => String(s.nummer).startsWith(query));
+        if (matches.length > 0) {
+            resBox.innerHTML = '';
+            matches.slice(0, 6).forEach(s => {
+                const label = `Standort ${s.nummer} – ${s.name.replace(/_/g, ' ')}`;
+                const btn = document.createElement('button');
+                btn.className = "text-left w-full p-2 text-sm border border-slate-200 dark:border-zinc-700 rounded hover:bg-slate-50 dark:hover:bg-zinc-800";
+                btn.innerText = label;
+                btn.onclick = () => saveLocation(s.lat, s.lon, label);
+                resBox.appendChild(btn);
+            });
+            return;
+        }
+        // no station found – fall through to Nominatim (e.g. partial PLZ)
+    }
     try {
-        const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${query}&count=3&language=de`);
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&countrycodes=de&limit=5&format=json&addressdetails=1&accept-language=de`;
+        const res = await fetch(url, { headers: { 'Accept-Language': 'de' } });
         const data = await res.json();
-        if (!data.results || data.results.length === 0) {
+        if (!data || data.length === 0) {
             resBox.innerHTML = '<p class="text-sm text-red-500">Nichts gefunden.</p>';
             return;
         }
         resBox.innerHTML = '';
-        data.results.forEach(r => {
+        data.forEach(r => {
+            const a = r.address;
+            const city = a.city || a.town || a.village || a.municipality || r.display_name.split(',')[0];
+            const state = a.state || '';
+            const postcode = a.postcode || '';
+            const label = [postcode, city, state].filter(Boolean).join(', ');
             const btn = document.createElement('button');
             btn.className = "text-left w-full p-2 text-sm border border-slate-200 dark:border-zinc-700 rounded hover:bg-slate-50 dark:hover:bg-zinc-800";
-            btn.innerText = `${r.name} (${r.admin1 || ''})`;
-            btn.onclick = () => saveLocation(r.latitude, r.longitude, r.name);
+            btn.innerText = label;
+            btn.onclick = () => saveLocation(parseFloat(r.lat), parseFloat(r.lon), label);
             resBox.appendChild(btn);
         });
     } catch (e) {

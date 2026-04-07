@@ -186,32 +186,92 @@ async function updateDWDDetailBox(lat, lon) {
     }
 }
 
+// WMO weathercode → { mdiIcon, label, color }
+function getWmoMeta(code) {
+    if (code === 0)                    return { icon: 'mdi-weather-sunny',            label: 'Klar',         color: '#f59e0b' };
+    if (code <= 2)                     return { icon: 'mdi-weather-partly-cloudy',    label: 'Teilw. bew.', color: '#94a3b8' };
+    if (code === 3)                    return { icon: 'mdi-weather-cloudy',            label: 'Bedeckt',     color: '#64748b' };
+    if (code <= 49)                    return { icon: 'mdi-weather-fog',               label: 'Nebel',        color: '#94a3b8' };
+    if (code <= 57)                    return { icon: 'mdi-weather-rainy',             label: 'Nieselregen', color: '#60a5fa' };
+    if (code <= 65)                    return { icon: 'mdi-weather-pouring',           label: 'Regen',        color: '#3b82f6' };
+    if (code <= 67)                    return { icon: 'mdi-weather-snowy-rainy',       label: 'Eisregen',     color: '#818cf8' };
+    if (code <= 77)                    return { icon: 'mdi-weather-snowy',             label: 'Schnee',       color: '#bae6fd' };
+    if (code <= 82)                    return { icon: 'mdi-weather-partly-rainy',      label: 'Schauer',      color: '#60a5fa' };
+    if (code <= 86)                    return { icon: 'mdi-weather-snowy-rainy',       label: 'Schneesch.',  color: '#818cf8' };
+    if (code <= 94)                    return { icon: 'mdi-snowflake-alert',           label: 'Graupel',      color: '#a5f3fc' };
+    return                                    { icon: 'mdi-weather-lightning-rainy',   label: 'Gewitter',     color: '#818cf8' };
+}
+
+function renderForecastStrip(hourly) {
+    const strip = document.getElementById('forecastStrip');
+    if (!strip || !hourly?.time) return;
+
+    // API may return either 'weathercode' (old) or 'weather_code' (new) key
+    const wcArr = hourly.weathercode ?? hourly.weather_code ?? [];
+
+    const now   = new Date();
+    const cards = [];
+    for (let i = 0; i < hourly.time.length && cards.length < 12; i++) {
+        const t = new Date(hourly.time[i]);
+        if (t < now) continue;
+        const meta    = getWmoMeta(wcArr[i] ?? 0);
+        const temp    = hourly.temperature_2m?.[i] ?? '--';
+        const wind    = hourly.windspeed_10m?.[i] ?? '--';
+        const precip  = (hourly.precipitation?.[i] ?? 0).toFixed(1);
+        const timeStr = t.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+        cards.push(`
+            <div class="flex flex-col items-center gap-0.5 px-3 py-2 rounded-md bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shrink-0 text-center min-w-[64px]">
+                <span class="text-xs text-slate-500 dark:text-zinc-400 font-medium">${timeStr}</span>
+                <i class="mdi ${meta.icon} text-xl my-0.5" style="color:${meta.color}"></i>
+                <span class="text-sm font-bold text-slate-800 dark:text-zinc-200">${temp}°</span>
+                <span class="text-[10px] text-blue-500 dark:text-blue-400 flex items-center gap-0.5"><i class="mdi mdi-weather-windy text-xs"></i>${wind}</span>
+                ${parseFloat(precip) > 0 ? `<span class="text-[10px] text-blue-400 flex items-center gap-0.5"><i class="mdi mdi-water text-xs"></i>${precip}mm</span>` : ''}
+            </div>
+        `);
+    }
+    strip.innerHTML = cards.join('');
+}
+
 async function fetchWeather(lat, lon) {
-    document.getElementById("weatherTemp").innerText = "-- °C";
-    document.getElementById("weatherDesc").innerText = "";
+    const tempEl = document.getElementById("weatherTemp");
+    const iconEl = document.getElementById("weatherIcon");
+    const descEl = document.getElementById("weatherDesc");
+    const windEl = document.getElementById("weatherWind");
+
+    if (tempEl) tempEl.innerText = "-- °C";
+    if (descEl) descEl.innerText = "";
+    if (windEl) windEl.innerText = "-- km/h";
+
+    // ── Current conditions — original working format ─────────────────────────
     try {
-        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+        const res = await fetch(
+            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`
+        );
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        const code = data.current_weather.weathercode;
-        document.getElementById("weatherTemp").innerText = `${data.current_weather.temperature} °C`;
+        const cw   = data.current_weather ?? {};
+        const code = cw.weathercode ?? cw.weather_code ?? 0;
+        const meta = getWmoMeta(code);
 
-        let wSvg = `<svg class="w-8 h-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>`;
-        let wText = "Klar";
+        if (tempEl) tempEl.innerText = `${cw.temperature ?? '--'} °C`;
+        if (iconEl) iconEl.innerHTML = `<i class="mdi ${meta.icon}" style="font-size:2rem;color:${meta.color};line-height:1"></i>`;
+        if (descEl) descEl.innerText = meta.label;
+        if (windEl) windEl.innerText = `${cw.windspeed ?? '--'} km/h`;
+    } catch (e) {
+        if (iconEl) iconEl.innerHTML = `<svg class="w-8 h-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>`;
+    }
 
-        if (code > 0) {
-            wSvg = `<svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>`;
-            wText = "Bewölkt";
-        }
-        if (code >= 51 && code <= 67) {
-            wSvg = `<svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14v2m-4-2v2m8-2v2M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>`;
-            wText = "Regen";
-        }
-        if (code >= 95) {
-            wSvg = `<svg class="w-8 h-8 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>`;
-            wText = "Gewitter";
-        }
-
-        document.getElementById("weatherIcon").innerHTML = wSvg;
-        document.getElementById("weatherDesc").innerText = wText;
-    } catch (e) {}
+    // ── 24h hourly forecast (isolated — failure must not affect current weather) ─
+    try {
+        const res2 = await fetch(
+            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+            `&hourly=temperature_2m,weathercode,windspeed_10m,precipitation` +
+            `&forecast_days=2&timezone=auto`
+        );
+        if (!res2.ok) throw new Error(`HTTP ${res2.status}`);
+        const data2 = await res2.json();
+        renderForecastStrip(data2.hourly);
+    } catch (e) {
+        // Forecast failure is non-critical — current weather already shown
+    }
 }

@@ -13,6 +13,9 @@ function openDashboard(nummer) {
     if (!standort) return;
     currentStandort = standort;
 
+    // Deep link: reflect open site in URL
+    history.replaceState(null, '', '?standort=' + encodeURIComponent(standort.nummer));
+
     if (typeof onOverlayTargetStandortChanged === 'function') {
         onOverlayTargetStandortChanged(standort.nummer);
     }
@@ -42,12 +45,40 @@ function openDashboard(nummer) {
     document.getElementById("btnTagebuch").href = getTagebuchLink(standort);
     const ordnerLink = standort.link.includes("/_standortinfo") ? standort.link.split("/_standortinfo")[0] : standort.link;
     document.getElementById("btnOrdner").href = ordnerLink;
-    document.getElementById("btnRoute").href = getNavLink(standort.lat, standort.lon);
+
+    // Navigation: use Hauptzufahrt waypoint if set in the overlay for this standort
+    const hzEntry = getHauptzufahrtEntryPoint(standort.nummer);
+    if (hzEntry && navMode !== 'apple') {
+        const dest = `${standort.lat},${standort.lon}`;
+        const wp   = `${hzEntry.lat},${hzEntry.lon}`;
+        document.getElementById("btnRoute").href  = `https://www.google.com/maps/dir/?api=1&destination=${dest}&waypoints=${wp}`;
+        document.getElementById("btnRoute").title = 'Navigation via Hauptzufahrt';
+    } else {
+        document.getElementById("btnRoute").href  = getNavLink(standort.lat, standort.lon);
+        document.getElementById("btnRoute").title = '';
+    }
+
+    // Update Hauptzufahrt info notice
+    const notice = document.getElementById('hauptzufahrtNotice');
+    if (notice) {
+        if (hzEntry) {
+            notice.className = 'col-span-2 text-[11px] px-2 py-1.5 rounded-md flex items-center gap-1.5 justify-center bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50';
+            notice.innerHTML = '<i class="mdi mdi-map-check text-sm shrink-0"></i> Hauptzufahrt hinterlegt — Navigation berücksichtigt Zufahrtsweg';
+        } else {
+            notice.className = 'col-span-2 text-[11px] px-2 py-1.5 rounded-md flex items-center gap-1.5 justify-center bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50';
+            notice.innerHTML = '<i class="mdi mdi-map-marker-alert-outline text-sm shrink-0"></i> Keine Hauptzufahrt hinterlegt — Zufahrt vor Ort eigenständig recherchieren';
+        }
+    }
 
     fetchWeather(standort.lat, standort.lon);
     updateDWDDetailBox(standort.lat, standort.lon);
 
     setupMobileMap(standort);
+
+    // Planner button state
+    if (typeof updatePlannerButtonForCurrent === 'function') {
+        updatePlannerButtonForCurrent();
+    }
 
     modal.classList.remove("hidden");
     modal.classList.add("modal-enter");
@@ -174,6 +205,15 @@ function closeDashboard() {
         closeOverlayEditMode();
     }
 
+    // Remove OSRM route polyline
+    if (currentRouteLayer && leafletMap) {
+        leafletMap.removeLayer(currentRouteLayer);
+        currentRouteLayer = null;
+    }
+
+    // Clean deep link URL
+    history.replaceState(null, '', location.pathname);
+
     const modal = document.getElementById("dashboardModal");
     modal.classList.remove("modal-enter-active");
     document.getElementById("windyIframe").src = "";
@@ -181,14 +221,22 @@ function closeDashboard() {
 }
 
 async function fetchRealRouteTimeDashboard(lat1, lon1, lat2, lon2, fallbackDist) {
+    // Remove stale route polyline from a previous site
+    if (currentRouteLayer && leafletMap) {
+        leafletMap.removeLayer(currentRouteLayer);
+        currentRouteLayer = null;
+    }
     try {
-        const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=false`);
+        const res = await fetch(
+            `https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=full&geometries=geojson`
+        );
         if (!res.ok) throw new Error("API Limit");
 
         const data = await res.json();
         if (data.routes && data.routes.length > 0) {
-            const durationSec = data.routes[0].duration;
-            const routeDistMeter = data.routes[0].distance;
+            const route         = data.routes[0];
+            const durationSec   = route.duration;
+            const routeDistMeter = route.distance;
 
             const mins = Math.round(durationSec / 60);
             document.getElementById("driveTimeValue").innerText = mins < 60 ? `${mins} Min` : `${Math.floor(mins / 60)}h ${mins % 60}m`;
@@ -200,6 +248,18 @@ async function fetchRealRouteTimeDashboard(lat1, lon1, lat2, lon2, fallbackDist)
             } else if (avgSpeedKmh < 30) {
                 document.getElementById("trafficAlertBox").classList.remove("hidden");
                 document.getElementById("trafficAlertText").innerText = "Sehr langsame Route. Stadtverkehr oder starker Stau erwartet.";
+            }
+
+            // Draw route polyline on main map
+            if (leafletMap && route.geometry) {
+                currentRouteLayer = L.geoJSON(route.geometry, {
+                    style: {
+                        color: '#3b82f6',
+                        weight: 4,
+                        opacity: 0.65,
+                        dashArray: '8 4'
+                    }
+                }).addTo(leafletMap);
             }
         }
     } catch (e) {
@@ -279,4 +339,39 @@ function deleteWayInstructions() {
         // Sync to backend
         window.__cfSync?.deleteFahrtanweisung(currentStandort.nummer);
     }
+}
+
+// ─── HAUPTZUFAHRT helper ──────────────────────────────────────────────────────
+// Returns the entry-point coordinate (farthest from the station) of the
+// Hauptzufahrt LineString overlay for a standort, or null if none is set.
+// The "farthest from station" heuristic works because Hauptzufahrt routes are
+// drawn FROM the public road TO the station, so the remote end is the approach
+// point a driver should be routed to as an intermediate nav waypoint.
+
+function getHauptzufahrtEntryPoint(nummer) {
+    if (typeof getOverlayPayloadForStandort !== 'function') return null;
+    const payload = getOverlayPayloadForStandort(nummer);
+    if (!payload?.features?.length) return null;
+
+    const hz = payload.features.find(f =>
+        f.geometry?.type === 'LineString' &&
+        f.properties?.routeType === 'hauptzufahrt'
+    );
+    if (!hz || !hz.geometry.coordinates?.length) return null;
+
+    const s = standorte.find(st => String(st.nummer) === String(nummer));
+    if (!s) {
+        // No station data — just use the first coordinate as entry point
+        const c = hz.geometry.coordinates[0];
+        return { lat: c[1], lon: c[0] };
+    }
+
+    // Find the coordinate that is farthest from the station location
+    let entry = hz.geometry.coordinates[0];
+    let maxDist = 0;
+    for (const c of hz.geometry.coordinates) {
+        const d = Math.hypot(c[0] - s.lon, c[1] - s.lat);
+        if (d > maxDist) { maxDist = d; entry = c; }
+    }
+    return { lat: entry[1], lon: entry[0] };
 }

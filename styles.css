@@ -1414,7 +1414,8 @@ html.dark:not(.dracula):not(.dracula-laser) .leaflet-control-attribution {
 .dark .leaflet-control-layers-group-name { color: #71717a !important; }
 /* ===== DWD Warning Zones — diagonal hatching via CSS mask ===== */
 .leaflet-layer.dwd-warn-tile {
-	filter: blur(5.1px) saturate(1.28) contrast(1.08);
+	filter: blur(1.1px) saturate(1.28) contrast(1.08);
+	border
 	mix-blend-mode: add;
 	opacity: 0.96;
 	transition: opacity 1.0s ease, filter 1.0s ease;
@@ -1751,4 +1752,35 @@ body.split-dragging #splitDivider {
 .group:hover .dwd-warn-label {
 	clip-path: inset(0 0% 0 0 round 4px);
 	opacity: 1;
+}
+
+/* ── Tourenplaner: list-item quick-add buttons ───────────────────────────── */
+
+/* Hidden by default — only visible when planner drawer is open */
+.planner-add-btn {
+	display: none;
+}
+
+body.planner-mode .planner-add-btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 0.375rem;
+}
+
+/* Pulsating violet icon for un-queued items */
+body.planner-mode .planner-add-btn:not(.is-queued) .planner-add-icon {
+	color: #8b5cf6;
+	animation: plannerAddPulse 1.8s ease-in-out infinite;
+}
+
+/* Solid green icon for items already in the queue */
+body.planner-mode .planner-add-btn.is-queued .planner-add-icon {
+	color: #10b981;
+	animation: none;
+}
+
+@keyframes plannerAddPulse {
+	0%,  100% { opacity: 1;   filter: drop-shadow(0 0 0px  #8b5cf6); transform: scale(1); }
+	50%       { opacity: 0.6; filter: drop-shadow(0 0 5px  #8b5cf6); transform: scale(0.88); }
 }

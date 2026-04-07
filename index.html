@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SWR Standort Dashboard</title>
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#09090b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Standorte">
+    <link rel="apple-touch-icon" href="/res/icons/app-icon.svg">
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Leaflet (CSS & JS) -->
@@ -82,6 +89,11 @@
                 </h1>
                 
                 <div class="flex items-center gap-3 shrink-0">
+                    <button onclick="togglePlannerDrawer()" class="relative text-xs font-medium px-3 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors flex items-center gap-2" title="Tourenplaner">
+                        <i class="mdi mdi-map-marker-path w-4 h-4 shrink-0 text-base leading-none"></i>
+                        <span class="hidden sm:inline">Tour</span>
+                        <span    id="plannerBadge" class="hidden absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center leading-none"></span>
+                    </button>
                     <button onclick="promptLocation()" class="text-xs font-medium px-3 py-1.5 border border-slate-300 dark:border-zinc-700 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors flex items-center gap-2">
                         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         <span id="userLocLabel" class="hidden sm:inline">Standort festlegen</span>
@@ -269,7 +281,7 @@
                 <button onclick="closeLocationModal()" class="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors" title="Schließen"><i class="mdi mdi-close text-xl leading-none"></i></button>
             </div>
             <div class="p-6">
-                <label class="block text-sm font-medium mb-2 text-slate-600 dark:text-zinc-400">Stadt oder PLZ eingeben:</label>
+                <label class="block text-sm font-medium mb-2 text-slate-600 dark:text-zinc-400">Stadt, Sendernummer oder PLZ eingeben:</label>
                 <div class="flex gap-2">
                     <input type="text" id="cityInput" placeholder="z.B. Stuttgart" class="flex-1 p-2 rounded-md border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 focus:border-blue-500 outline-none">
                     <button onclick="searchCity()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition-colors">Suchen</button>
@@ -310,11 +322,25 @@
                             </div>
                             <div class="p-4 bg-white dark:bg-zinc-950 flex justify-between items-center">
                                 <div class="flex items-center gap-3">
-                                    <div id="weatherIcon" class="w-8 h-8 text-slate-400">...</div>
+                                    <div id="weatherIcon" class="w-8 h-8 text-slate-400 flex items-center justify-center">...</div>
                                     <span id="weatherTemp" class="text-2xl font-bold text-slate-800 dark:text-zinc-200">-- °C</span>
                                 </div>
                                 <div class="text-right">
                                     <p id="weatherDesc" class="text-sm font-medium text-slate-600 dark:text-zinc-400"></p>
+                                    <p class="text-xs text-slate-400 dark:text-zinc-500 flex items-center justify-end gap-1 mt-0.5">
+                                        <i class="mdi mdi-weather-windy text-sm"></i>
+                                        <span id="weatherWind">-- km/h</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <!-- 24h Forecast strip (collapsed by default) -->
+                            <div id="forecastSection" class="border-t border-slate-200 dark:border-zinc-800">
+                                <button onclick="document.getElementById('forecastBody').classList.toggle('hidden'); this.querySelector('.fcast-chevron').classList.toggle('mdi-chevron-down'); this.querySelector('.fcast-chevron').classList.toggle('mdi-chevron-up');" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-slate-500 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-900 transition-colors uppercase tracking-wide">
+                                    <span class="flex items-center gap-1.5"><i class="mdi mdi-chart-timeline-variant text-sm"></i> Vorhersage (24h)</span>
+                                    <i class="mdi mdi-chevron-down fcast-chevron text-sm"></i>
+                                </button>
+                                <div id="forecastBody" class="forecast-body hidden">
+                                    <div id="forecastStrip" class="flex gap-2 overflow-x-auto px-3 pb-3 pt-1 scrollbar-thin"></div>
                                 </div>
                             </div>
                             <div id="dwdAlertBox" class="hidden p-3 border-t">
@@ -385,6 +411,11 @@
                             <button onclick="copyCoords()" class="flex items-center justify-center gap-2 p-3 border border-slate-300 dark:border-zinc-700 bg-transparent hover:bg-blue-100 dark:hover:bg-blue-900/50 active:bg-blue-500 active:text-white text-slate-700 dark:text-zinc-200 rounded-md text-sm font-medium transition-colors">
                                 <i class="mdi mdi-content-copy text-base"></i>
                                 <span>Koordinaten</span>
+                            </button>
+                            <!-- Hauptzufahrt notice (set by dashboard.js) -->
+                            <div id="hauptzufahrtNotice" class="col-span-2 hidden"></div>
+                            <button id="btnAddToPlanner" onclick="togglePlannerForCurrent()" class="flex items-center justify-center gap-2 p-3 border border-slate-300 dark:border-zinc-700 bg-transparent hover:bg-blue-100 dark:hover:bg-blue-900/50 active:bg-blue-500 active:text-white text-slate-700 dark:text-zinc-200 rounded-md text-sm font-medium transition-colors col-span-2">
+                                <i class="mdi mdi-map-plus text-base"></i><span>Zur Tour hinzufügen</span>
                             </button>
                         </div>
                     </div>
@@ -588,6 +619,37 @@
         </div>
     </div>
 
+    <!-- Tourenplaner Drawer -->
+    <div id="plannerDrawer" class="fixed bottom-0 left-0 right-0 z-[48] transform translate-y-full transition-transform duration-300 ease-in-out">
+        <div class="bg-white dark:bg-zinc-950 border-t border-slate-200 dark:border-zinc-800 shadow-2xl mx-2 md:mx-4 rounded-t-lg overflow-hidden max-h-80">
+            <div class="flex items-center justify-between px-4 py-2.5 bg-slate-50 dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800">
+                <h3 class="font-semibold text-sm text-slate-800 dark:text-zinc-100 flex items-center gap-2">
+                    <i class="mdi mdi-map-marker-path text-blue-500"></i>
+                    Tourenplaner
+                </h3>
+                <button onclick="closePlannerDrawer()" class="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
+                    <i class="mdi mdi-close text-lg"></i>
+                </button>
+            </div>
+            <div class="p-3 overflow-y-auto max-h-48">
+                <p id="plannerEmpty" class="text-xs text-slate-400 dark:text-zinc-500 py-2 text-center">Noch keine Stopps. Öffne einen Standort und klicke „Zur Tour hinzufügen“.</p>
+                <div id="plannerStopsList"></div>
+                <div id="plannerResult"></div>
+            </div>
+            <div id="plannerActions" class="hidden flex gap-2 px-3 pb-3 pt-1">
+                <button onclick="runPlannerRoute()" class="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium">
+                    <i class="mdi mdi-map-search"></i> Route berechnen
+                </button>
+                <button onclick="openPlannerNavigation()" class="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm border border-slate-300 dark:border-zinc-700 text-slate-700 dark:text-zinc-200 rounded-md hover:bg-slate-50 dark:hover:bg-zinc-900 transition-colors">
+                    <i class="mdi mdi-navigation-variant-outline"></i> Google Maps
+                </button>
+                <button onclick="clearPlannerQueue()" class="px-3 py-2 text-sm text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors" title="Alle entfernen">
+                    <i class="mdi mdi-delete-outline"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Data (static fallback — backend may serve a newer copy via /api/standorte) -->
     <script defer src="standorte.js"></script>
 
@@ -605,7 +667,17 @@
     <script defer src="js/list.js"></script>
     <script defer src="js/dashboard.js"></script>
     <script defer src="js/overlays.js"></script>
+    <script defer src="js/planner.js"></script>
     <script defer src="js/tutorial.js"></script>
     <script defer src="js/init.js"></script>
+
+    <!-- Service Worker registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(() => {});
+            });
+        }
+    </script>
 </body>
 </html>

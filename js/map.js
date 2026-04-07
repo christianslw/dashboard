@@ -129,9 +129,24 @@ function initLeafletMap() {
     // Rain radar overlay group (populated on demand by loadRadarFrames)
     radarOverlayGroup = L.layerGroup();
 
+    // Lightning strike overlay (Blitzortung community tiles — no API key needed)
+    // Note: community-provided endpoint; may require fallback to lightningmaps.org if unavailable
+    const lightningLayer = L.tileLayer(
+        'https://map.blitzortung.org/L/{z}/{x}/{y}.png',
+        {
+            attribution: '© <a href="https://www.blitzortung.org" target="_blank">Blitzortung.org</a>',
+            opacity: 0.85,
+            className: 'no-filter',
+            zIndex: 250,
+            maxNativeZoom: 8,
+            maxZoom: 22
+        }
+    );
+
     const overlayLayers = {
         'DWD Warnzonen': dwdWarningsLayer,
-        [RAINVIEWER_LAYER_NAME]: radarOverlayGroup
+        [RAINVIEWER_LAYER_NAME]: radarOverlayGroup,
+        'Blitzortung ⚡': lightningLayer
     };
 
     L.control.layers(baseLayers, overlayLayers, { position: 'topright' }).addTo(leafletMap);
@@ -239,6 +254,8 @@ function updateMapMarkers(liste) {
         const anchorOffset = isMainStation ? 12 : 7;
         const starSize = isMainStation ? 28 : 20;
 
+        const ringStyle = 'box-shadow:0 2px 4px rgba(0,0,0,0.3);';
+
         const smallMarker = isFav
             ? L.divIcon({
                 html: `<div style="width:${starSize}px;height:${starSize}px;display:flex;align-items:center;justify-content:center;color:${markerColor};font-size:${starSize}px;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3))"><i class="mdi mdi-star" style="font-size:${starSize}px"></i></div>`,
@@ -247,7 +264,7 @@ function updateMapMarkers(liste) {
                 iconAnchor: [Math.round(starSize / 2), Math.round(starSize / 2)]
             })
             : L.divIcon({
-                html: `<div style="width: ${markerSize}px; height: ${markerSize}px; background-color: ${markerColor}; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); box-sizing: border-box;"></div>`,
+                html: `<div style="width: ${markerSize}px; height: ${markerSize}px; background-color: ${markerColor}; border-radius: 50%; border: 2px solid white; ${ringStyle} box-sizing: border-box;"></div>`,
                 className: 'custom-small-marker',
                 iconSize: iconSize,
                 iconAnchor: [anchorOffset, anchorOffset]

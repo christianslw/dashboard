@@ -140,4 +140,101 @@ window.onload = async () => {
     }
 
     initTutorialHighlight();
+
+    // ── Deep link: open site from ?standort=NUMMER in URL ─────────────────────
+    const urlParams = new URLSearchParams(location.search);
+    const deepLinkNummer = urlParams.get('standort');
+    if (deepLinkNummer) {
+        const found = standorte.find(s => String(s.nummer) === String(deepLinkNummer));
+        if (found) {
+            setTimeout(() => openDashboard(deepLinkNummer), 100);
+        }
+    }
+
+    // ── PWA / Shortcut: focus search if ?focus=search ──────────────────────────
+    if (urlParams.get('focus') === 'search') {
+        setTimeout(() => document.getElementById('searchInput')?.focus(), 200);
+    }
+
+    // ── Keyboard shortcuts ─────────────────────────────────────────────────────
+    document.addEventListener('keydown', handleGlobalKeydown);
 };
+
+function handleGlobalKeydown(e) {
+    const inInput = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable;
+
+    // / → focus search
+    if (e.key === '/' && !inInput) {
+        e.preventDefault();
+        document.getElementById('searchInput')?.focus();
+        return;
+    }
+
+    // ? → open tutorial
+    if (e.key === '?' && !inInput) {
+        if (typeof openTutorial === 'function') openTutorial();
+        return;
+    }
+
+    // Escape → close top-most open modal
+    if (e.key === 'Escape') {
+        const modals = [
+            { id: 'overlayInputModal', close: () => { if (typeof cancelOverlayInput === 'function') cancelOverlayInput(); } },
+            { id: 'wayInstructionsModal', close: () => { if (typeof closeWayInstructionsModal === 'function') closeWayInstructionsModal(); } },
+            { id: 'settingsModal', close: () => { if (typeof closeSettingsModal === 'function') closeSettingsModal(); } },
+            { id: 'appSettingsModal', close: () => { if (typeof closeAppSettingsModal === 'function') closeAppSettingsModal(); } },
+            { id: 'tutorialModal', close: () => { if (typeof closeTutorial === 'function') closeTutorial(); } },
+            { id: 'dashboardModal', close: () => { if (typeof closeDashboard === 'function') closeDashboard(); } },
+        ];
+        for (const m of modals) {
+            const el = document.getElementById(m.id);
+            if (el && !el.classList.contains('hidden')) {
+                m.close();
+                return;
+            }
+        }
+        return;
+    }
+
+    // F → toggle favorite for open dashboard
+    if ((e.key === 'f' || e.key === 'F') && !inInput) {
+        const dashModal = document.getElementById('dashboardModal');
+        if (dashModal && !dashModal.classList.contains('hidden') && currentStandort) {
+            if (typeof toggleCurrentDashboardFavorite === 'function') toggleCurrentDashboardFavorite(e);
+        }
+        return;
+    }
+
+    // Arrow keys → navigate list
+    if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !inInput) {
+        e.preventDefault();
+        const container = document.getElementById('resultList');
+        if (!container) return;
+        const items = Array.from(container.querySelectorAll('[id^="list-item-"]'));
+        if (items.length === 0) return;
+
+        let currentIdx = items.findIndex(el => el.id === `list-item-${String(selectedListItemId ?? '').replace(/[^a-zA-Z0-9]/g, '')}` );
+        if (e.key === 'ArrowDown') {
+            currentIdx = Math.min(currentIdx + 1, items.length - 1);
+        } else {
+            currentIdx = Math.max(currentIdx - 1, 0);
+        }
+
+        const targetEl  = items[currentIdx];
+        const numMatch  = targetEl.id.replace('list-item-', '');
+        const targetObj = standorte.find(s => String(s.nummer).replace(/[^a-zA-Z0-9]/g, '') === numMatch);
+        if (targetObj) {
+            if (typeof highlightListItem === 'function') highlightListItem(targetObj.nummer);
+            targetEl.scrollIntoView({ block: 'nearest' });
+        }
+        return;
+    }
+
+    // Enter → open dashboard for highlighted list item
+    if (e.key === 'Enter' && !inInput && selectedListItemId) {
+        const dashModal = document.getElementById('dashboardModal');
+        if (!dashModal || dashModal.classList.contains('hidden')) {
+            if (typeof openDashboard === 'function') openDashboard(selectedListItemId);
+        }
+        return;
+    }}

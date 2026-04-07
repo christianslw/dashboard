@@ -583,6 +583,18 @@ html.carbon.dark .list-item-selected {
 }
 
 /* ══════════════════════════════════════════════════════════════════
+   PLANNER ADD BUTTON — hidden unless planner-mode is active
+   The global "html.carbon button" rule sets display:inline-flex
+   which would override the display:none set in styles.css.
+   ══════════════════════════════════════════════════════════════════ */
+html.carbon .planner-add-btn {
+    display: none;
+}
+html.carbon body.planner-mode .planner-add-btn {
+    display: inline-flex;
+}
+
+/* ══════════════════════════════════════════════════════════════════
    FILTER CHIPS — ACTIVE AREA CHIPS
    ══════════════════════════════════════════════════════════════════ */
 html.carbon.dark #filterMenuPanel .border-green-500 { border-color: #42be65 !important; }

@@ -1,3 +1,8 @@
+# ─── Service Worker ──────────────────────────────────────────────────────────
+# Must never be cached — browser checks for SW updates on every navigation.
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
+
 # ─── HTML ────────────────────────────────────────────────────────────────────
 # Always revalidate the document — never serve a stale HTML page.
 /

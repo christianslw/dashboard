@@ -1,0 +1,27 @@
+{
+  "name": "SWR Standort Dashboard",
+  "short_name": "Standorte",
+  "description": "SWR-interne Karte aller Sendeanlagenstandorte",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "lang": "de",
+  "icons": [
+    {
+      "src": "/res/icons/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Standort suchen",
+      "url": "/?focus=search",
+      "description": "Direkt zur Suche"
+    }
+  ],
+  "categories": ["utilities", "navigation"]
+}
