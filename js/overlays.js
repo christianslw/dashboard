@@ -1041,6 +1041,9 @@ function activateShiftSelect() {
     if (ovEraserActive) deactivateEraser();
     if (ovVertexEditLayer) cancelLayerEdit();
 
+    // Prevent Leaflet's built-in Shift+drag box-zoom from firing
+    if (leafletMap.boxZoom) leafletMap.boxZoom.disable();
+
     const mapContainer = leafletMap.getContainer();
     mapContainer.style.cursor = 'crosshair';
 
@@ -1117,6 +1120,8 @@ function activateShiftSelect() {
         ovShiftSelActive = false;
         ovShiftSelCleanup = null;
         removeShiftSelHintBar();
+        // Restore Leaflet's box-zoom
+        if (leafletMap.boxZoom) leafletMap.boxZoom.enable();
     };
 }
 
