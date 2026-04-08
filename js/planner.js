@@ -76,6 +76,23 @@ function clearPlannerQueue() {
     _syncPlannerBadge();
 }
 
+// ─── SHARE TOUR VIA DEEP LINK ────────────────────────────────────────────────
+function shareTour() {
+    if (plannerQueue.length === 0) return;
+    const numbers = plannerQueue.map(s => encodeURIComponent(s.nummer)).join(',');
+    const url = `${location.origin}${location.pathname}?tour=${numbers}`;
+    if (navigator.share) {
+        const name = tourName || `Tour (${plannerQueue.length} Stopps)`;
+        navigator.share({ title: name, url }).catch(() => {});
+    } else {
+        navigator.clipboard.writeText(url).then(() => {
+            showToast('Tour-Link kopiert!');
+        }).catch(() => {
+            prompt('Tour-Link kopieren:', url);
+        });
+    }
+}
+
 function completeTour() {
     if (!confirm('Tour als abgeschlossen markieren und löschen?')) return;
     const saved = _getSavedTours();
@@ -307,78 +324,131 @@ function togglePlannerDrawer() {
     plannerOpen = !plannerOpen;
     const drawer = document.getElementById('plannerDrawer');
     if (!drawer) return;
-    drawer.classList.toggle('translate-y-0', plannerOpen);
-    drawer.classList.toggle('translate-y-full', !plannerOpen);
-    document.body.classList.toggle('planner-mode', plannerOpen);
-    _syncPlannerBadge();
     if (plannerOpen) {
+        // First open: center horizontally at bottom of viewport
+        if (!drawer._positioned) {
+            drawer._positioned = true;
+            const w = parseInt(drawer.style.width) || 420;
+            drawer.style.left   = Math.max(0, Math.round((window.innerWidth  - w) / 2)) + 'px';
+            drawer.style.bottom = '0px';
+            drawer.style.top    = '';
+        }
+        drawer.classList.remove('hidden');
         _initDrawerResize();
         // Re-apply dim + redraw route if one was computed
         if (plannerQueue.length > 0) _applyRouteDimming(true);
         if (_lastOptRouteGeom || _stdRouteGeom) selectPlannerRoute(_activeRouteType);
     } else {
+        drawer.classList.add('hidden');
         _clearSuggestionPulse();
         clearRoutePreview();
         _clearRouteLayerOnly();      // remove route from map
         _applyRouteDimming(false);   // restore all markers
     }
+    document.body.classList.toggle('planner-mode', plannerOpen);
+    _syncPlannerBadge();
 }
 
-// Drag the top handle to resize the whole drawer
+// Draggable + freely resizable floating planner window
 function _initDrawerResize() {
     if (_drawerResizeInited) return;
+    _drawerResizeInited = true;
+    const drawer = document.getElementById('plannerDrawer');
     const handle = document.getElementById('plannerDragHandle');
     const inner  = document.getElementById('plannerInner');
-    if (!handle || !inner) return;
-    _drawerResizeInited = true;
+    if (!drawer || !handle || !inner) return;
 
-    let dragging = false, startY = 0, startH = 0;
-    const MIN_H = 120, MAX_H_VH = 0.85;
+    const MIN_W = 280, MIN_H = 120;
+    const maxW  = () => window.innerWidth  - 8;
+    const maxH  = () => Math.floor(window.innerHeight * 0.92);
 
-    function onStart(y) {
-        dragging = true;
-        startY   = y;
-        startH   = inner.offsetHeight;
+    // Helper: resolve current left/top from either top- or bottom-anchoring
+    function resolvePos() {
+        const r = drawer.getBoundingClientRect();
+        return { l: r.left, t: r.top };
+    }
+
+    // ── Move (drag title bar) ─────────────────────────────────────────────
+    let moving = false, msx = 0, msy = 0, mol = 0, mot = 0;
+
+    function moveStart(x, y) {
+        const pos = resolvePos();
+        moving = true; msx = x; msy = y; mol = pos.l; mot = pos.t;
+        // Switch to top-anchored positioning
+        drawer.style.bottom = '';
+        drawer.style.top    = mot + 'px';
+        drawer.style.left   = mol + 'px';
         document.body.style.userSelect = 'none';
-        document.body.style.cursor     = 'row-resize';
+        handle.style.cursor = 'grabbing';
     }
-    function onMove(y) {
-        if (!dragging) return;
-        const maxH = Math.floor(window.innerHeight * MAX_H_VH);
-        // dragging UP (y < startY) → taller drawer
-        const h = Math.max(MIN_H, Math.min(startH + (startY - y), maxH));
-        inner.style.height = h + 'px';
+    function moveMove(x, y) {
+        if (!moving) return;
+        const w   = drawer.offsetWidth;
+        const h   = drawer.offsetHeight;
+        const nl  = Math.max(0, Math.min(mol + (x - msx), window.innerWidth  - w));
+        const nt  = Math.max(0, Math.min(mot + (y - msy), window.innerHeight - h));
+        drawer.style.left = nl + 'px';
+        drawer.style.top  = nt + 'px';
     }
-    function onEnd() {
-        if (!dragging) return;
-        dragging = false;
+    function moveEnd() {
+        if (!moving) return;
+        moving = false;
         document.body.style.userSelect = '';
-        document.body.style.cursor     = '';
+        handle.style.cursor = '';
     }
 
-    handle.addEventListener('mousedown',  e => { onStart(e.clientY); e.preventDefault(); });
-    document.addEventListener('mousemove', e => onMove(e.clientY));
-    document.addEventListener('mouseup',   onEnd);
-    handle.addEventListener('touchstart',  e => { onStart(e.touches[0].clientY); }, { passive: false });
-    document.addEventListener('touchmove',
-        e => { if (dragging) { onMove(e.touches[0].clientY); e.preventDefault(); } },
-        { passive: false }
-    );
-    document.addEventListener('touchend', onEnd);
+    handle.addEventListener('mousedown',  e => { moveStart(e.clientX, e.clientY); e.preventDefault(); });
+    document.addEventListener('mousemove', e => { moveMove(e.clientX, e.clientY); });
+    document.addEventListener('mouseup',   moveEnd);
+    handle.addEventListener('touchstart',  e => { moveStart(e.touches[0].clientX, e.touches[0].clientY); }, { passive: false });
+    document.addEventListener('touchmove',  e => { if (moving) { moveMove(e.touches[0].clientX, e.touches[0].clientY); e.preventDefault(); } }, { passive: false });
+    document.addEventListener('touchend',  moveEnd);
+
+    // ── Generic resize handle setup ───────────────────────────────────────
+    function makeResizable(elId, onMove) {
+        const el = document.getElementById(elId);
+        if (!el) return;
+        let active = false, sx = 0, sy = 0, sw = 0, sh = 0;
+        const start = (x, y) => {
+            active = true; sx = x; sy = y;
+            sw = drawer.offsetWidth; sh = inner.offsetHeight;
+            document.body.style.userSelect = 'none';
+        };
+        const move = (x, y) => { if (active) onMove(x - sx, y - sy, sw, sh); };
+        const end  = () => { active = false; document.body.style.userSelect = ''; };
+        el.addEventListener('mousedown',  e => { start(e.clientX, e.clientY); e.preventDefault(); e.stopPropagation(); });
+        document.addEventListener('mousemove', e => move(e.clientX, e.clientY));
+        document.addEventListener('mouseup',   end);
+        el.addEventListener('touchstart',  e => { start(e.touches[0].clientX, e.touches[0].clientY); e.stopPropagation(); }, { passive: false });
+        document.addEventListener('touchmove',  e => { if (active) { move(e.touches[0].clientX, e.touches[0].clientY); e.preventDefault(); } }, { passive: false });
+        document.addEventListener('touchend',  end);
+    }
+
+    // East (right) edge → width
+    makeResizable('plannerResizeE', (dx, dy, sw) => {
+        drawer.style.width = Math.max(MIN_W, Math.min(sw + dx, maxW())) + 'px';
+    });
+    // South (bottom) edge → height
+    makeResizable('plannerResizeS', (dx, dy, sw, sh) => {
+        inner.style.height = Math.max(MIN_H, Math.min(sh + dy, maxH())) + 'px';
+    });
+    // South-East corner → both
+    makeResizable('plannerResizeSE', (dx, dy, sw, sh) => {
+        drawer.style.width = Math.max(MIN_W, Math.min(sw + dx, maxW())) + 'px';
+        inner.style.height = Math.max(MIN_H, Math.min(sh + dy, maxH())) + 'px';
+    });
 }
 
 function closePlannerDrawer() {
     plannerOpen = false;
     const drawer = document.getElementById('plannerDrawer');
-    if (drawer) {
-        drawer.classList.remove('translate-y-0');
-        drawer.classList.add('translate-y-full');
-    }
+    if (drawer) drawer.classList.add('hidden');
     document.body.classList.remove('planner-mode');
     _clearSuggestionPulse();
     clearRoutePreview();
     _clearRouteLayerOnly();
     _applyRouteDimming(false);
+    _syncPlannerBadge();
 }
 
 function _syncPlannerBadge() {
@@ -1273,17 +1343,13 @@ function _renderSuggestions(section) {
                 // --suggest-color drives the CSS glow animation.
                 m.setIcon(L.divIcon({
                     className: 'custom-small-marker planner-active-stop',
-                    iconSize:   [22, 22],
-                    iconAnchor: [11, 11],
-                    html: `<svg viewBox="0 0 22 22" width="22" height="22"
+                    iconSize:   [24, 24],
+                    iconAnchor: [12, 12],
+                    html: `<svg viewBox="0 0 24 24" width="24" height="24"
                                class="planner-suggest-icon"
                                style="overflow:visible;display:block;--suggest-color:${rawColor}">
-                        <circle cx="11" cy="11" r="8"
-                            fill="none"
-                            stroke="${rawColor}"
-                            stroke-width="2.5"
-                            stroke-dasharray="4.5 3"
-                            opacity="0.9"/>
+                        <rect x="10" y="3" width="4" height="18" rx="1.5" fill="${rawColor}"/>
+                        <rect x="3" y="10" width="18" height="4" rx="1.5" fill="${rawColor}"/>
                     </svg>`
                 }));
             } catch (_) {}

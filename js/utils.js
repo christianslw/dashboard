@@ -16,3 +16,18 @@ function calcDriveTimeFallback(distanceKm) {
         ? `~${timeInMinutes} Min`
         : `~${Math.floor(timeInMinutes / 60)}h ${timeInMinutes % 60}m`;
 }
+
+// ─── Toast notification ───────────────────────────────────────────────────────
+function showToast(msg, duration = 2500) {
+    let el = document.getElementById('_toast');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = '_toast';
+        el.className = 'fixed bottom-20 left-1/2 -translate-x-1/2 z-[200] pointer-events-none px-4 py-2 rounded-full bg-slate-800 dark:bg-zinc-700 text-white text-sm font-medium shadow-lg opacity-0 transition-opacity duration-200 whitespace-nowrap';
+        document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.style.opacity = '1';
+    clearTimeout(el._timer);
+    el._timer = setTimeout(() => { el.style.opacity = '0'; }, duration);
+}

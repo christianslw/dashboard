@@ -187,3 +187,22 @@ function openAppSettingsModal() {
 function closeAppSettingsModal() {
     document.getElementById('appSettingsModal').classList.add('hidden');
 }
+
+// ─── Share a standort via maps navigation link ───────────────────────────────
+function shareStandort(nummer, event) {
+    event.preventDefault();
+    event.stopPropagation();
+    const s = standorte.find(st => String(st.nummer) === String(nummer));
+    if (!s) return;
+    const url = getNavLink(s.lat, s.lon);
+    const title = `${s.nummer} – ${s.name}`;
+    if (navigator.share) {
+        navigator.share({ title, url }).catch(() => {});
+    } else {
+        navigator.clipboard.writeText(url).then(() => {
+            showToast('Navigationslink kopiert!');
+        }).catch(() => {
+            prompt('Link kopieren:', url);
+        });
+    }
+}

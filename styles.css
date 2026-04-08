@@ -1081,25 +1081,50 @@ html.dark:not(.dracula):not(.dracula-laser) .leaflet-control-attribution {
 .ov-draw-mode-btn:hover { background: #e0f2fe; color: #0369a1; }
 .ov-draw-mode-btn.active { background: #bae6fd; border-color: #7dd3fc; color: #0369a1; font-weight: 700; }
 
-/* ── Snap-to-road / freehand hint bar ── */
+/* ── Snap-to-road / draw / eraser / shift-select hint bar ── */
 .ov-snap-hint {
 	position: fixed; bottom: 56px; left: 50%; transform: translateX(-50%);
 	background: rgba(15,23,42,0.88); color: #e2e8f0;
-	font-size: 11px; padding: 5px 8px 5px 14px; border-radius: 99px;
+	font-size: 11px; padding: 5px 10px 5px 14px; border-radius: 99px;
 	pointer-events: auto; z-index: 9999; white-space: nowrap;
 	box-shadow: 0 2px 12px rgba(0,0,0,0.35);
 	display: flex; align-items: center; gap: 6px;
 }
-.ov-hint-text { pointer-events: none; }
-.ov-hint-finish, .ov-hint-cancel {
-	padding: 2px 9px; border-radius: 99px; border: none;
-	font-size: 11px; font-weight: 700; cursor: pointer;
-	line-height: 1.5; transition: background 0.12s;
+.ov-hint-finish {
+	background: #22c55e; color: #fff; border: none; border-radius: 99px;
+	padding: 3px 11px; font-size: 11px; font-weight: 600; cursor: pointer;
+	transition: background 0.12s;
 }
-.ov-hint-finish { background: #22c55e; color: #fff; }
 .ov-hint-finish:hover { background: #16a34a; }
-.ov-hint-cancel { background: rgba(255,255,255,0.12); color: #e2e8f0; }
-.ov-hint-cancel:hover { background: rgba(239,68,68,0.55); color: #fff; }
+.ov-hint-cancel {
+	background: rgba(255,255,255,0.12); color: #e2e8f0;
+	border: 1px solid rgba(255,255,255,0.18); border-radius: 99px;
+	padding: 3px 9px; font-size: 11px; cursor: pointer;
+	transition: background 0.12s;
+}
+.ov-hint-cancel:hover { background: rgba(255,255,255,0.22); }
+
+/* ── Vertex-edit confirm bar ── */
+.ov-vertex-edit-bar {
+	position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+	background: rgba(15,23,42,0.88); color: #e2e8f0;
+	font-size: 11px; padding: 5px 10px 5px 14px; border-radius: 99px;
+	pointer-events: auto; z-index: 9999; white-space: nowrap;
+	box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+	display: flex; align-items: center; gap: 6px;
+}
+.ov-veb-label { display: flex; align-items: center; gap: 4px; }
+
+/* ── Element list edit button ── */
+.ov-element-edit {
+	width: 18px; height: 18px; flex-shrink: 0;
+	display: flex; align-items: center; justify-content: center;
+	background: transparent; border: none; border-radius: 0.25rem;
+	cursor: pointer; color: #cbd5e1; padding: 0; transition: all 0.12s;
+}
+.ov-element-edit:hover { background: #dbeafe; color: #2563eb; }
+.ov-panel.dark .ov-element-edit { color: #52525b; }
+.ov-panel.dark .ov-element-edit:hover { background: #1e3a5f; color: #60a5fa; }
 
 /* ── Dark mode additions ── */
 .ov-panel.dark .ov-sub-row { background: #1c1c1f; border-color: #27272a; }
@@ -1596,6 +1621,74 @@ button:hover .nav-icon-wrap .nav-outline {
 	opacity: 0;
 }
 
+/* Share button — wrapper clips width from 0, revealing the icon from the right */
+.nav-share-wrap {
+	display: inline-flex;
+	align-items: center;
+	overflow: hidden;
+	width: 0;
+	transition: width 0.32s cubic-bezier(0.25, 1.1, 0.5, 1);
+}
+.group:hover .nav-share-wrap {
+	width: 40px;
+}
+
+/* The button itself — fixed square, no Tailwind padding fights */
+.nav-share-btn {
+	flex-shrink: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	color: #94a3b8; /* slate-400 */
+	border-radius: 6px;
+	position: relative;
+	background: transparent;
+	overflow: hidden;
+	transition: color 0.18s ease;
+}
+.dark .nav-share-btn {
+	color: #71717a; /* zinc-500 */
+}
+.nav-share-btn:hover {
+	color: #3b82f6; /* blue-500 */
+}
+.dark .nav-share-btn:hover {
+	color: #60a5fa; /* blue-400 */
+}
+
+/* Icon gentle spring on hover, punch-in on active */
+.nav-share-btn i {
+	font-size: 1.25rem;
+	transition: transform 0.3s cubic-bezier(0.25, 1.1, 0.5, 1);
+}
+.nav-share-btn:hover i {
+	transform: scale(1.18) rotate(-8deg);
+}
+.nav-share-btn:active i {
+	transform: scale(0.9) rotate(0deg);
+	transition-duration: 0.12s;
+}
+
+/* Ripple background pulse on click */
+.nav-share-btn::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	border-radius: 6px;
+	background: rgba(59, 130, 246, 0);
+	transform: scale(0.4);
+	opacity: 0;
+	transition: transform 0.35s ease, opacity 0.35s ease;
+}
+.nav-share-btn:active::before {
+	background: rgba(59, 130, 246, 0.14);
+	transform: scale(1);
+	opacity: 1;
+	transition-duration: 0.08s;
+}
+
 /* Improved focus ring for all interactive (base) */
 :focus-visible {
 	outline: 2px solid #3b82f6;
@@ -1887,6 +1980,22 @@ body.planner-mode .planner-add-btn.is-queued .planner-add-icon {
     50%       { filter: drop-shadow(0 0 6px currentColor); transform: scale(1.22); }
 }
 .planner-suggest-pulse { animation: plannerSuggestPulse 2s ease-in-out infinite; will-change: transform; }
+
+@keyframes plannerSuggestIconPulse {
+    0%, 100% {
+        filter: drop-shadow(0 0 0px var(--suggest-color, #8b5cf6));
+        transform: scale(0.5);
+    }
+    50% {
+        filter: drop-shadow(0 0 5px var(--suggest-color, #8b5cf6));
+        transform: scale(0.8);
+    }
+}
+.planner-suggest-icon {
+    animation: plannerSuggestIconPulse 1.8s ease-in-out infinite;
+    will-change: transform, filter;
+    transform-origin: center;
+}
 
 /* ── Endpoint picker (inline search inside planner) ─────────────────────── */
 .planner-ep-result {
