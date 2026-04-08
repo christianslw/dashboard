@@ -117,6 +117,22 @@ let ovModalPendingLayer = null;
 let ovModalEditLayer = null;
 let ovModalEditNummer = null;
 
+// Vertex-edit mode
+let ovVertexEditLayer = null;   // the layer currently being vertex-edited
+let ovVertexEditCleanup = null; // fn to restore state after vertex edit
+
+// Eraser state
+let ovEraserMode = 'freehand'; // 'freehand' | 'rect'
+let ovEraserActive = false;
+let ovEraserAltDown = false;
+let ovEraserCleanup = null;
+
+// Shift-rectangle selection state
+let ovShiftSelActive = false;
+let ovShiftSelCleanup = null;
+let ovShiftSelHighlights = []; // L.circleMarker array (visual dots)
+let ovShiftSelData = [];       // [{ layer, indices: Set<number> }]
+
 // ─── HELPERS ─────────────────────────────────────────────
 
 function normalizeStandortNummer(n) { return String(n); }
@@ -668,6 +684,582 @@ function attachDeleteHandler(layer) {
     });
 }
 
+// ─── VERTEX EDIT MODE ────────────────────────────────────
+
+function beginLayerEdit(layer) {
+    if (ovVertexEditLayer) cancelLayerEdit(); // cancel previous if any
+    deactivateCurrentTool();
+
+    const p = layer.feature?.properties || {};
+    const ot = p.overlayType;
+
+    // Markers / icons → open text/zone modal
+    if (ot === 'icon') {
+        if (p.iconType === 'hinweis') { beginEditExistingHinweis(layer, overlayEditingStandortNummer); return; }
+        // Schranke / Tresor — just open color picker for now
+        ovActiveCategoryTab = 'farbe';
+        updateToolbarState();
+        return;
+    }
+    if (ot === 'zone' || ot === 'kreis') {
+        if (p.zoneType !== 'eisabfall') { beginEditExistingZone(layer, overlayEditingStandortNummer); return; }
+    }
+
+    // Polyline / polygon / circle — enable Leaflet.Draw vertex editing
+    if (!(layer.editing)) return;
+
+    ovVertexEditLayer = layer;
+    layer.editing.enable();
+    leafletMap.panTo(layer instanceof L.Circle ? layer.getLatLng() : layer.getBounds().getCenter());
+
+    // Style the layer to indicate edit mode
+    if (layer.setStyle) layer.setStyle({ dashArray: null, opacity: 1, fillOpacity: layer.feature ? undefined : 0.25 });
+
+    showVertexEditBar(layer);
+
+    ovVertexEditCleanup = () => {
+        if (layer.editing?.enabled()) layer.editing.disable();
+        removeVertexEditBar();
+        ovVertexEditLayer = null;
+        ovVertexEditCleanup = null;
+    };
+}
+
+function commitLayerEdit() {
+    const layer = ovVertexEditLayer;
+    if (!layer) return;
+
+    // Read back the updated geometry
+    const p = layer.feature?.properties || {};
+    const ot = p.overlayType;
+    if (layer instanceof L.Circle) {
+        const ll = layer.getLatLng();
+        if (layer.feature) {
+            layer.feature.geometry.coordinates = [ll.lng, ll.lat];
+            layer.feature.properties.radius = layer.getRadius();
+        }
+    } else if (layer instanceof L.Polygon) {
+        const rings = layer.getLatLngs();
+        const outer = Array.isArray(rings[0]) ? rings[0] : rings;
+        if (layer.feature) layer.feature.geometry.coordinates = [outer.map(ll => [ll.lng, ll.lat])];
+    } else if (layer instanceof L.Polyline) {
+        const lls = layer.getLatLngs();
+        if (layer.feature) layer.feature.geometry.coordinates = lls.map(ll => [ll.lng, ll.lat]);
+    }
+
+    if (ovVertexEditCleanup) ovVertexEditCleanup();
+    pushUndo();
+    saveEditedOverlays();
+    renderElementList();
+}
+
+function cancelLayerEdit() {
+    if (ovVertexEditCleanup) ovVertexEditCleanup();
+    renderElementList();
+}
+
+function showVertexEditBar(layer) {
+    removeVertexEditBar();
+    const bar = document.createElement('div');
+    bar.id = 'ovVertexEditBar';
+    bar.className = 'ov-vertex-edit-bar';
+    const label = layer.feature?.properties?.label ||
+        (layer.feature?.properties?.overlayType === 'anfahrt' ? 'Route' :
+        layer.feature?.properties?.overlayType === 'pfad' ? 'Pfad' :
+        layer.feature?.properties?.overlayType === 'zone' ? 'Zone' : 'Element');
+    bar.innerHTML = `<span class="ov-veb-label"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg> ${escapeHTML(label)} bearbeiten</span>`
+        + `<button class="ov-hint-finish" onclick="commitLayerEdit()">✓ Speichern</button>`
+        + `<button class="ov-hint-cancel" onclick="cancelLayerEdit()">✕</button>`;
+    document.body.appendChild(bar);
+}
+
+function removeVertexEditBar() {
+    const el = document.getElementById('ovVertexEditBar');
+    if (el) el.remove();
+}
+
+function beginEditExistingZone(layer, nummer) {
+    ovModalEditLayer = layer;
+    ovModalEditNummer = nummer;
+    showOverlayModal('edit-zone');
+}
+
+// ─── ERASER ──────────────────────────────────────────────
+
+/** Called when Alt is pressed in edit mode — attaches eraser listeners. */
+function activateEraser() {
+    if (ovEraserActive) return;
+    ovEraserActive = true;
+    if (ovVertexEditLayer) cancelLayerEdit(); // eraser and vertex-edit are mutually exclusive
+
+    const mapContainer = leafletMap.getContainer();
+    mapContainer.style.cursor = ovEraserMode === 'rect' ? 'cell' : 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\'%3E%3Ccircle cx=\'12\' cy=\'12\' r=\'10\' fill=\'rgba(239,68,68,0.25)\' stroke=\'%23ef4444\' stroke-width=\'2\'/%3E%3C/svg%3E") 12 12, crosshair';
+
+    showEraserHintBar();
+
+    let drawing = false;
+    let erasePath = []; // pixel points for freehand
+    let rectStart = null;
+    let overlayEl = null; // SVG overlay for visual feedback
+
+    function containerPoint(e) {
+        const r = mapContainer.getBoundingClientRect();
+        return { x: e.clientX - r.left, y: e.clientY - r.top };
+    }
+
+    function onPointerDown(e) {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        e.stopPropagation();
+        try { mapContainer.setPointerCapture(e.pointerId); } catch(_) {}
+        leafletMap.dragging.disable();
+        drawing = true;
+        const cp = containerPoint(e);
+        if (ovEraserMode === 'rect') {
+            rectStart = cp;
+        } else {
+            erasePath = [cp];
+        }
+        createEraserOverlay(mapContainer);
+    }
+
+    function onPointerMove(e) {
+        if (!drawing) return;
+        const cp = containerPoint(e);
+        if (ovEraserMode === 'rect' && rectStart) {
+            drawEraserRect(mapContainer, rectStart, cp);
+        } else {
+            erasePath.push(cp);
+            drawEraserPath(mapContainer, erasePath);
+        }
+    }
+
+    function onPointerUp(e) {
+        if (!drawing) return;
+        drawing = false;
+        try { mapContainer.releasePointerCapture(e.pointerId); } catch(_) {}
+        leafletMap.dragging.enable();
+
+        const cp = containerPoint(e);
+        let pixelPoly;
+        if (ovEraserMode === 'rect' && rectStart) {
+            pixelPoly = [
+                rectStart,
+                { x: cp.x, y: rectStart.y },
+                cp,
+                { x: rectStart.x, y: cp.y }
+            ];
+            rectStart = null;
+        } else {
+            pixelPoly = erasePath.slice();
+            erasePath = [];
+        }
+
+        removeEraserOverlay(mapContainer);
+        if (pixelPoly.length >= 3) applyEraserToLayers(pixelPoly);
+    }
+
+    function createEraserOverlay(container) {
+        removeEraserOverlay(container);
+        overlayEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        overlayEl.id = 'ovEraserSvg';
+        overlayEl.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1500;';
+        container.style.position = container.style.position || 'relative';
+        container.appendChild(overlayEl);
+    }
+
+    function removeEraserOverlay(container) {
+        const old = container.querySelector('#ovEraserSvg');
+        if (old) old.remove();
+        overlayEl = null;
+    }
+
+    function drawEraserPath(container, pts) {
+        if (!overlayEl || pts.length < 2) return;
+        const d = 'M' + pts.map(p => `${p.x},${p.y}`).join('L') + 'Z';
+        overlayEl.innerHTML = `<path d="${d}" fill="rgba(239,68,68,0.18)" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,2"/>`;
+    }
+
+    function drawEraserRect(container, a, b) {
+        if (!overlayEl) return;
+        const x = Math.min(a.x, b.x), y = Math.min(a.y, b.y),
+              w = Math.abs(b.x - a.x), h = Math.abs(b.y - a.y);
+        overlayEl.innerHTML = `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="rgba(239,68,68,0.18)" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,2"/>`;
+    }
+
+    mapContainer.addEventListener('pointerdown', onPointerDown, { capture: true });
+    mapContainer.addEventListener('pointermove', onPointerMove, { capture: true });
+    mapContainer.addEventListener('pointerup', onPointerUp, { capture: true });
+
+    ovEraserCleanup = () => {
+        mapContainer.removeEventListener('pointerdown', onPointerDown, { capture: true });
+        mapContainer.removeEventListener('pointermove', onPointerMove, { capture: true });
+        mapContainer.removeEventListener('pointerup', onPointerUp, { capture: true });
+        removeEraserOverlay(mapContainer);
+        mapContainer.style.cursor = '';
+        ovEraserActive = false;
+        ovEraserCleanup = null;
+        removeEraserHintBar();
+    };
+}
+
+function deactivateEraser() {
+    if (ovEraserCleanup) ovEraserCleanup();
+}
+
+/** Check if a pixel point is inside a pixel polygon (ray-casting). */
+function pixelPointInPoly(pt, poly) {
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        const xi = poly[i].x, yi = poly[i].y, xj = poly[j].x, yj = poly[j].y;
+        if (((yi > pt.y) !== (yj > pt.y)) && (pt.x < (xj - xi) * (pt.y - yi) / (yj - yi) + xi)) {
+            inside = !inside;
+        }
+    }
+    return inside;
+}
+
+/** Erase polyline points that fall within the given pixel-polygon area. */
+function applyEraserToLayers(pixelPoly) {
+    if (!overlayEditGroup || !pixelPoly.length) return;
+    pushUndo();
+    let changed = false;
+
+    const toAdd = [], toRemove = [];
+
+    overlayEditGroup.eachLayer(layer => {
+        if (!(layer instanceof L.Polyline) || layer instanceof L.Polygon) return;
+
+        const originalLatLngs = layer.getLatLngs();
+        // Determine which points survive
+        const kept = originalLatLngs.map((ll, i) => {
+            const px = leafletMap.latLngToContainerPoint(ll);
+            return { ll, erased: pixelPointInPoly({ x: px.x, y: px.y }, pixelPoly), i };
+        });
+
+        if (!kept.some(k => k.erased)) return; // nothing erased on this layer
+        changed = true;
+
+        if (kept.filter(k => !k.erased).length < 2) {
+            toRemove.push(layer);
+            return;
+        }
+
+        // Split into contiguous un-erased segments
+        const segments = [];
+        let current = [];
+        for (const k of kept) {
+            if (!k.erased) {
+                current.push(k.ll);
+            } else {
+                if (current.length >= 2) segments.push(current);
+                current = [];
+            }
+        }
+        if (current.length >= 2) segments.push(current);
+
+        toRemove.push(layer);
+        for (const seg of segments) {
+            if (seg.length < 2) continue;
+            const coords = seg.map(ll => [ll.lng, ll.lat]);
+            const props = { ...layer.feature.properties };
+            const newLayer = L.polyline(seg, {
+                color: props.color || overlayActiveColor,
+                weight: layer.options.weight || 4,
+                dashArray: layer.options.dashArray,
+                opacity: 0.9
+            });
+            newLayer.feature = {
+                type: 'Feature',
+                geometry: { type: 'LineString', coordinates: coords },
+                properties: props
+            };
+            // Re-attach tooltip using original label type
+            if (props.overlayType === 'anfahrt') {
+                bindColoredTooltip(newLayer, () => {
+                    const dist = formatDistance(calcPolylineLength(newLayer.getLatLngs()));
+                    return `${getRouteLabel(props.routeType)} \u00b7 ${dist}`;
+                }, { sticky: true, className: 'overlay-route-tooltip' });
+            } else if (props.overlayType === 'pfad') {
+                bindColoredTooltip(newLayer, () => {
+                    const dist = formatDistance(calcPolylineLength(newLayer.getLatLngs()));
+                    return `${PFAD_STYLE_LABELS[props.strokeStyle] || 'Pfad'} \u00b7 ${dist}`;
+                }, { sticky: true, className: 'overlay-route-tooltip' });
+            }
+            attachDeleteHandler(newLayer);
+            toAdd.push(newLayer);
+        }
+    });
+
+    for (const l of toRemove) overlayEditGroup.removeLayer(l);
+    for (const l of toAdd) overlayEditGroup.addLayer(l);
+
+    if (changed) { saveEditedOverlays(); renderElementList(); }
+}
+
+function showEraserHintBar() {
+    removeEraserHintBar();
+    const bar = document.createElement('div');
+    bar.id = 'ovEraserBar';
+    bar.className = 'ov-snap-hint';
+    const fhActive = ovEraserMode === 'freehand' ? 'active' : '';
+    const rcActive = ovEraserMode === 'rect' ? 'active' : '';
+    bar.innerHTML = `<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:#ef4444"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>`
+        + `<span style="margin-right:4px">Radierer aktiv</span>`
+        + `<button class="ov-draw-mode-btn ${fhActive}" onclick="setEraserMode('freehand')" title="Freihand-Radierer" style="padding:2px 7px">Freihand</button>`
+        + `<button class="ov-draw-mode-btn ${rcActive}" onclick="setEraserMode('rect')" title="Rechteck-Radierer" style="padding:2px 7px">Rechteck</button>`
+        + `<span style="margin-left:4px;font-size:10px;opacity:0.6">Alt loslassen zum Beenden</span>`;
+    document.body.appendChild(bar);
+}
+
+function removeEraserHintBar() {
+    const el = document.getElementById('ovEraserBar');
+    if (el) el.remove();
+}
+
+function setEraserMode(mode) {
+    ovEraserMode = mode;
+    const bar = document.getElementById('ovEraserBar');
+    if (bar) {
+        bar.querySelectorAll('.ov-draw-mode-btn').forEach(b => {
+            b.classList.toggle('active', b.textContent.toLowerCase().startsWith(mode === 'freehand' ? 'f' : 'r'));
+        });
+    }
+    const mapContainer = leafletMap?.getContainer();
+    if (mapContainer) {
+        mapContainer.style.cursor = mode === 'rect'
+            ? 'cell'
+            : 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\'%3E%3Ccircle cx=\'12\' cy=\'12\' r=\'10\' fill=\'rgba(239,68,68,0.25)\' stroke=\'%23ef4444\' stroke-width=\'2\'/%3E%3C/svg%3E") 12 12, crosshair';
+    }
+}
+
+// ─── SHIFT-RECTANGLE SELECTION ───────────────────────────
+
+function activateShiftSelect() {
+    if (ovShiftSelActive) return;
+    ovShiftSelActive = true;
+    if (ovEraserActive) deactivateEraser();
+    if (ovVertexEditLayer) cancelLayerEdit();
+
+    const mapContainer = leafletMap.getContainer();
+    mapContainer.style.cursor = 'crosshair';
+
+    let drawing = false;
+    let rectStart = null;
+    let overlayEl = null;
+
+    function containerPoint(e) {
+        const r = mapContainer.getBoundingClientRect();
+        return { x: e.clientX - r.left, y: e.clientY - r.top };
+    }
+    function createSelOverlay() {
+        removeSelOverlay();
+        overlayEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        overlayEl.id = 'ovSelSvg';
+        overlayEl.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1500;';
+        mapContainer.style.position = mapContainer.style.position || 'relative';
+        mapContainer.appendChild(overlayEl);
+    }
+    function removeSelOverlay() {
+        const old = mapContainer.querySelector('#ovSelSvg');
+        if (old) old.remove();
+        overlayEl = null;
+    }
+    function drawSelRect(a, b) {
+        if (!overlayEl) return;
+        const x = Math.min(a.x, b.x), y = Math.min(a.y, b.y),
+              w = Math.abs(b.x - a.x), h = Math.abs(b.y - a.y);
+        overlayEl.innerHTML = `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="rgba(59,130,246,0.12)" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="4,2"/>`;
+    }
+
+    function onPointerDown(e) {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        e.stopPropagation();
+        try { mapContainer.setPointerCapture(e.pointerId); } catch(_) {}
+        leafletMap.dragging.disable();
+        drawing = true;
+        rectStart = containerPoint(e);
+        createSelOverlay();
+    }
+    function onPointerMove(e) {
+        if (!drawing || !rectStart) return;
+        drawSelRect(rectStart, containerPoint(e));
+    }
+    function onPointerUp(e) {
+        if (!drawing) return;
+        drawing = false;
+        try { mapContainer.releasePointerCapture(e.pointerId); } catch(_) {}
+        leafletMap.dragging.enable();
+        const cp = containerPoint(e);
+        removeSelOverlay();
+        if (!rectStart) return;
+        const pixelRect = {
+            x: Math.min(rectStart.x, cp.x), y: Math.min(rectStart.y, cp.y),
+            w: Math.abs(cp.x - rectStart.x), h: Math.abs(cp.y - rectStart.y)
+        };
+        rectStart = null;
+        if (pixelRect.w > 3 && pixelRect.h > 3) applyShiftSelection(pixelRect);
+    }
+
+    mapContainer.addEventListener('pointerdown', onPointerDown, { capture: true });
+    mapContainer.addEventListener('pointermove', onPointerMove, { capture: true });
+    mapContainer.addEventListener('pointerup',   onPointerUp,   { capture: true });
+
+    ovShiftSelCleanup = () => {
+        mapContainer.removeEventListener('pointerdown', onPointerDown, { capture: true });
+        mapContainer.removeEventListener('pointermove', onPointerMove, { capture: true });
+        mapContainer.removeEventListener('pointerup',   onPointerUp,   { capture: true });
+        removeSelOverlay();
+        mapContainer.style.cursor = '';
+        clearShiftSelHighlights();
+        ovShiftSelData = [];
+        ovShiftSelActive = false;
+        ovShiftSelCleanup = null;
+        removeShiftSelHintBar();
+    };
+}
+
+function deactivateShiftSelect() {
+    if (ovShiftSelCleanup) ovShiftSelCleanup();
+}
+
+function clearShiftSelHighlights() {
+    for (const m of ovShiftSelHighlights) { try { leafletMap.removeLayer(m); } catch(_) {} }
+    ovShiftSelHighlights = [];
+}
+
+function applyShiftSelection(pixelRect) {
+    clearShiftSelHighlights();
+    ovShiftSelData = [];
+    overlayEditGroup.eachLayer(layer => {
+        if (!(layer instanceof L.Polyline) || layer instanceof L.Polygon) return;
+        const latLngs = layer.getLatLngs();
+        const indices = new Set();
+        latLngs.forEach((ll, i) => {
+            const px = leafletMap.latLngToContainerPoint(ll);
+            if (px.x >= pixelRect.x && px.x <= pixelRect.x + pixelRect.w &&
+                px.y >= pixelRect.y && px.y <= pixelRect.y + pixelRect.h) {
+                indices.add(i);
+                const marker = L.circleMarker(ll, {
+                    radius: 6, color: '#f97316', fillColor: '#f97316',
+                    fillOpacity: 0.75, weight: 2
+                }).addTo(leafletMap);
+                ovShiftSelHighlights.push(marker);
+            }
+        });
+        if (indices.size > 0) ovShiftSelData.push({ layer, indices });
+    });
+    if (ovShiftSelData.length > 0) {
+        const total = ovShiftSelData.reduce((s, d) => s + d.indices.size, 0);
+        showShiftSelHintBar(total);
+    } else {
+        removeShiftSelHintBar();
+    }
+}
+
+function deleteShiftSelected() {
+    if (!ovShiftSelData.length) return;
+    pushUndo();
+    const toAdd = [], toRemove = [];
+    for (const { layer, indices } of ovShiftSelData) {
+        const latLngs = layer.getLatLngs();
+        toRemove.push(layer);
+        const segments = [];
+        let cur = [];
+        for (let i = 0; i < latLngs.length; i++) {
+            if (!indices.has(i)) { cur.push(latLngs[i]); }
+            else { if (cur.length >= 2) segments.push(cur); cur = []; }
+        }
+        if (cur.length >= 2) segments.push(cur);
+        for (const seg of segments) {
+            if (seg.length < 2) continue;
+            const props = { ...layer.feature.properties };
+            const newLayer = L.polyline(seg, {
+                color: props.color || overlayActiveColor,
+                weight: layer.options.weight || 4,
+                dashArray: layer.options.dashArray,
+                opacity: 0.9
+            });
+            newLayer.feature = {
+                type: 'Feature',
+                geometry: { type: 'LineString', coordinates: seg.map(ll => [ll.lng, ll.lat]) },
+                properties: props
+            };
+            if (props.overlayType === 'anfahrt') {
+                bindColoredTooltip(newLayer, () => {
+                    const dist = formatDistance(calcPolylineLength(newLayer.getLatLngs()));
+                    return `${getRouteLabel(props.routeType)} \u00b7 ${dist}`;
+                }, { sticky: true, className: 'overlay-route-tooltip' });
+            } else if (props.overlayType === 'pfad') {
+                bindColoredTooltip(newLayer, () => {
+                    const dist = formatDistance(calcPolylineLength(newLayer.getLatLngs()));
+                    return `${PFAD_STYLE_LABELS[props.strokeStyle] || 'Pfad'} \u00b7 ${dist}`;
+                }, { sticky: true, className: 'overlay-route-tooltip' });
+            }
+            attachDeleteHandler(newLayer);
+            toAdd.push(newLayer);
+        }
+    }
+    for (const l of toRemove) overlayEditGroup.removeLayer(l);
+    for (const l of toAdd)    overlayEditGroup.addLayer(l);
+    clearShiftSelHighlights();
+    ovShiftSelData = [];
+    removeShiftSelHintBar();
+    saveEditedOverlays();
+    renderElementList();
+}
+
+function showShiftSelHintBar(count) {
+    removeShiftSelHintBar();
+    const bar = document.createElement('div');
+    bar.id = 'ovShiftSelBar';
+    bar.className = 'ov-snap-hint';
+    bar.innerHTML =
+        `<svg width="13" height="13" fill="none" stroke="#f97316" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>`
+        + `<span id="ovShiftSelCount">${count} Punkt${count !== 1 ? 'e' : ''} ausgewählt</span>`
+        + `<button class="ov-hint-finish" onclick="deleteShiftSelected()" style="padding:2px 10px">Löschen</button>`
+        + `<button class="ov-hint-cancel" onclick="clearShiftSelHighlights();ovShiftSelData=[];removeShiftSelHintBar()" style="padding:2px 7px">✕</button>`
+        + `<span style="margin-left:4px;font-size:10px;opacity:0.6">Shift loslassen zum Beenden</span>`;
+    document.body.appendChild(bar);
+}
+
+function removeShiftSelHintBar() {
+    const el = document.getElementById('ovShiftSelBar');
+    if (el) el.remove();
+}
+
+// ─── ALT KEY GLOBAL HANDLER ──────────────────────────────
+
+function attachEraserKeyListeners() {
+    document.addEventListener('keydown', e => {
+        if (!overlayEditMode) return;
+        if (e.key === 'Alt') {
+            e.preventDefault();
+            ovEraserAltDown = true;
+            if (!ovEraserActive) activateEraser();
+        } else if (e.key === 'Shift') {
+            if (!ovShiftSelActive) activateShiftSelect();
+        } else if ((e.key === 'Delete' || e.key === 'Backspace') && ovShiftSelData.length > 0) {
+            e.preventDefault();
+            deleteShiftSelected();
+        }
+    });
+    document.addEventListener('keyup', e => {
+        if (e.key === 'Alt') {
+            ovEraserAltDown = false;
+            deactivateEraser();
+        } else if (e.key === 'Shift') {
+            deactivateShiftSelect();
+        }
+    });
+    // Also deactivate if window loses focus while Alt/Shift is held
+    window.addEventListener('blur', () => {
+        if (ovEraserAltDown) { ovEraserAltDown = false; deactivateEraser(); }
+        if (ovShiftSelActive) deactivateShiftSelect();
+    });
+}
+
 function ensureOverlayCollections() {
     if (!leafletMap) return;
     if (!overlayDisplayGroup) overlayDisplayGroup = L.layerGroup().addTo(leafletMap);
@@ -771,6 +1363,11 @@ function setOverlayEditMode(enabled) {
     overlayEditMode = enabled;
     if (!enabled) {
         stopCurrentDrawHandler();
+        if (ovVertexEditCleanup) ovVertexEditCleanup();
+        deactivateEraser();
+        deactivateShiftSelect();
+        clearAccumulatedRoute();
+        removeDrawHint();
         overlayActiveTool = null;
         overlayEditingStandortNummer = null;
         overlayUndoStack = [];
@@ -910,6 +1507,7 @@ function deactivateCurrentTool() {
     stopCurrentDrawHandler();
     clearAccumulatedRoute();
     removeDrawHint();
+    if (ovVertexEditCleanup) ovVertexEditCleanup();
     overlayActiveTool = null;
     updateToolBtnStates();
 }
@@ -1655,9 +2253,17 @@ function renderElementList() {
         // Color text/unicode icons with the element color; HTML icons (<svg>, <i>) already carry their color
         const iconIsHtml = d.icon.startsWith('<');
         const iconStyle = (!iconIsHtml && d.color) ? ` style="color:${d.color}"` : '';
+        const ot = feature.properties?.overlayType;
+        const isEditable = (ot === 'anfahrt' || ot === 'pfad' || ot === 'zone' || ot === 'kreis' || ot === 'icon');
+        const editBtn = isEditable
+            ? `<button type="button" class="ov-element-edit" data-idx="${idx}" title="Bearbeiten">
+                <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              </button>`
+            : '';
         return `<div class="ov-element-row">
             <span class="ov-element-icon"${iconStyle}>${d.icon}</span>
             ${labelHtml}
+            ${editBtn}
             <button type="button" class="ov-element-delete" data-idx="${idx}" title="Löschen">
                 <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
@@ -1675,6 +2281,18 @@ function renderElementList() {
                 overlayEditGroup.removeLayer(layers[idx]);
                 await saveEditedOverlays();
             }
+        });
+    });
+
+    // Attach edit handlers
+    container.querySelectorAll('.ov-element-edit').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.idx, 10);
+            const layers = [];
+            overlayEditGroup.eachLayer(l => { if (l.feature) layers.push(l); });
+            const layer = layers[idx];
+            if (!layer) return;
+            beginLayerEdit(layer);
         });
     });
 
@@ -2218,6 +2836,7 @@ async function initStandortOverlays() {
     createOverlaySidebar();
     ensureOverlayCollections();
     attachDrawListeners();
+    attachEraserKeyListeners();
 
     await initCFOverlaySync();
     await loadOverlayStore();

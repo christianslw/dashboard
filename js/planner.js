@@ -23,8 +23,10 @@ let _orderedStops         = [];   // optimised stop order
 
 // ── nearby suggestions setting ────────────────────────────────────────────
 let showRouteSuggestions  = localStorage.getItem('routeSuggestions') !== 'false';
-const SUGGEST_MAX_KM      = 3;
-const SUGGEST_MAX_COUNT   = 5;
+let suggestRadiusKm       = parseFloat(localStorage.getItem('suggestRadiusKm') || '3');
+const SUGGEST_MAX_COUNT   = 8;
+let _suggestionUnclustered = null; // L.layerGroup for suggestion markers pulled from cluster
+let _suggestionRingLayer   = null; // L.layerGroup for circleMarker highlight rings
 
 // ─── DATA MODEL HELPERS ───────────────────────────────────────────────────────
 
@@ -610,6 +612,8 @@ function _applyRouteDimming(dim) {
         }
     } else {
         container.classList.remove('planner-dim-mode');
+        // Also restore any suggestion highlights that were pulled from cluster
+        _clearSuggestionPulse();
     }
 }
 
@@ -747,7 +751,20 @@ function _renderRouteResults(standardData, optimisedData, orderedStops) {
     _applyRouteDimming(true);
     // Apply active-column styling (no route re-draw — done by caller after render)
     _updateRouteColUI();
-    _renderSuggestions(section);
+    // Suggestions are rendered asynchronously (see runPlannerRoute) so the
+    // drawer autosize happens first without suggestions inflating scrollHeight.
+    if (showRouteSuggestions) {
+        section.insertAdjacentHTML('beforeend', `
+            <div id="plannerSuggestionsLoader" class="mt-3 pt-2 border-t border-slate-100 dark:border-zinc-800 animate-pulse space-y-1.5">
+                <div class="flex items-center gap-1.5 mb-2">
+                    <div class="w-3 h-3 rounded-full bg-slate-200 dark:bg-zinc-700"></div>
+                    <div class="h-2.5 w-28 rounded bg-slate-200 dark:bg-zinc-700"></div>
+                </div>
+                <div class="h-5 rounded bg-slate-100 dark:bg-zinc-800/80 w-full"></div>
+                <div class="h-5 rounded bg-slate-100 dark:bg-zinc-800/80 w-[90%]"></div>
+                <div class="h-5 rounded bg-slate-100 dark:bg-zinc-800/80 w-[75%]"></div>
+            </div>`);
+    }
 }
 
 // ─── NAVIGATION URL BUILDERS ─────────────────────────────────────────────────
@@ -804,6 +821,32 @@ function openPlannerNavigation() {
     if (plannerQueue.length === 0) return;
     const nav = typeof navMode !== 'undefined' ? navMode : 'google';
     window.open(nav === 'apple' ? _buildAppleMapsUrl(plannerQueue) : _buildGoogleMapsUrl(plannerQueue), '_blank');
+}
+
+// ─── DRAWER AUTO-SIZE ───────────────────────────────────────────────────────
+
+// Resize plannerInner to fit content after route results are rendered.
+// Measures header + content scrollHeight + actions, caps at 55 % viewport height.
+function _autosizePlannerDrawer() {
+    const inner   = document.getElementById('plannerInner');
+    const content = document.getElementById('plannerContent');
+    if (!inner || !content) return;
+
+    const maxH = Math.floor(window.innerHeight * 0.55);
+
+    // Measure the fixed chrome (header + actions bar)
+    let chrome = 0;
+    inner.querySelectorAll(':scope > :not(#plannerContent)').forEach(el => {
+        chrome += el.offsetHeight;
+    });
+
+    // Natural height = full scroll content + chrome + small breathing room
+    const target = Math.min(content.scrollHeight + chrome + 8, maxH);
+
+    inner.style.transition = 'height 0.25s ease';
+    inner.style.height = target + 'px';
+    // Remove transition override after animation so drag-resize still feels instant
+    setTimeout(() => { inner.style.transition = ''; }, 280);
 }
 
 // ─── ROUTE SELECTION & PREVIEW ───────────────────────────────────────────────
@@ -958,6 +1001,13 @@ async function runPlannerRoute() {
         }
 
         _renderRouteResults(stdTrip, optTrip, orderedStops);
+        _autosizePlannerDrawer(); // sizes to route columns before suggestions load
+
+        // Render suggestions after a short delay so they don't trigger a resize
+        setTimeout(() => {
+            const section = document.getElementById('plannerRouteResults');
+            if (section) _renderSuggestions(section);
+        }, 350);
 
         // Store geometries and draw active route
         _lastOptRouteGeom = optTrip.geometry?.coordinates || null;
@@ -1142,21 +1192,26 @@ function clearTourEndpoint(type) {
 // ─── ROUTE SUGGESTIONS ────────────────────────────────────────────────────────
 
 function _findSuggestedStops() {
-    if (!_lastOptRouteGeom || !showRouteSuggestions) return [];
+    if (!showRouteSuggestions) return [];
+    // Use whichever route is currently active
+    const activeGeom = _activeRouteType === 'opt' ? _lastOptRouteGeom : _stdRouteGeom;
+    if (!activeGeom) return [];
     return (typeof standorte !== 'undefined' ? standorte : [])
         .filter(s => !isPlannerQueued(s.nummer) && s.lat && s.lon)
         .map(s => {
-            // Minimum distance from this station to any point on the route polyline
-            const minDist = _lastOptRouteGeom.reduce((min, [lon, lat]) =>
+            // Minimum distance from this station to any segment point on the active route
+            const minDist = activeGeom.reduce((min, [lon, lat]) =>
                 Math.min(min, calcDistance(s.lat, s.lon, lat, lon)), Infinity);
             return { ...s, distToRoute: minDist };
         })
-        .filter(s => s.distToRoute < SUGGEST_MAX_KM)
+        .filter(s => s.distToRoute < suggestRadiusKm)
         .sort((a, b) => a.distToRoute - b.distToRoute)
         .slice(0, SUGGEST_MAX_COUNT);
 }
 
 function _renderSuggestions(section) {
+    // Always remove the loader placeholder first
+    document.getElementById('plannerSuggestionsLoader')?.remove();
     if (!showRouteSuggestions) return;
     const suggestions = _findSuggestedStops();
     if (!suggestions.length) return;
@@ -1166,34 +1221,103 @@ function _renderSuggestions(section) {
     div.className = 'mt-3 pt-2 border-t border-slate-100 dark:border-zinc-800';
     div.innerHTML = `
         <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-zinc-500 mb-1.5 flex items-center gap-1">
-            <i class="mdi mdi-map-marker-radius-outline text-xs text-violet-500"></i>Nahe der Strecke
+            <i class="mdi mdi-map-marker-radius-outline text-xs text-violet-500"></i>
+            Nahe der Strecke
+            <span class="ml-auto font-normal normal-case text-[10px] text-slate-300 dark:text-zinc-600">&le;&thinsp;${suggestRadiusKm < 1 ? Math.round(suggestRadiusKm * 1000) + ' m' : suggestRadiusKm + ' km'}</span>
         </p>
         ${suggestions.map(s => `
         <div class="planner-suggest-row">
-            <i class="mdi mdi-map-marker-outline text-slate-400 dark:text-zinc-500 shrink-0"></i>
+            <span class="w-3 h-3 rounded-full bg-violet-500 ring-2 ring-violet-300 dark:ring-violet-700 shrink-0"></span>
             <span class="flex-1 min-w-0">
                 <span class="font-semibold text-slate-700 dark:text-zinc-300">${_esc(String(s.nummer))}</span>
                 <span class="text-slate-400 dark:text-zinc-500"> ${_esc(s.name)}</span>
-                <span class="text-slate-300 dark:text-zinc-600"> · ${s.distToRoute < 1 ? Math.round(s.distToRoute * 1000) + ' m' : s.distToRoute.toFixed(1) + ' km'}</span>
+                <span class="text-slate-300 dark:text-zinc-600"> &middot; ${s.distToRoute < 1 ? Math.round(s.distToRoute * 1000) + ' m' : s.distToRoute.toFixed(1) + ' km'}</span>
             </span>
             <button onclick="addToPlannerQueue('${_esc(String(s.nummer))}')"
-                class="w-6 h-6 flex items-center justify-center rounded bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 hover:bg-violet-200 dark:hover:bg-violet-800/40 transition-colors shrink-0" title="Zur Tour hinzufügen">
+                class="w-6 h-6 flex items-center justify-center rounded bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 hover:bg-violet-200 dark:hover:bg-violet-800/40 transition-colors shrink-0" title="Zur Tour hinzuf\u00fcgen">
                 <i class="mdi mdi-plus text-sm"></i>
             </button>
         </div>`).join('')}`;
     section.appendChild(div);
 
-    // Apply pulse CSS to the suggestion markers on the map
-    suggestions.forEach(s => {
-        const m = window._markersByNummer?.get(String(s.nummer));
-        if (m?._icon) {
-            m._icon.classList.add('planner-suggest-pulse');
+    // ── Map highlights ─────────────────────────────────────────────────────
+    // Swap each marker's icon to a small violet diamond-pin so suggestions are
+    // Swap each marker's icon to a dashed hollow SVG circle in its own color.
+    // The station keeps its position and tooltip; the dashed outline is the
+    // only visual change, clearly distinct from solid tour-stop circles.
+    _clearSuggestionPulse(); // clean any leftovers first
+
+    if (leafletMap) {
+        _suggestionUnclustered = L.layerGroup().addTo(leafletMap);
+
+        suggestions.forEach(s => {
+            const m = window._markersByNummer?.get(String(s.nummer));
+            if (!m) return;
+            try {
+                // Pull out of cluster so it renders individually in dim mode
+                if (typeof markerClusterGroup !== 'undefined' && markerClusterGroup) {
+                    markerClusterGroup.removeLayer(m);
+                }
+                _suggestionUnclustered.addLayer(m);
+                m.setOpacity(1);
+                if (m._icon) m._icon.classList.add('planner-active-stop');
+
+                // Read the marker's fill color from its inner div inline style
+                const innerDiv = m._icon?.querySelector('div[style]');
+                const rawColor = innerDiv?.style.backgroundColor || '#94a3b8';
+
+                // Save original icon so we can restore it later
+                m._savedOrigIcon = m.getIcon();
+
+                // Replace with a dashed hollow SVG circle in the marker's own color.
+                // --suggest-color drives the CSS glow animation.
+                m.setIcon(L.divIcon({
+                    className: 'custom-small-marker planner-active-stop',
+                    iconSize:   [22, 22],
+                    iconAnchor: [11, 11],
+                    html: `<svg viewBox="0 0 22 22" width="22" height="22"
+                               class="planner-suggest-icon"
+                               style="overflow:visible;display:block;--suggest-color:${rawColor}">
+                        <circle cx="11" cy="11" r="8"
+                            fill="none"
+                            stroke="${rawColor}"
+                            stroke-width="2.5"
+                            stroke-dasharray="4.5 3"
+                            opacity="0.9"/>
+                    </svg>`
+                }));
+            } catch (_) {}
+        });
+
+        if (typeof markerClusterGroup !== 'undefined' && markerClusterGroup) {
+            try { markerClusterGroup.refreshClusters(); } catch (_) {}
         }
-    });
+    }
 }
 
-// Called when suggestion stops are re-added to the queue (clears pulse)
+// Restore suggestion marker icons and return them to the cluster
 function _clearSuggestionPulse() {
+    // Remove the async loader placeholder if still present (e.g. planner closed before suggestions loaded)
+    document.getElementById('plannerSuggestionsLoader')?.remove();
+    if (_suggestionUnclustered) {
+        _suggestionUnclustered.eachLayer(m => {
+            try {
+                if (m._icon) m._icon.classList.remove('planner-active-stop');
+                // Restore the original icon before putting back in cluster
+                if (m._savedOrigIcon) { m.setIcon(m._savedOrigIcon); delete m._savedOrigIcon; }
+                m.setOpacity(1);
+                if (typeof markerClusterGroup !== 'undefined' && markerClusterGroup) {
+                    markerClusterGroup.addLayer(m);
+                }
+            } catch (_) {}
+        });
+        if (leafletMap) leafletMap.removeLayer(_suggestionUnclustered);
+        _suggestionUnclustered = null;
+    }
+    if (_suggestionRingLayer) {
+        if (leafletMap) leafletMap.removeLayer(_suggestionRingLayer);
+        _suggestionRingLayer = null;
+    }
     document.querySelectorAll('.planner-suggest-pulse').forEach(el => el.classList.remove('planner-suggest-pulse'));
 }
 
@@ -1203,6 +1327,13 @@ function toggleRouteSuggestions() {
     showRouteSuggestions = !showRouteSuggestions;
     localStorage.setItem('routeSuggestions', showRouteSuggestions);
     _updateSuggestToggleUI();
+}
+
+function setSuggestRadius(km) {
+    suggestRadiusKm = parseFloat(km) || 3;
+    localStorage.setItem('suggestRadiusKm', suggestRadiusKm);
+    const lbl = document.getElementById('suggestRadiusLabel');
+    if (lbl) lbl.textContent = suggestRadiusKm < 1 ? Math.round(suggestRadiusKm * 1000) + ' m' : suggestRadiusKm + ' km';
 }
 
 function _updateSuggestToggleUI() {
@@ -1220,4 +1351,9 @@ function _updateSuggestToggleUI() {
         btn.classList.replace('dark:bg-violet-600', 'dark:bg-zinc-700');
         btn.querySelector('.ep-knob')?.classList.replace('translate-x-5', 'translate-x-0');
     }
+    // Sync radius slider & label
+    const slider = document.getElementById('suggestRadiusSlider');
+    const lbl    = document.getElementById('suggestRadiusLabel');
+    if (slider) slider.value = suggestRadiusKm;
+    if (lbl) lbl.textContent = suggestRadiusKm < 1 ? Math.round(suggestRadiusKm * 1000) + ' m' : suggestRadiusKm + ' km';
 }

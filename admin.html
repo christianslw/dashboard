@@ -91,6 +91,10 @@
                 class="px-3 py-1.5 text-sm border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 rounded-md font-medium transition-colors flex items-center gap-1.5">
                 <i class="mdi mdi-database-import-outline text-base leading-none"></i> Seed von standorte.js
             </button>
+            <button onclick="exportStandorteJs()"
+                class="px-3 py-1.5 text-sm border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 rounded-md font-medium transition-colors flex items-center gap-1.5">
+                <i class="mdi mdi-database-export-outline text-base leading-none"></i> Export standorte.js
+            </button>
             <button onclick="loadAll()"
                 class="px-3 py-1.5 text-sm border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 rounded-md font-medium transition-colors flex items-center gap-1.5">
                 <i class="mdi mdi-refresh text-base leading-none"></i> Neu laden
@@ -699,6 +703,43 @@ async function seedFromStandorteJs() {
     const result = await res.json();
     await loadStandorte();
     setStatus(`Seed abgeschlossen: ${result.seeded} Standorte importiert. Gesamt: ${result.total}`);
+}
+
+// ─── EXPORT standorte.js ──────────────────────────────────────────────────────
+
+async function exportStandorteJs() {
+    if (!standorte.length) {
+        alert('Keine Standorte geladen. Bitte zuerst neu laden.');
+        return;
+    }
+
+    // Build array containing only the fields kept in standorte.js
+    const records = standorte.map(s => {
+        const r = {
+            nummer: s.nummer,
+            name:   s.name ?? '',
+            lat:    (s.lat !== null && s.lat !== undefined && !isNaN(s.lat)) ? s.lat : null,
+            lon:    (s.lon !== null && s.lon !== undefined && !isNaN(s.lon)) ? s.lon : null,
+        };
+        if (s.link) r.link = s.link;
+        return r;
+    });
+
+    // Serialise each record as compact single-line JSON then indent with 2 spaces
+    const lines = records.map(r => '  ' + JSON.stringify(r));
+    const content = 'const standorteDaten = [\n' + lines.join(',\n') + '\n];\n';
+
+    const blob = new Blob([content], { type: 'text/javascript; charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = 'standorte.js';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+
+    setStatus(`standorte.js exportiert: ${records.length} Standorte — ${new Date().toLocaleTimeString()}`);
 }
 
 // ─── MODAL HELPERS ────────────────────────────────────────────────────────────
