@@ -87,6 +87,23 @@ let overlayActiveColor = '#dc2626';
 let overlayUndoStack = [];
 const OVERLAY_MAX_UNDO = 30;
 
+// Draw mode for anfahrt tools
+let overlayAnfahrtDrawMode = 'snap'; // 'path' | 'freehand' | 'snap'
+
+// Freehand draw cleanup ref
+let freehandCleanup = null;
+
+// Shared accumulated route geometry — persists across mode switches mid-draw
+let accumulatedRoutePoints = [];          // LatLng[] combining all mode segments
+let accumulatedRoutePreviewLayer = null;  // polyline showing accumulated route on map
+
+// Snap-to-road draw state
+let snapRouteActive = false;
+let snapRouteWaypoints = [];   // user-clicked LatLng[] for current snap session
+let snapRouteMouseLine = null; // cursor-following ghost line
+let snapRouteClickTimer = null;
+let snapRouteCleanup = null;
+
 let overlaySyncClient = null;
 let overlaySyncChannel = null;
 let overlayPollingTimer = null;
@@ -780,6 +797,81 @@ function closeOverlayEditMode() { if (overlayEditMode) setOverlayEditMode(false)
 
 function stopCurrentDrawHandler() {
     if (overlayCurrentDrawHandler) { overlayCurrentDrawHandler.disable(); overlayCurrentDrawHandler = null; }
+    if (freehandCleanup) { freehandCleanup(); freehandCleanup = null; }
+    if (snapRouteCleanup) { snapRouteCleanup(); snapRouteCleanup = null; }
+    // Only clean up transient cursor-following elements — NOT accumulatedRoutePoints
+    snapRouteActive = false;
+    if (snapRouteClickTimer) { clearTimeout(snapRouteClickTimer); snapRouteClickTimer = null; }
+    if (snapRouteMouseLine) { try { leafletMap.removeLayer(snapRouteMouseLine); } catch(e){} snapRouteMouseLine = null; }
+}
+
+/** Remove the shared accumulated geometry + preview layer. Call on commit, cancel, or full deactivation. */
+function clearAccumulatedRoute() {
+    accumulatedRoutePoints = [];
+    snapRouteWaypoints = [];
+    if (accumulatedRoutePreviewLayer) {
+        try { leafletMap.removeLayer(accumulatedRoutePreviewLayer); } catch(_) {}
+        accumulatedRoutePreviewLayer = null;
+    }
+}
+
+/** Create/update the map polyline that shows the full accumulated route so far. */
+function updateAccumulatedPreview() {
+    if (!accumulatedRoutePoints.length) return;
+    if (accumulatedRoutePreviewLayer) {
+        accumulatedRoutePreviewLayer.setLatLngs(accumulatedRoutePoints);
+        accumulatedRoutePreviewLayer.setStyle({ color: overlayActiveColor });
+    } else {
+        accumulatedRoutePreviewLayer = L.polyline(accumulatedRoutePoints, {
+            color: overlayActiveColor, weight: 4, dashArray: '8,6', opacity: 0.85, interactive: false
+        }).addTo(leafletMap);
+    }
+}
+
+/** Creates the floating hint bar. Pass `isSnap=true` for snap-specific text. */
+function createDrawHint(isSnap) {
+    removeDrawHint();
+    const el = document.createElement('div');
+    el.id = 'ovDrawHint';
+    el.className = 'ov-snap-hint';
+    el.innerHTML = isSnap
+        ? '<span class="ov-hint-text">Klicken = Wegpunkt · Modus wechseln jederzeit möglich</span> &nbsp;'
+            + '<button class="ov-hint-finish" onclick="finishAccumulatedRoute()">✓ Fertig</button>'
+            + '<button class="ov-hint-cancel" onclick="deactivateCurrentTool()">✕</button>'
+        : '<span class="ov-hint-text">Maus halten und ziehen · Modus wechseln jederzeit möglich</span> &nbsp;'
+            + '<button class="ov-hint-finish" onclick="finishAccumulatedRoute()">✓ Fertig</button>'
+            + '<button class="ov-hint-cancel" onclick="deactivateCurrentTool()">✕</button>';
+    document.body.appendChild(el);
+    return el;
+}
+
+function removeDrawHint() {
+    const existing = document.getElementById('ovDrawHint');
+    if (existing) existing.remove();
+}
+
+function updateHintSegmentCount() {
+    const hint = document.getElementById('ovDrawHint');
+    if (!hint) return;
+    const span = hint.querySelector('.ov-hint-text');
+    if (!span) return;
+    if (accumulatedRoutePoints.length >= 2) {
+        const dist = typeof formatDistance === 'function'
+            ? formatDistance(calcPolylineLength(accumulatedRoutePoints))
+            : `${accumulatedRoutePoints.length} Pkt.`;
+        const modeLabel = overlayAnfahrtDrawMode === 'snap' ? 'Straße'
+            : overlayAnfahrtDrawMode === 'freehand' ? 'Freihand' : 'Pfad';
+        span.textContent = `${modeLabel}: ${dist} — Modus jederzeit wechselbar`;
+    }
+}
+
+/** Commit the entire accumulated route then deactivate. */
+async function finishAccumulatedRoute() {
+    const savedTool = overlayActiveTool;
+    stopCurrentDrawHandler();
+    const pts = accumulatedRoutePoints.slice();
+    if (pts.length < 2) { deactivateCurrentTool(); return; }
+    await commitRouteLayerFromLatLngs(pts, savedTool);
 }
 
 // ─── TOOL MANAGEMENT ─────────────────────────────────────
@@ -795,7 +887,10 @@ function activateTool(toolId) {
 
     switch (toolId) {
         case 'hauptzufahrt': case 'alternativ': case 'route_custom':
-            startLineDraw(); break;
+            if (overlayAnfahrtDrawMode === 'freehand') startFreehandDraw();
+            else if (overlayAnfahrtDrawMode === 'snap') startSnapRouteDraw();
+            else startLineDraw();
+            break;
         case 'schranke': case 'tresor': case 'hinweis':
             startMarkerDraw(getIconTypeForTool(toolId)); break;
         case 'eisabfall_poly': case 'zone_poly':
@@ -813,6 +908,8 @@ function activateTool(toolId) {
 
 function deactivateCurrentTool() {
     stopCurrentDrawHandler();
+    clearAccumulatedRoute();
+    removeDrawHint();
     overlayActiveTool = null;
     updateToolBtnStates();
 }
@@ -864,6 +961,286 @@ function startPfadDraw(strokeStyle) {
         }
     });
     overlayCurrentDrawHandler.enable();
+}
+
+// ─── FREEHAND DRAWING ────────────────────────────────────
+
+function startFreehandDraw() {
+    stopCurrentDrawHandler();
+    const container = leafletMap.getContainer();
+    let strokePoints = [];       // current drag stroke
+    let strokePreviewLine = null; // temp line during drag only
+    let drawing = false;
+
+    const hint = createDrawHint(false);
+    updateHintSegmentCount();
+
+    function onPointerDown(e) {
+        if (e.button !== 0 && e.pointerType !== 'touch') return;
+        e.preventDefault();
+        try { container.setPointerCapture(e.pointerId); } catch(_) {}
+        leafletMap.dragging.disable();
+        drawing = true;
+        strokePoints = [];
+        // Seed stroke from last accumulated point so continuity is visible
+        if (accumulatedRoutePoints.length > 0) {
+            strokePoints.push(accumulatedRoutePoints[accumulatedRoutePoints.length - 1]);
+        }
+        const pt = leafletMap.containerPointToLatLng(L.point(e.offsetX, e.offsetY));
+        strokePoints.push(pt);
+        if (strokePreviewLine) { try { leafletMap.removeLayer(strokePreviewLine); } catch(_) {} }
+        strokePreviewLine = L.polyline(strokePoints, {
+            color: overlayActiveColor, weight: 3, dashArray: '3,3', opacity: 0.7, interactive: false
+        }).addTo(leafletMap);
+    }
+
+    function onPointerMove(e) {
+        if (!drawing) return;
+        const ll = leafletMap.containerPointToLatLng(L.point(e.offsetX, e.offsetY));
+        strokePoints.push(ll);
+        if (strokePreviewLine) strokePreviewLine.setLatLngs(strokePoints);
+    }
+
+    function onPointerUp(e) {
+        if (!drawing) return;
+        drawing = false;
+        try { container.releasePointerCapture(e.pointerId); } catch(_) {}
+        leafletMap.dragging.enable();
+        if (strokePreviewLine) { try { leafletMap.removeLayer(strokePreviewLine); } catch(_) {} strokePreviewLine = null; }
+        const captured = strokePoints.slice();
+        strokePoints = [];
+
+        // The stroke was seeded with the last accumulated point; real content starts at index 1
+        const hasAccum = accumulatedRoutePoints.length > 0;
+        const meaningfulPts = hasAccum ? captured.slice(1) : captured;
+        if (meaningfulPts.length < 2) return;
+
+        const toSimplify = hasAccum
+            ? [accumulatedRoutePoints[accumulatedRoutePoints.length - 1], ...meaningfulPts]
+            : captured;
+        const simplified = simplifyFreehandPoints(toSimplify, 0.000015);
+        const toAppend = (simplified.length >= 2 ? simplified : toSimplify).slice(hasAccum ? 1 : 0);
+
+        for (const pt of toAppend) accumulatedRoutePoints.push(pt);
+        updateAccumulatedPreview();
+        updateHintSegmentCount();
+    }
+
+    function onKeyDown(e) {
+        if (e.key === 'Enter') {
+            if (drawing) { drawing = false; leafletMap.dragging.enable(); }
+            if (strokePreviewLine) { try { leafletMap.removeLayer(strokePreviewLine); } catch(_) {} strokePreviewLine = null; }
+            cleanup();
+            finishAccumulatedRoute();
+        }
+        if (e.key === 'Escape') {
+            if (drawing) { drawing = false; leafletMap.dragging.enable(); }
+            if (strokePreviewLine) { try { leafletMap.removeLayer(strokePreviewLine); } catch(_) {} strokePreviewLine = null; }
+            cleanup();
+            deactivateCurrentTool();
+        }
+    }
+
+    function cleanup() {
+        container.removeEventListener('pointerdown', onPointerDown);
+        container.removeEventListener('pointermove', onPointerMove);
+        container.removeEventListener('pointerup', onPointerUp);
+        document.removeEventListener('keydown', onKeyDown);
+        container.style.cursor = '';
+        freehandCleanup = null;
+    }
+
+    freehandCleanup = cleanup;
+    container.style.cursor = 'crosshair';
+    container.addEventListener('pointerdown', onPointerDown);
+    container.addEventListener('pointermove', onPointerMove);
+    container.addEventListener('pointerup', onPointerUp);
+    document.addEventListener('keydown', onKeyDown);
+}
+
+// Ramer-Douglas-Peucker point simplification for freehand paths
+function simplifyFreehandPoints(points, tolerance) {
+    if (points.length < 3) return points;
+
+    function perpDist(p, a, b) {
+        const dx = b.lat - a.lat, dy = b.lng - a.lng;
+        const len2 = dx * dx + dy * dy;
+        if (len2 === 0) {
+            const ex = p.lat - a.lat, ey = p.lng - a.lng;
+            return Math.sqrt(ex * ex + ey * ey);
+        }
+        const t = Math.max(0, Math.min(1, ((p.lat - a.lat) * dx + (p.lng - a.lng) * dy) / len2));
+        const ex = p.lat - a.lat - t * dx, ey = p.lng - a.lng - t * dy;
+        return Math.sqrt(ex * ex + ey * ey);
+    }
+
+    function rdp(pts) {
+        if (pts.length < 3) return pts;
+        let maxD = 0, idx = 0;
+        for (let i = 1; i < pts.length - 1; i++) {
+            const d = perpDist(pts[i], pts[0], pts[pts.length - 1]);
+            if (d > maxD) { maxD = d; idx = i; }
+        }
+        if (maxD > tolerance) {
+            const l = rdp(pts.slice(0, idx + 1));
+            const r = rdp(pts.slice(idx));
+            return [...l.slice(0, -1), ...r];
+        }
+        return [pts[0], pts[pts.length - 1]];
+    }
+
+    return rdp(points);
+}
+
+// ─── SNAP-TO-ROAD DRAWING (OSRM) ─────────────────────────
+
+async function fetchOSRMSegment(from, to) {
+    try {
+        const url = `https://router.project-osrm.org/route/v1/driving/${from.lng},${from.lat};${to.lng},${to.lat}?overview=full&geometries=geojson`;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+        const resp = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeout);
+        if (!resp.ok) return null;
+        const data = await resp.json();
+        if (data.code !== 'Ok' || !data.routes?.length) return null;
+        return data.routes[0].geometry.coordinates.map(([lng, lat]) => L.latLng(lat, lng));
+    } catch (_) { return null; }
+}
+
+function startSnapRouteDraw() {
+    stopCurrentDrawHandler();
+    snapRouteActive = true;
+    // Resume waypoints from the last accumulated point (for mid-draw mode switching)
+    snapRouteWaypoints = accumulatedRoutePoints.length > 0
+        ? [accumulatedRoutePoints[accumulatedRoutePoints.length - 1]]
+        : [];
+
+    const container = leafletMap.getContainer();
+    container.style.cursor = 'crosshair';
+
+    const hint = createDrawHint(true);
+    updateHintSegmentCount();
+
+    function onMapClick(e) {
+        if (snapRouteClickTimer) { clearTimeout(snapRouteClickTimer); snapRouteClickTimer = null; }
+        snapRouteClickTimer = setTimeout(() => addSnapWaypoint(e.latlng), 220);
+    }
+
+    function onMapDblClick(e) {
+        if (snapRouteClickTimer) { clearTimeout(snapRouteClickTimer); snapRouteClickTimer = null; }
+        L.DomEvent.stop(e);
+        cleanup();
+        finishAccumulatedRoute();
+    }
+
+    function onMapMouseMove(e) {
+        if (!snapRouteActive || !snapRouteWaypoints.length) return;
+        const last = snapRouteWaypoints[snapRouteWaypoints.length - 1];
+        if (snapRouteMouseLine) {
+            snapRouteMouseLine.setLatLngs([last, e.latlng]);
+        } else {
+            snapRouteMouseLine = L.polyline([last, e.latlng], {
+                color: overlayActiveColor, weight: 2, dashArray: '4,4', opacity: 0.45, interactive: false
+            }).addTo(leafletMap);
+        }
+    }
+
+    function onKeyDown(e) {
+        if (e.key === 'Escape') { cleanup(); deactivateCurrentTool(); }
+        if (e.key === 'Enter') { cleanup(); finishAccumulatedRoute(); }
+    }
+
+    function cleanup() {
+        leafletMap.off('click', onMapClick);
+        leafletMap.off('dblclick', onMapDblClick);
+        leafletMap.off('mousemove', onMapMouseMove);
+        document.removeEventListener('keydown', onKeyDown);
+        container.style.cursor = '';
+        snapRouteCleanup = null;
+    }
+
+    snapRouteCleanup = cleanup;
+    leafletMap.on('click', onMapClick);
+    leafletMap.on('dblclick', onMapDblClick);
+    leafletMap.on('mousemove', onMapMouseMove);
+    document.addEventListener('keydown', onKeyDown);
+}
+
+async function addSnapWaypoint(newLatlng) {
+    if (!snapRouteActive) return;
+
+    if (snapRouteWaypoints.length === 0) {
+        // First click — just mark the starting point
+        snapRouteWaypoints.push(newLatlng);
+        if (accumulatedRoutePoints.length === 0) {
+            accumulatedRoutePoints.push(newLatlng);
+            updateAccumulatedPreview();
+        }
+        return;
+    }
+
+    const prev = snapRouteWaypoints[snapRouteWaypoints.length - 1];
+
+    // Fetch OSRM road-snapped segment
+    const snapped = await fetchOSRMSegment(prev, newLatlng);
+    if (!snapRouteActive) return; // cancelled while fetching
+
+    if (snapped && snapped.length >= 2) {
+        // Skip first point of segment — it duplicates the last accumulated point
+        const startIdx = accumulatedRoutePoints.length > 0 ? 1 : 0;
+        for (let i = startIdx; i < snapped.length; i++) accumulatedRoutePoints.push(snapped[i]);
+        if (accumulatedRoutePoints.length === 0) accumulatedRoutePoints.push(...snapped);
+    } else {
+        // Fallback: straight line
+        if (accumulatedRoutePoints.length === 0) accumulatedRoutePoints.push(prev);
+        accumulatedRoutePoints.push(newLatlng);
+    }
+    snapRouteWaypoints.push(newLatlng);
+
+    if (snapRouteMouseLine) { try { leafletMap.removeLayer(snapRouteMouseLine); } catch(_) {} snapRouteMouseLine = null; }
+    updateAccumulatedPreview();
+    updateHintSegmentCount();
+}
+
+// ─── SHARED ROUTE COMMIT ─────────────────────────────────
+
+async function commitRouteLayerFromLatLngs(latLngs, toolOverride) {
+    const tool = toolOverride || overlayActiveTool;
+    const color = overlayActiveColor;
+    const routeType = getRouteTypeForTool(tool);
+
+    // Normalize to plain [lat, lng] for polyline and [lng, lat] for GeoJSON
+    const normalizedLatLngs = latLngs.map(ll => {
+        if (ll && typeof ll.lat !== 'undefined') return ll;
+        if (Array.isArray(ll)) return L.latLng(ll[0], ll[1]);
+        return ll;
+    }).filter(Boolean);
+
+    if (normalizedLatLngs.length < 2) { deactivateCurrentTool(); return; }
+
+    const coords = normalizedLatLngs.map(ll => [ll.lng, ll.lat]);
+
+    // Remove accumulated preview before adding the final committed layer
+    clearAccumulatedRoute();
+    removeDrawHint();
+
+    const layer = L.polyline(normalizedLatLngs, { color, weight: 4, opacity: 0.9 });
+    layer.feature = {
+        type: 'Feature',
+        geometry: { type: 'LineString', coordinates: coords },
+        properties: { overlayType: 'anfahrt', routeType, color }
+    };
+    bindColoredTooltip(layer, () => {
+        const dist = formatDistance(calcPolylineLength(layer.getLatLngs()));
+        return `${getRouteLabel(routeType)} \u00b7 ${dist}`;
+    }, { sticky: true, className: 'overlay-route-tooltip' });
+    attachDeleteHandler(layer);
+
+    pushUndo();
+    overlayEditGroup.addLayer(layer);
+    await saveEditedOverlays();
+    deactivateCurrentTool();
 }
 
 // ─── PFAD RENDERING HELPERS ───────────────────────────────
@@ -961,7 +1338,15 @@ function updateToolBtnStates() {
     ovPanelEl.querySelectorAll('[data-tool]').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.tool === overlayActiveTool);
     });
+    updateDrawModeBtnStates();
     updateToolbarState();
+}
+
+function updateDrawModeBtnStates() {
+    if (!ovPanelEl) return;
+    ovPanelEl.querySelectorAll('[data-drawmode]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.drawmode === overlayAnfahrtDrawMode);
+    });
 }
 
 // ─── CLEAR ALL ───────────────────────────────────────────
@@ -1058,19 +1443,39 @@ function buildPanelHTML() {
         </div>
 
         <!-- Sub-toolbar: Anfahrt -->
-        <div class="ov-subtoolbar ov-hidden" id="ovSubAnfahrt">
-            <button type="button" class="ov-sub-btn" data-tool="hauptzufahrt" title="Hauptzufahrt einzeichnen">
-                <svg width="18" height="10" viewBox="0 0 18 10" fill="none"><line x1="1" y1="5" x2="11" y2="5" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round"/><polygon points="9,1 17,5 9,9 11.5,5" fill="#dc2626"/></svg>
-                Haupt
-            </button>
-            <button type="button" class="ov-sub-btn" data-tool="alternativ" title="Alternative Route">
-                <svg width="18" height="10" viewBox="0 0 18 10" fill="none"><line x1="1" y1="5" x2="11" y2="5" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-dasharray="4,2.5"/><polygon points="9,1 17,5 9,9 11.5,5" fill="#f97316"/></svg>
-                Alternativ
-            </button>
-            <button type="button" class="ov-sub-btn" data-tool="route_custom" title="Freie Route einzeichnen">
-                <svg width="18" height="10" viewBox="0 0 18 10" fill="none"><path d="M1 7 Q5 1 9 5 Q13 9 17 3" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/></svg>
-                Frei
-            </button>
+        <div class="ov-subtoolbar ov-subtoolbar-anfahrt ov-hidden" id="ovSubAnfahrt">
+            <!-- Row 1: Route type -->
+            <div class="ov-sub-row">
+                <button type="button" class="ov-sub-btn" data-tool="hauptzufahrt" title="Hauptzufahrt einzeichnen">
+                    <svg width="18" height="10" viewBox="0 0 18 10" fill="none"><line x1="1" y1="5" x2="11" y2="5" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round"/><polygon points="9,1 17,5 9,9 11.5,5" fill="#dc2626"/></svg>
+                    Haupt
+                </button>
+                <button type="button" class="ov-sub-btn" data-tool="alternativ" title="Alternative Route">
+                    <svg width="18" height="10" viewBox="0 0 18 10" fill="none"><line x1="1" y1="5" x2="11" y2="5" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-dasharray="4,2.5"/><polygon points="9,1 17,5 9,9 11.5,5" fill="#f97316"/></svg>
+                    Alternativ
+                </button>
+                <button type="button" class="ov-sub-btn" data-tool="route_custom" title="Freie Route einzeichnen">
+                    <svg width="18" height="10" viewBox="0 0 18 10" fill="none"><path d="M1 7 Q5 1 9 5 Q13 9 17 3" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/></svg>
+                    Frei
+                </button>
+            </div>
+            <!-- Divider -->
+            <div class="ov-drawmode-divider"></div>
+            <!-- Row 2: Drawing mode -->
+            <div class="ov-draw-mode-row">
+                <button type="button" class="ov-draw-mode-btn" data-drawmode="path" title="Wegpunkte durch Klicken setzen (Standard)">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3,17 9,11 13,15 21,7"/><circle cx="3" cy="17" r="1.5" fill="currentColor" stroke="none"/><circle cx="9" cy="11" r="1.5" fill="currentColor" stroke="none"/><circle cx="13" cy="15" r="1.5" fill="currentColor" stroke="none"/><circle cx="21" cy="7" r="1.5" fill="currentColor" stroke="none"/></svg>
+                    Pfad
+                </button>
+                <button type="button" class="ov-draw-mode-btn" data-drawmode="freehand" title="Freihand zeichnen (Maus gedrückt halten)">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 17c2-4 5-7 8-5s4 5 7 2"/></svg>
+                    Freihand
+                </button>
+                <button type="button" class="ov-draw-mode-btn active" data-drawmode="snap" title="Wegpunkte klicken – Strecke rastet automatisch auf Straßen ein (OSRM)">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                    Straße
+                </button>
+            </div>
         </div>
 
         <!-- Sub-toolbar: Pfade -->
@@ -1685,6 +2090,34 @@ function attachSidebarListeners() {
     // Tool buttons
     ovPanelEl.querySelectorAll('[data-tool]').forEach(btn => {
         btn.addEventListener('click', () => activateTool(btn.dataset.tool));
+    });
+
+    // Draw-mode buttons (path / freehand / snap) — inside Anfahrt subtoolbar
+    ovPanelEl.querySelectorAll('[data-drawmode]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const newMode = btn.dataset.drawmode;
+            if (newMode === overlayAnfahrtDrawMode) return;
+            overlayAnfahrtDrawMode = newMode;
+            updateDrawModeBtnStates();
+            // Hot-switch: if an anfahrt tool is already active, restart handler with new mode
+            // WITHOUT clearing accumulated points so the route continues seamlessly.
+            const anfahrtTools = ['hauptzufahrt', 'alternativ', 'route_custom'];
+            if (overlayActiveTool && anfahrtTools.includes(overlayActiveTool)) {
+                stopCurrentDrawHandler(); // stops listeners, keeps accumulatedRoutePoints
+                if (overlayAnfahrtDrawMode === 'freehand') startFreehandDraw();
+                else if (overlayAnfahrtDrawMode === 'snap') startSnapRouteDraw();
+                else {
+                    // path mode: commit what's accumulated, then start L.Draw fresh
+                    if (accumulatedRoutePoints.length >= 2) {
+                        finishAccumulatedRoute();
+                    } else {
+                        clearAccumulatedRoute();
+                        removeDrawHint();
+                        startLineDraw();
+                    }
+                }
+            }
+        });
     });
 
     // Palette swatches

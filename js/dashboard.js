@@ -251,8 +251,7 @@ async function fetchRealRouteTimeDashboard(lat1, lon1, lat2, lon2, fallbackDist)
                     style: {
                         color: '#3b82f6',
                         weight: 4,
-                        opacity: 0.65,
-                        dashArray: '8 4'
+                        opacity: 0.65
                     }
                 }).addTo(leafletMap);
             }

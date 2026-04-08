@@ -239,6 +239,8 @@ function updateMapMarkers(liste) {
         }
     });
 
+    window._markersByNummer = new Map();
+
     liste.forEach(s => {
         if (!s.lat || !s.lon) return;
         const prefix = Math.floor(s.nummer / 1000);
@@ -279,6 +281,7 @@ function updateMapMarkers(liste) {
             }
         });
         markerClusterGroup.addLayer(marker);
+        window._markersByNummer.set(String(s.nummer), marker);
     });
 
     leafletMap.addLayer(markerClusterGroup);

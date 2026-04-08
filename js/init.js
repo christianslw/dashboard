@@ -127,6 +127,8 @@ window.onload = async () => {
         standorte.sort((a, b) => String(a.nummer).localeCompare(String(b.nummer)));
         initFilterMenu();
         loadSavedLocation();
+        // Restore active tour from previous session
+        if (typeof _loadActiveTour === 'function') _loadActiveTour();
     } else {
         document.getElementById("locationStatus").innerHTML =
             "Fehler: Keine Standortdaten (standorte.js fehlt und Backend nicht erreichbar).";

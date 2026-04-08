@@ -745,10 +745,28 @@ html.dark:not(.dracula):not(.dracula-laser) .leaflet-control-attribution {
 	}
 }
 
-/* Help button z-index */
-#helpBtn {
-	position: relative;
-	z-index: 70;
+/* Tutorial keyboard shortcut badge */
+.tutorial-kbd {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 1.4rem;
+	padding: 0.1rem 0.35rem;
+	font-size: 0.65rem;
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	background: #f1f5f9;
+	border: 1px solid #cbd5e1;
+	border-bottom-width: 2px;
+	border-radius: 4px;
+	color: #475569;
+	white-space: nowrap;
+	line-height: 1.4;
+}
+.dark .tutorial-kbd {
+	background: #27272a;
+	border-color: #52525b;
+	border-bottom-color: #3f3f46;
+	color: #a1a1aa;
 }
 
 .overlay-poi-icon-wrap {
@@ -1035,6 +1053,61 @@ html.dark:not(.dracula):not(.dracula-laser) .leaflet-control-attribution {
 .ov-sub-btn.active { background: #dbeafe; border-color: #bfdbfe; color: #1d4ed8; }
 .ov-color-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 .ov-sub-emoji { font-size: 13px; line-height: 1; flex-shrink: 0; }
+
+/* ── Anfahrt subtoolbar: two-row column layout ── */
+.ov-subtoolbar-anfahrt {
+	flex-direction: column !important; align-items: stretch !important;
+	gap: 0 !important; padding: 0 !important; overflow: visible !important;
+}
+.ov-sub-row {
+	display: flex; flex-wrap: nowrap; gap: 2px;
+	padding: 5px 7px; overflow-x: auto;
+}
+.ov-sub-row::-webkit-scrollbar { height: 0; }
+.ov-drawmode-divider {
+	height: 1px; background: #e5e7eb; flex-shrink: 0;
+}
+.ov-draw-mode-row {
+	display: flex; gap: 2px; padding: 4px 7px 5px;
+	background: #f0f9ff; flex-shrink: 0;
+}
+.ov-draw-mode-btn {
+	flex: 1; display: flex; align-items: center; justify-content: center; gap: 3px;
+	padding: 3px 4px; border-radius: 0.3rem;
+	border: 1px solid transparent; background: transparent;
+	font-size: 10px; font-weight: 500; color: #64748b;
+	cursor: pointer; transition: all 0.12s; white-space: nowrap;
+}
+.ov-draw-mode-btn:hover { background: #e0f2fe; color: #0369a1; }
+.ov-draw-mode-btn.active { background: #bae6fd; border-color: #7dd3fc; color: #0369a1; font-weight: 700; }
+
+/* ── Snap-to-road / freehand hint bar ── */
+.ov-snap-hint {
+	position: fixed; bottom: 56px; left: 50%; transform: translateX(-50%);
+	background: rgba(15,23,42,0.88); color: #e2e8f0;
+	font-size: 11px; padding: 5px 8px 5px 14px; border-radius: 99px;
+	pointer-events: auto; z-index: 9999; white-space: nowrap;
+	box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+	display: flex; align-items: center; gap: 6px;
+}
+.ov-hint-text { pointer-events: none; }
+.ov-hint-finish, .ov-hint-cancel {
+	padding: 2px 9px; border-radius: 99px; border: none;
+	font-size: 11px; font-weight: 700; cursor: pointer;
+	line-height: 1.5; transition: background 0.12s;
+}
+.ov-hint-finish { background: #22c55e; color: #fff; }
+.ov-hint-finish:hover { background: #16a34a; }
+.ov-hint-cancel { background: rgba(255,255,255,0.12); color: #e2e8f0; }
+.ov-hint-cancel:hover { background: rgba(239,68,68,0.55); color: #fff; }
+
+/* ── Dark mode additions ── */
+.ov-panel.dark .ov-sub-row { background: #1c1c1f; border-color: #27272a; }
+.ov-panel.dark .ov-drawmode-divider { background: #27272a; }
+.ov-panel.dark .ov-draw-mode-row { background: #0c1a2b; }
+.ov-panel.dark .ov-draw-mode-btn { color: #71717a; }
+.ov-panel.dark .ov-draw-mode-btn:hover { background: #172a41; color: #7dd3fc; }
+.ov-panel.dark .ov-draw-mode-btn.active { background: #1e3a5f; border-color: #3b82f6; color: #60a5fa; }
 
 /* ── Color Palette ── */
 .ov-palette { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
@@ -1763,4 +1836,113 @@ body.planner-mode .planner-add-btn.is-queued .planner-add-icon {
 @keyframes plannerAddPulse {
 	0%,  100% { opacity: 1;   filter: drop-shadow(0 0 0px  #8b5cf6); transform: scale(1); }
 	50%       { opacity: 0.6; filter: drop-shadow(0 0 5px  #8b5cf6); transform: scale(0.88); }
+}
+
+/* ── Tourenplaner v2: expanded drawer ───────────────────────────────────── */
+#plannerInner.planner-expanded {
+    max-height: 85vh !important;
+}
+
+/* ── Route results: two-column side-by-side ─────────────────────────────── */
+.planner-route-col {
+    min-width: 0;
+    overflow: hidden;
+}
+.planner-route-stops {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    overflow: hidden;
+    font-size: 11px;
+}
+.dark .planner-route-stops {
+    border-color: #3f3f46;
+}
+
+/* ── Per-stop comment box ────────────────────────────────────────────────── */
+.planner-comment-input {
+    font-size: 11px;
+    line-height: 1.4;
+    resize: none;
+}
+.planner-stop-row {
+    border-bottom: 1px solid #f1f5f9;
+}
+.planner-stop-row:last-child {
+    border-bottom: none;
+}
+.dark .planner-stop-row {
+    border-color: #27272a;
+}
+
+/* ── Planner route dimming ───────────────────────────────────────────────── */
+.planner-dim-mode .custom-small-marker  { opacity: 0.15 !important; transition: opacity 0.3s; }
+.planner-dim-mode .custom-cluster-icon  { opacity: 0.15 !important; transition: opacity 0.3s; }
+/* Tour-stop markers are pulled out of the cluster and exempted from dimming.
+   Both classes sit on the same element (m._icon), so use compound selector (no space). */
+.planner-dim-mode .planner-active-stop.custom-small-marker  { opacity: 1 !important; }
+
+/* ── Suggested stop pulse ────────────────────────────────────────────────── */
+@keyframes plannerSuggestPulse {
+    0%, 100% { filter: drop-shadow(0 0 0px currentColor); transform: scale(1); }
+    50%       { filter: drop-shadow(0 0 6px currentColor); transform: scale(1.22); }
+}
+.planner-suggest-pulse { animation: plannerSuggestPulse 2s ease-in-out infinite; will-change: transform; }
+
+/* ── Endpoint picker (inline search inside planner) ─────────────────────── */
+.planner-ep-result {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 5px 8px;
+    font-size: 11px;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    cursor: pointer;
+    background: #fff;
+    color: #374151;
+}
+.planner-ep-result + .planner-ep-result { margin-top: 3px; }
+.planner-ep-result:hover { background: #f8fafc; }
+.dark .planner-ep-result { border-color: #3f3f46; background: #18181b; color: #d4d4d8; }
+.dark .planner-ep-result:hover { background: #27272a; }
+
+/* ── Route suggestions list ──────────────────────────────────────────────── */
+.planner-suggest-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 0;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 11px;
+}
+.planner-suggest-row:last-child { border-bottom: none; }
+.dark .planner-suggest-row { border-color: #27272a; }
+
+/* ── Bug Report Modal ────────────────────────────────────────────────────── */
+.bug-type-btn {
+    background: #fff;
+    color: #475569;
+}
+.dark .bug-type-btn {
+    background: #18181b;
+    color: #a1a1aa;
+}
+.bug-type-btn:hover {
+    background: #f8fafc;
+    color: #1e293b;
+}
+.dark .bug-type-btn:hover {
+    background: #27272a;
+    color: #f4f4f5;
+}
+.bug-type-btn.active {
+    border-color: #3b82f6;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-weight: 600;
+}
+.dark .bug-type-btn.active {
+    border-color: #3b82f6;
+    background: rgba(59,130,246,0.12);
+    color: #60a5fa;
 }

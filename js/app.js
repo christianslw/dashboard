@@ -175,6 +175,8 @@ function updateAppSettingsUI() {
             btn.classList.add('bg-white', 'text-slate-700', 'border-slate-300', 'dark:bg-zinc-900', 'dark:text-zinc-300');
         }
     });
+    // Sync route suggestions toggle (lives in planner.js)
+    if (typeof _updateSuggestToggleUI === 'function') _updateSuggestToggleUI();
 }
 
 function openAppSettingsModal() {
