@@ -187,3 +187,21 @@ function openAppSettingsModal() {
 function closeAppSettingsModal() {
     document.getElementById('appSettingsModal').classList.add('hidden');
 }
+
+// ─── Share a single standort via deep link ────────────────────────────────────
+function shareStandort(nummer, event) {
+    event.preventDefault();
+    event.stopPropagation();
+    const url = `${location.origin}${location.pathname}?standort=${encodeURIComponent(nummer)}`;
+    if (navigator.share) {
+        const s = standorte.find(st => String(st.nummer) === String(nummer));
+        const title = s ? `${s.nummer} – ${s.name}` : `Standort ${nummer}`;
+        navigator.share({ title, url }).catch(() => {});
+    } else {
+        navigator.clipboard.writeText(url).then(() => {
+            showToast('Link kopiert!');
+        }).catch(() => {
+            prompt('Link kopieren:', url);
+        });
+    }
+}

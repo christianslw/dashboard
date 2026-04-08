@@ -92,7 +92,15 @@ function renderList(liste) {
                     title="Zur Tour hinzufügen / entfernen">
                     <i class="mdi mdi-map-marker-plus planner-add-icon text-xl"></i>
                 </button>
-                <a href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lon}" target="_blank"
+                <span class="nav-share-wrap">
+                    <button type="button"
+                        onclick="shareStandort('${s.nummer}', event)"
+                        class="nav-share-btn"
+                        title="Standort-Link teilen">
+                        <i class="mdi mdi-share-variant"></i>
+                    </button>
+                </span>
+                <a href="${getNavLink(s.lat, s.lon)}" target="_blank"
                    class="p-2 text-slate-400 hover:text-blue-600 dark:hover:text-blue-500 transition-colors"
                    title="Navigation starten" onclick="event.stopPropagation();">
                     <span class="nav-icon-wrap text-xl">

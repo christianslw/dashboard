@@ -810,7 +810,7 @@ function activateEraser() {
     function onPointerDown(e) {
         if (e.button !== 0) return;
         e.preventDefault();
-        e.stopPropagation();
+        e.stopImmediatePropagation();
         try { mapContainer.setPointerCapture(e.pointerId); } catch(_) {}
         leafletMap.dragging.disable();
         drawing = true;
@@ -825,6 +825,7 @@ function activateEraser() {
 
     function onPointerMove(e) {
         if (!drawing) return;
+        e.stopImmediatePropagation();
         const cp = containerPoint(e);
         if (ovEraserMode === 'rect' && rectStart) {
             drawEraserRect(mapContainer, rectStart, cp);
@@ -836,6 +837,7 @@ function activateEraser() {
 
     function onPointerUp(e) {
         if (!drawing) return;
+        e.stopImmediatePropagation();
         drawing = false;
         try { mapContainer.releasePointerCapture(e.pointerId); } catch(_) {}
         leafletMap.dragging.enable();
@@ -1078,7 +1080,7 @@ function activateShiftSelect() {
     function onPointerDown(e) {
         if (e.button !== 0) return;
         e.preventDefault();
-        e.stopPropagation();
+        e.stopImmediatePropagation();
         try { mapContainer.setPointerCapture(e.pointerId); } catch(_) {}
         leafletMap.dragging.disable();
         drawing = true;
@@ -1087,10 +1089,12 @@ function activateShiftSelect() {
     }
     function onPointerMove(e) {
         if (!drawing || !rectStart) return;
+        e.stopImmediatePropagation();
         drawSelRect(rectStart, containerPoint(e));
     }
     function onPointerUp(e) {
         if (!drawing) return;
+        e.stopImmediatePropagation();
         drawing = false;
         try { mapContainer.releasePointerCapture(e.pointerId); } catch(_) {}
         leafletMap.dragging.enable();
@@ -1109,24 +1113,29 @@ function activateShiftSelect() {
     mapContainer.addEventListener('pointermove', onPointerMove, { capture: true });
     mapContainer.addEventListener('pointerup',   onPointerUp,   { capture: true });
 
-    ovShiftSelCleanup = () => {
+    // stopShiftDrawing: removes pointer listeners + restores cursor/boxZoom
+    // but intentionally KEEPS ovShiftSelData + highlights so Delete still works after Shift release
+    function stopShiftDrawing() {
         mapContainer.removeEventListener('pointerdown', onPointerDown, { capture: true });
         mapContainer.removeEventListener('pointermove', onPointerMove, { capture: true });
         mapContainer.removeEventListener('pointerup',   onPointerUp,   { capture: true });
         removeSelOverlay();
         mapContainer.style.cursor = '';
-        clearShiftSelHighlights();
-        ovShiftSelData = [];
+        if (leafletMap.boxZoom) leafletMap.boxZoom.enable();
         ovShiftSelActive = false;
         ovShiftSelCleanup = null;
-        removeShiftSelHintBar();
-        // Restore Leaflet's box-zoom
-        if (leafletMap.boxZoom) leafletMap.boxZoom.enable();
-    };
+    }
+
+    // Full cleanup also clears the selection (called by ✕ button, edit-mode close, etc.)
+    ovShiftSelCleanup = stopShiftDrawing;
 }
 
 function deactivateShiftSelect() {
+    // Full clear: stop drawing AND remove highlights/data
     if (ovShiftSelCleanup) ovShiftSelCleanup();
+    clearShiftSelHighlights();
+    ovShiftSelData = [];
+    removeShiftSelHintBar();
 }
 
 function clearShiftSelHighlights() {
@@ -1224,8 +1233,8 @@ function showShiftSelHintBar(count) {
         `<svg width="13" height="13" fill="none" stroke="#f97316" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>`
         + `<span id="ovShiftSelCount">${count} Punkt${count !== 1 ? 'e' : ''} ausgewählt</span>`
         + `<button class="ov-hint-finish" onclick="deleteShiftSelected()" style="padding:2px 10px">Löschen</button>`
-        + `<button class="ov-hint-cancel" onclick="clearShiftSelHighlights();ovShiftSelData=[];removeShiftSelHintBar()" style="padding:2px 7px">✕</button>`
-        + `<span style="margin-left:4px;font-size:10px;opacity:0.6">Shift loslassen zum Beenden</span>`;
+        + `<button class="ov-hint-cancel" onclick="deactivateShiftSelect()" style="padding:2px 7px">✕</button>`
+        + `<span style="margin-left:4px;font-size:10px;opacity:0.6">Entf = löschen &nbsp;·&nbsp; Shift halten = neu auswählen</span>`;
     document.body.appendChild(bar);
 }
 
@@ -1255,13 +1264,14 @@ function attachEraserKeyListeners() {
             ovEraserAltDown = false;
             deactivateEraser();
         } else if (e.key === 'Shift') {
-            deactivateShiftSelect();
+            // Stop the rectangle-drag interaction but KEEP highlights so user can press Delete
+            if (ovShiftSelCleanup) ovShiftSelCleanup();
         }
     });
     // Also deactivate if window loses focus while Alt/Shift is held
     window.addEventListener('blur', () => {
         if (ovEraserAltDown) { ovEraserAltDown = false; deactivateEraser(); }
-        if (ovShiftSelActive) deactivateShiftSelect();
+        if (ovShiftSelActive && ovShiftSelCleanup) ovShiftSelCleanup();
     });
 }
 

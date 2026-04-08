@@ -213,27 +213,29 @@
     </div>
 
     <!-- Footer -->
-    <div class="mx-4 md:mx-8 px-2 mb-4 flex justify-between items-center text-slate-400 dark:text-zinc-600">
-        <div class="flex items-center gap-4">
+    <div class="mx-4 md:mx-8 px-2 mb-4 flex items-center text-slate-400 dark:text-zinc-600">
+        <div class="flex items-center gap-4 flex-1">
             <div class="text-[10px] uppercase tracking-wider font-semibold">Standort DB v0.1</div>
             <button id="helpBtn" onclick="openTutorial()" class="text-[11px] font-medium text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1">
                 <i class="mdi mdi-help-circle-outline text-base"></i>
                 Hilfe
             </button>
         </div>
-        <div class="flex items-center gap-3">
-        <button id="settingsBtn" onclick="openSettingsModal()" class="text-[11px] font-medium text-slate-400 hover:text-slate-600 dark:hover:text-zinc-400 transition-colors flex items-center gap-1">
-            <i class="mdi mdi-palette-outline text-base"></i>
-            Darstellung
-        </button>
-        <button id="appSettingsBtn" onclick="openAppSettingsModal()" class="text-[11px] font-medium text-slate-400 hover:text-slate-600 dark:hover:text-zinc-400 transition-colors flex items-center gap-1">
-            <i class="mdi mdi-cog-outline text-base"></i>
-            Einstellungen
-        </button>
-        <button onclick="BugReport.open()" class="text-[11px] font-medium text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors flex items-center gap-1" title="Fehler melden">
-            <i class="mdi mdi-bug-outline text-base"></i>
-            Bug melden
-        </button>
+        <div class="flex items-center justify-center">
+            <button onclick="BugReport.open()" class="text-[11px] font-medium text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors flex items-center gap-1" title="Fehler melden">
+                <i class="mdi mdi-bug-outline text-base"></i>
+                Bug melden
+            </button>
+        </div>
+        <div class="flex items-center gap-3 flex-1 justify-end">
+            <button id="settingsBtn" onclick="openSettingsModal()" class="text-[11px] font-medium text-slate-400 hover:text-slate-600 dark:hover:text-zinc-400 transition-colors flex items-center gap-1">
+                <i class="mdi mdi-palette-outline text-base"></i>
+                Darstellung
+            </button>
+            <button id="appSettingsBtn" onclick="openAppSettingsModal()" class="text-[11px] font-medium text-slate-400 hover:text-slate-600 dark:hover:text-zinc-400 transition-colors flex items-center gap-1">
+                <i class="mdi mdi-cog-outline text-base"></i>
+                Einstellungen
+            </button>
         </div>
     </div>
 
@@ -748,16 +750,25 @@
                 <!-- Tourenplaner settings -->
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-zinc-400 mb-1">Tourenplaner</label>
-                    <div class="flex items-center gap-3 py-2.5 border border-slate-200 dark:border-zinc-700 rounded px-3">
-                        <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between py-2.5 border border-slate-200 dark:border-zinc-700 rounded px-3">
+                        <div>
                             <p class="text-sm font-medium text-slate-700 dark:text-zinc-200">Streckenvorschläge</p>
-                            <p class="text-xs text-slate-400 dark:text-zinc-500 mt-0.5 leading-snug">Zeigt Standorte nahe der berechneten Route als Vorschläge</p>
+                            <p class="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">Zeigt Standorte nahe der berechneten Route als Vorschläge</p>
                         </div>
                         <button id="btn-route-suggest-toggle" onclick="toggleRouteSuggestions()"
                             title="Streckenvorschläge an/aus"
-                            class="relative w-11 h-6 rounded-full transition-colors bg-violet-500 dark:bg-violet-600 shrink-0 overflow-hidden">
+                            class="relative w-11 h-6 rounded-full transition-colors bg-violet-500 dark:bg-violet-600 shrink-0 ml-3">
                             <span class="ep-knob absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform translate-x-5"></span>
                         </button>
+                    </div>
+                    <!-- Nearby station radius slider -->
+                    <div class="mt-2 flex items-center gap-3 px-1">
+                        <label class="text-xs text-slate-500 dark:text-zinc-400 shrink-0">Radius</label>
+                        <input id="suggestRadiusSlider" type="range" min="0.5" max="20" step="0.5"
+                            value="3"
+                            oninput="setSuggestRadius(parseFloat(this.value))"
+                            class="flex-1 h-1.5 accent-violet-500 cursor-pointer">
+                        <span id="suggestRadiusLabel" class="text-xs font-medium text-slate-600 dark:text-zinc-300 min-w-[38px] text-right">3 km</span>
                     </div>
                 </div>
             </div>
@@ -806,13 +817,13 @@
         </div>
     </div>
 
-    <!-- Tourenplaner Drawer -->
-    <div id="plannerDrawer" class="fixed bottom-0 left-0 right-0 z-[48] transform translate-y-full transition-transform duration-300 ease-in-out">
-        <!-- Drag handle — the visible border between dashboard and planner -->
-        <div id="plannerDragHandle" class="mx-2 md:mx-4 bg-slate-100 dark:bg-zinc-800 border border-b-0 border-slate-200 dark:border-zinc-700 rounded-t-lg h-3 cursor-row-resize select-none flex items-center justify-center group hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
-            <div class="w-10 h-1 rounded-full bg-slate-300 dark:bg-zinc-600 group-hover:bg-blue-400 dark:group-hover:bg-blue-500 transition-colors"></div>
+    <!-- Tourenplaner floating window -->
+    <div id="plannerDrawer" class="fixed z-[48] hidden select-none" style="width:420px;bottom:0;left:0;">
+        <!-- Title / move bar -->
+        <div id="plannerDragHandle" class="bg-slate-200 dark:bg-zinc-800 border border-b-0 border-slate-200 dark:border-zinc-700 rounded-t-lg h-4 cursor-grab active:cursor-grabbing flex items-center justify-center group hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors" title="Planer verschieben">
+            <div class="w-10 h-1 rounded-full bg-slate-400 dark:bg-zinc-500 group-hover:bg-blue-400 dark:group-hover:bg-blue-500 transition-colors"></div>
         </div>
-        <div id="plannerInner" class="bg-white dark:bg-zinc-950 border border-t-0 border-slate-200 dark:border-zinc-800 shadow-2xl mx-2 md:mx-4 overflow-hidden flex flex-col" style="height:22rem">
+        <div id="plannerInner" class="bg-white dark:bg-zinc-950 border border-t-0 border-slate-200 dark:border-zinc-800 shadow-2xl overflow-hidden flex flex-col relative" style="height:22rem">
             <!-- Header -->
             <div class="flex items-center gap-2 px-3 py-2 bg-slate-50 dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 shrink-0">
                 <i class="mdi mdi-map-marker-path text-blue-500 shrink-0"></i>
@@ -830,6 +841,49 @@
             <!-- Single scrollable content — either stop list OR route results -->
             <div id="plannerContent" class="flex-1 overflow-y-auto px-3 pt-2 pb-1 min-h-0">
                 <p id="plannerEmpty" class="text-xs text-slate-400 dark:text-zinc-500 py-2 text-center">Noch keine Stopps. Einen Standort öffnen und „Zur Tour hinzufügen" klicken oder in der Liste auswählen.</p>
+
+                <!-- ── Start / End override section ─────────────────────────────── -->
+                <div id="plannerEndpointSection" class="hidden mb-2">
+                    <div class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-zinc-500 mb-1 flex items-center gap-1">
+                        <i class="mdi mdi-routes text-xs text-violet-500"></i>Startpunkt &amp; Endpunkt
+                    </div>
+                    <!-- Start row -->
+                    <div class="flex items-center gap-1.5 py-1.5 border-b border-slate-100 dark:border-zinc-800">
+                        <i class="mdi mdi-map-marker text-blue-500 text-sm shrink-0"></i>
+                        <span id="plannerStartLabel" class="flex-1 text-xs text-slate-600 dark:text-zinc-300 truncate">Mein Standort</span>
+                        <button onclick="openEndpointPicker('start')" class="w-7 h-7 flex items-center justify-center rounded text-slate-300 dark:text-zinc-600 hover:text-blue-500 transition-colors shrink-0" title="Startpunkt ändern">
+                            <i class="mdi mdi-pencil-outline text-sm"></i>
+                        </button>
+                    </div>
+                    <!-- End row -->
+                    <div class="flex items-center gap-1.5 py-1.5">
+                        <i class="mdi mdi-map-marker-check text-blue-500 text-sm shrink-0"></i>
+                        <span id="plannerEndLabel" class="flex-1 text-xs text-slate-600 dark:text-zinc-300 truncate">Zurück zum Start</span>
+                        <button onclick="openEndpointPicker('end')" class="w-7 h-7 flex items-center justify-center rounded text-slate-300 dark:text-zinc-600 hover:text-blue-500 transition-colors shrink-0" title="Endpunkt ändern">
+                            <i class="mdi mdi-pencil-outline text-sm"></i>
+                        </button>
+                    </div>
+                    <!-- Inline picker -->
+                    <div id="plannerEndpointPicker" class="hidden mt-2 p-2 bg-slate-50 dark:bg-zinc-900 rounded border border-slate-200 dark:border-zinc-700">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span id="plannerEpPickerTitle" class="text-xs font-semibold text-slate-700 dark:text-zinc-200">Startpunkt ändern</span>
+                            <div class="flex items-center gap-1">
+                                <button id="plannerEpClear" onclick="clearTourEndpoint(_epPickerType)" class="hidden text-[11px] text-red-400 hover:text-red-600 px-1.5 py-0.5 rounded border border-red-200 dark:border-red-800 transition-colors">Zurücksetzen</button>
+                                <button onclick="closeEndpointPicker()" class="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors">
+                                    <i class="mdi mdi-close text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex gap-1">
+                            <input id="plannerEpInput" type="text" placeholder="PLZ, Ort oder Standort-Nr." maxlength="80"
+                                class="flex-1 text-xs rounded border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 placeholder-slate-300 dark:placeholder-zinc-600 px-2 py-1.5 focus:outline-none focus:border-blue-400 transition-colors"
+                                oninput="_endpointSearch(this.value)"
+                                onkeydown="if(event.key==='Enter'){_endpointSearch(this.value);}" />
+                        </div>
+                        <div id="plannerEpResults" class="mt-1.5 space-y-0.5 max-h-32 overflow-y-auto"></div>
+                    </div>
+                </div>
+
                 <div id="plannerStopsList"></div>
                 <!-- Two-column route results (replaces stop list after Route berechnen) -->
                 <div id="plannerRouteResults" class="hidden"></div>
@@ -845,10 +899,17 @@
                 <button onclick="completeTour()" class="flex items-center justify-center gap-1.5 px-3 py-2 text-sm border border-green-400 dark:border-green-600 text-green-700 dark:text-green-400 rounded-md hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
                     <i class="mdi mdi-check-circle-outline"></i> Abschließen
                 </button>
+                <button onclick="shareTour()" class="flex items-center justify-center gap-1.5 px-3 py-2 text-sm border border-slate-300 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 rounded-md hover:bg-slate-50 dark:hover:bg-zinc-900 transition-colors" title="Tour als Link teilen">
+                    <i class="mdi mdi-share-variant-outline"></i>
+                </button>
                 <button onclick="clearPlannerQueue()" class="flex items-center justify-center px-3 py-2 text-sm text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors" title="Alle entfernen">
                     <i class="mdi mdi-delete-outline"></i>
                 </button>
             </div>
+            <!-- Resize handles -->
+            <div id="plannerResizeE"  class="absolute top-0 right-0 w-1.5 h-full cursor-ew-resize z-10 hover:bg-blue-400/30 transition-colors"></div>
+            <div id="plannerResizeS"  class="absolute bottom-0 left-0 w-full h-1.5 cursor-ns-resize z-10 hover:bg-blue-400/30 transition-colors"></div>
+            <div id="plannerResizeSE" class="absolute bottom-0 right-0 w-3 h-3 cursor-nwse-resize z-20" style="background:radial-gradient(circle at 100% 100%,rgba(148,163,184,0.6) 40%,transparent 41%)"></div>
         </div>
     </div>
 

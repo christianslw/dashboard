@@ -146,6 +146,19 @@ window.onload = async () => {
         }
     }
 
+    // ── Deep link: load tour from ?tour=num1,num2,… ────────────────────────────
+    const deepLinkTour = urlParams.get('tour');
+    if (deepLinkTour) {
+        const tourNums = deepLinkTour.split(',').map(n => decodeURIComponent(n.trim())).filter(n => n);
+        const validNums = tourNums.filter(n => standorte.find(s => String(s.nummer) === n));
+        if (validNums.length > 0) {
+            validNums.forEach(n => addToPlannerQueue(n));
+            setTimeout(() => {
+                if (!plannerOpen) togglePlannerDrawer();
+            }, 300);
+        }
+    }
+
     // ── PWA / Shortcut: focus search if ?focus=search ──────────────────────────
     if (urlParams.get('focus') === 'search') {
         setTimeout(() => document.getElementById('searchInput')?.focus(), 200);
@@ -174,12 +187,17 @@ function handleGlobalKeydown(e) {
     // Escape → close top-most open modal
     if (e.key === 'Escape') {
         const modals = [
-            { id: 'overlayInputModal', close: () => { if (typeof cancelOverlayInput === 'function') cancelOverlayInput(); } },
+            { id: 'bugReportModal',      close: () => { if (typeof BugReport !== 'undefined') BugReport.close(); } },
+            { id: 'overlayInputModal',   close: () => { if (typeof cancelOverlayInput === 'function') cancelOverlayInput(); } },
+            { id: 'savedToursModal',     close: () => { if (typeof closeSavedToursModal === 'function') closeSavedToursModal(); } },
+            { id: 'locationModal',       close: () => { if (typeof closeLocationModal === 'function') closeLocationModal(); } },
             { id: 'wayInstructionsModal', close: () => { if (typeof closeWayInstructionsModal === 'function') closeWayInstructionsModal(); } },
-            { id: 'settingsModal', close: () => { if (typeof closeSettingsModal === 'function') closeSettingsModal(); } },
-            { id: 'appSettingsModal', close: () => { if (typeof closeAppSettingsModal === 'function') closeAppSettingsModal(); } },
-            { id: 'tutorialModal', close: () => { if (typeof closeTutorial === 'function') closeTutorial(); } },
-            { id: 'dashboardModal', close: () => { if (typeof closeDashboard === 'function') closeDashboard(); } },
+            { id: 'settingsModal',       close: () => { if (typeof closeSettingsModal === 'function') closeSettingsModal(); } },
+            { id: 'appSettingsModal',    close: () => { if (typeof closeAppSettingsModal === 'function') closeAppSettingsModal(); } },
+            { id: 'tutorialModal',       close: () => { if (typeof closeTutorial === 'function') closeTutorial(); } },
+            { id: 'dashboardModal',      close: () => { if (typeof closeDashboard === 'function') closeDashboard(); } },
+            { id: 'filterMenuPanel',     close: () => { if (typeof closeFilterMenu === 'function') closeFilterMenu(); } },
+            { id: 'sortMenuPanel',       close: () => { if (typeof closeSortMenu === 'function') closeSortMenu(); } },
         ];
         for (const m of modals) {
             const el = document.getElementById(m.id);
@@ -187,6 +205,11 @@ function handleGlobalKeydown(e) {
                 m.close();
                 return;
             }
+        }
+        // Planner drawer uses translate classes, not hidden
+        if (typeof plannerOpen !== 'undefined' && plannerOpen) {
+            if (typeof closePlannerDrawer === 'function') closePlannerDrawer();
+            return;
         }
         return;
     }
