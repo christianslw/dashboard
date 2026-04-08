@@ -27,6 +27,17 @@ html.swr-ms:not(.dark) {
     /* Focus / glow */
     --theme-focus-ring:       rgba(0, 51, 102, 0.20);
     --theme-focus-glow:       rgba(0, 51, 102, 0.30);
+    /* Overlay panel */
+    --ov-bg:                  #ffffff;
+    --ov-border:              #e2e8f0;
+    --ov-section-bg:          #f4f6f9;
+    --ov-body-text:           #0f172a;
+    --ov-muted:               #64748b;
+    --ov-divider:             #e2e8f0;
+    --ov-accent-bg:           #e6f0fa;
+    --ov-accent-text:         #003366;
+    /* Split-pane divider */
+    --divider-color:          #e2e8f0;
     /* DWD warning levels */
     --dwd-level-1: #c09800;
     --dwd-level-2: #d47015;
@@ -63,6 +74,17 @@ html.swr-ms.dark {
     /* Focus / glow */
     --theme-focus-ring:       rgba(0, 51, 102, 0.20);
     --theme-focus-glow:       rgba(0, 51, 102, 0.30);
+    /* Overlay panel */
+    --ov-bg:                  #152238;
+    --ov-border:              #273959;
+    --ov-section-bg:          #0c1524;
+    --ov-body-text:           #f8fafc;
+    --ov-muted:               #94a3b8;
+    --ov-divider:             #273959;
+    --ov-accent-bg:           #002244;
+    --ov-accent-text:         #4da6ff;
+    /* Split-pane divider */
+    --divider-color:          #273959;
     /* DWD warning levels */
     --dwd-level-1: #f0ca48;
     --dwd-level-2: #ff9840;
@@ -146,7 +168,7 @@ html.swr-ms:not(.dark) select {
     background-color: #ffffff !important;
     color: #0f172a !important;
     border: 1px solid #cbd5e1 !important;
-    border-radius: 0 !important;
+    border-radius: 2px !important;
 }
 html.swr-ms.dark input[type="text"],
 html.swr-ms.dark textarea,
@@ -154,7 +176,7 @@ html.swr-ms.dark select {
     background-color: #0c1524 !important;
     color: #f8fafc !important;
     border: 1px solid #273959 !important;
-    border-radius: 0 !important;
+    border-radius: 2px !important;
 }
 html.swr-ms input[type="text"]:focus,
 html.swr-ms textarea:focus,
@@ -195,3 +217,46 @@ html.swr-ms.dark .dark\:hover\:text-blue-400:hover  { color: #80bfff !important;
    ------------------------------------------------------------------- */
 html.swr-ms:not(.dark) .text-amber-500 { color: #cc8400 !important; }
 html.swr-ms.dark       .text-amber-500 { color: #ffb833 !important; }
+
+/* -------------------------------------------------------------------
+   OVERLAY PANEL — --ov-* tokens
+   ------------------------------------------------------------------- */
+html.swr-ms .ov-panel              { background: var(--ov-bg) !important; border-color: var(--ov-border) !important; }
+html.swr-ms .ov-header             { background: var(--ov-section-bg) !important; border-color: var(--ov-divider) !important; }
+html.swr-ms .ov-header-station     { color: var(--ov-body-text) !important; }
+html.swr-ms .ov-header-name        { color: var(--ov-muted) !important; }
+html.swr-ms .ov-toolbar            { background: var(--ov-bg) !important; border-color: var(--ov-divider) !important; }
+html.swr-ms .ov-tb-cat             { color: var(--ov-body-text) !important; border-radius: 2px !important; }
+html.swr-ms .ov-tb-cat:hover       { background: var(--ov-accent-bg) !important; color: var(--ov-accent-text) !important; }
+html.swr-ms .ov-tb-cat.active      { background: var(--ov-accent-bg) !important; color: var(--ov-accent-text) !important; }
+html.swr-ms .ov-tb-sep             { background: var(--ov-divider) !important; }
+html.swr-ms .ov-tb-act             { color: var(--ov-muted) !important; border-radius: 2px !important; }
+html.swr-ms .ov-tb-act:hover       { background: var(--ov-accent-bg) !important; color: var(--ov-accent-text) !important; }
+html.swr-ms .ov-sub-btn            { color: var(--ov-body-text) !important; border-radius: 2px !important; }
+html.swr-ms .ov-sub-btn:hover      { background: var(--ov-accent-bg) !important; color: var(--ov-accent-text) !important; }
+html.swr-ms .ov-sub-btn.active     { background: var(--ov-accent-bg) !important; border-color: var(--ov-accent-text) !important; color: var(--ov-accent-text) !important; }
+html.swr-ms .ov-body               { background: var(--ov-bg) !important; }
+html.swr-ms .ov-element-row        { background: var(--ov-bg) !important; color: var(--ov-body-text) !important; }
+html.swr-ms .ov-element-row:hover  { background: var(--theme-hover) !important; }
+html.swr-ms .ov-footer             { background: var(--ov-section-bg) !important; border-color: var(--ov-divider) !important; }
+html.swr-ms .ov-badge              { background: var(--ov-section-bg) !important; color: var(--ov-muted) !important; }
+html.swr-ms .ov-trigger-btn        { background: var(--ov-section-bg) !important; border-radius: 2px !important; }
+html.swr-ms .ov-trigger-btn:hover  { background: var(--ov-accent-bg) !important; color: var(--ov-accent-text) !important; }
+html.swr-ms .ov-trigger-btn.active { background: var(--ov-accent-bg) !important; color: var(--ov-accent-text) !important; }
+
+/* -------------------------------------------------------------------
+   FILTER CHIPS — SWR corporate colours
+   ------------------------------------------------------------------- */
+html.swr-ms #filterMenuPanel .border-green-500             { border-color: #003366 !important; }
+html.swr-ms #filterMenuPanel .bg-green-100                 { background-color: #e6f0fa !important; }
+html.swr-ms #filterMenuPanel .text-green-700               { color: #003366 !important; }
+html.swr-ms.dark #filterMenuPanel .border-green-500        { border-color: #4da6ff !important; }
+html.swr-ms.dark #filterMenuPanel .dark\:bg-green-900\/30  { background-color: rgba(0, 68, 136, 0.30) !important; }
+html.swr-ms.dark #filterMenuPanel .dark\:text-green-300    { color: #4da6ff !important; }
+
+html.swr-ms #filterMenuPanel .border-red-500               { border-color: #c83535 !important; }
+html.swr-ms #filterMenuPanel .bg-red-100                   { background-color: #fdecea !important; }
+html.swr-ms #filterMenuPanel .text-red-700                 { color: #c83535 !important; }
+html.swr-ms.dark #filterMenuPanel .border-red-500          { border-color: #ff5c5c !important; }
+html.swr-ms.dark #filterMenuPanel .dark\:bg-red-900\/30    { background-color: rgba(200, 53, 53, 0.20) !important; }
+html.swr-ms.dark #filterMenuPanel .dark\:text-red-300      { color: #ff5c5c !important; }

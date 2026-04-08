@@ -328,12 +328,11 @@ html.dark {
     transition: all 0.2s ease !important;
 }
 :is(html.dracula, html.dracula-laser) button:active {
-    background-color: var(--primary) !important;
-    border-color: var(--primary) !important;
-    color: var(--background) !important;
+    border-color: var(--pink) !important;
+    box-shadow: 0 0 0 2px rgba(246, 148, 255, 0.30), 0 0 12px rgba(246, 148, 255, 0.40) !important;
 }
 :is(html.dracula, html.dracula-laser) a[id*="btn"],
-:is(html.dracula, html.dracula-laser) button:not(.text-xs):not([title="Suchen"]):not([title*="Favorit"]):not([title*="Navigation"]):not(#clearSearchBtn):not([onclick^="close"]) {
+:is(html.dracula, html.dracula-laser) button:not(.text-xs):not([title="Suchen"]):not([title*="Favorit"]):not([title*="Navigation"]):not(#clearSearchBtn):not([onclick^="close"]):not([class~="w-6"]):not([class~="w-7"]):not([class~="w-8"]):not(#helpBtn):not(#settingsBtn):not(#appSettingsBtn):not([title="Fehler melden"]):not([onclick="shareTour()"]):not([onclick="clearPlannerQueue()"]):not(.nav-share-btn) {
     background: transparent !important;
     border: 1px solid var(--border) !important;
     color: var(--text-secondary) !important;
@@ -362,7 +361,7 @@ html.dark {
 
 /* Dashboard */
 :is(html.dracula, html.dracula-laser) #weatherTemp,
-:is(html.dracula, html.dracula-laser) #driveTimeValue { color: var(--accent) !important; }
+:is(html.dracula, html.dracula-laser) #driveTimeValue { color: var(--pink) !important; }
 :is(html.dracula, html.dracula-laser) #weatherDesc    { color: var(--text-muted) !important; }
 :is(html.dracula, html.dracula-laser) .text-sm.font-medium { color: var(--text-secondary) !important; }
 :is(html.dracula, html.dracula-laser) button[onclick="editWayInstructions()"],
@@ -424,8 +423,8 @@ html.dark {
 /* List item selection */
 :is(html.dracula, html.dracula-laser) .list-item-selected {
     background-color: var(--highlight) !important;
-    border-left: 2px solid var(--accent) !important;
-    box-shadow: inset 2px 0 0 var(--accent) !important;
+    border-left: 2px solid var(--pink) !important;
+    box-shadow: inset 2px 0 0 var(--pink) !important;
     padding-left: calc(0.75rem - 2px) !important;
     color: var(--text-primary) !important;
 }
@@ -473,8 +472,8 @@ html.dark {
     content: "" !important;
     display: block !important; width: 16px !important; height: 16px !important;
     background-color: var(--text-primary) !important;
-    -webkit-mask: url("data:image/svg+xml,%3Csvg version='1.1' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 122.88 105.02'%3E%3Cg%3E%3Cpath fill='currentColor' d='M97.25,40.58l23.85,10.28c1.48,0.64,2.17,2.36,1.53,3.85c-0.32,0.75-0.93,1.3-1.63,1.57l-23.19,9.39l23.29,10.04 c1.48,0.64,2.17,2.36,1.53,3.84c-0.32,0.75-0.93,1.3-1.63,1.57l-58.52,23.69c-0.73,0.3-1.52,0.27-2.2,0L1.83,81.05 c-1.5-0.61-2.22-2.31-1.61-3.81c0.33-0.82,0.99-1.4,1.76-1.67l22.97-9.96l-23.12-9.4c-1.5-0.61-2.22-2.31-1.61-3.81 c0.33-0.82,0.99-1.4,1.76-1.67l23.53-10.21L1.83,30.9c-1.5-0.61-2.22-2.31-1.61-3.81c0.33-0.82,0.99-1.4,1.76-1.67L60.02,0.24 c0.77-0.33,1.6-0.31,2.31,0l0-0.01l58.77,25.32c1.48,0.64,2.17,2.36,1.53,3.84c-0.32,0.75-0.93,1.3-1.63,1.57L97.25,40.58 L97.25,40.58z M112.36,53.47l-22.73-9.79L62.49,54.66c-0.73,0.3-1.52,0.27-2.2,0L33.08,43.6L10.47,53.4L61.39,74.1L112.36,53.47 L112.36,53.47z M90.19,68.75l-27.7,11.21c-0.73,0.3-1.52,0.27-2.2,0L32.52,68.68l-22.05,9.56l50.92,20.69l50.97-20.63L90.19,68.75 L90.19,68.75z M61.17,6.1l-50.7,21.99l50.92,20.69l50.97-20.63L61.17,6.1L61.17,6.1z'/%3E%3C/g%3E%3C/svg%3E") no-repeat center / contain;
-    mask: url("data:image/svg+xml,%3Csvg version='1.1' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 122.88 105.02'%3E%3Cg%3E%3Cpath fill='currentColor' d='M97.25,40.58l23.85,10.28c1.48,0.64,2.17,2.36,1.53,3.85c-0.32,0.75-0.93,1.3-1.63,1.57l-23.19,9.39l23.29,10.04 c1.48,0.64,2.17,2.36,1.53,3.84c-0.32,0.75-0.93,1.3-1.63,1.57l-58.52,23.69c-0.73,0.3-1.52,0.27-2.2,0L1.83,81.05 c-1.5-0.61-2.22-2.31-1.61-3.81c0.33-0.82,0.99-1.4,1.76-1.67l22.97-9.96l-23.12-9.4c-1.5-0.61-2.22-2.31-1.61-3.81 c0.33-0.82,0.99-1.4,1.76-1.67l23.53-10.21L1.83,30.9c-1.5-0.61-2.22-2.31-1.61-3.81c0.33-0.82,0.99-1.4,1.76-1.67L60.02,0.24 c0.77-0.33,1.6-0.31,2.31,0l0-0.01l58.77,25.32c1.48,0.64,2.17,2.36,1.53,3.84c-0.32,0.75-0.93,1.3-1.63,1.57L97.25,40.58 L97.25,40.58z M112.36,53.47l-22.73-9.79L62.49,54.66c-0.73,0.3-1.52,0.27-2.2,0L33.08,43.6L10.47,53.4L61.39,74.1L112.36,53.47 L112.36,53.47z M90.19,68.75l-27.7,11.21c-0.73,0.3-1.52,0.27-2.2,0L32.52,68.68l-22.05,9.56l50.92,20.69l50.97-20.63L90.19,68.75 L90.19,68.75z M61.17,6.1l-50.7,21.99l50.92,20.69l50.97-20.63L61.17,6.1L61.17,6.1z'/%3E%3C/g%3E%3C/svg%3E") no-repeat center / contain;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12,16.54L19.37,10.8L21,12.07L12,19.07L3,12.07L4.62,10.81L12,16.54M12,14L3,7L12,0L21,7L12,14M12,2.53L6.26,7L12,11.47L17.74,7L12,2.53Z'/%3E%3C/svg%3E") no-repeat center / contain;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12,16.54L19.37,10.8L21,12.07L12,19.07L3,12.07L4.62,10.81L12,16.54M12,14L3,7L12,0L21,7L12,14M12,2.53L6.26,7L12,11.47L17.74,7L12,2.53Z'/%3E%3C/svg%3E") no-repeat center / contain;
     transition: all 0.2s ease !important;
 }
 :is(html.dracula, html.dracula-laser) .leaflet-control-layers-toggle:hover::after { background-color: var(--primary) !important; }
@@ -482,6 +481,35 @@ html.dark {
     background-color: var(--background) !important;
     border-color: var(--primary) !important;
     box-shadow: 0 0 12px var(--theme-focus-glow) !important;
+}
+/* Suppress any child elements inside the toggle — only the ::after SVG icon should show */
+:is(html.dracula, html.dracula-laser) .leaflet-control-layers-toggle > *,
+:is(html.dracula, html.dracula-laser) .leaflet-control-layers-toggle img {
+    display: none !important;
+}
+/* Tour name input — no border (it lives in a header bar with its own visual context) */
+:is(html.dracula, html.dracula-laser) #tourNameInput {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+}
+/* Share / clear-planner buttons — always borderless (HTML has Tailwind border classes) */
+:is(html.dracula, html.dracula-laser) button[onclick="shareTour()"],
+:is(html.dracula, html.dracula-laser) button[onclick="clearPlannerQueue()"] {
+    border: none !important;
+    box-shadow: none !important;
+}
+/* List-item share icon (nav-share-btn) — always borderless */
+:is(html.dracula, html.dracula-laser) button.nav-share-btn,
+:is(html.dracula, html.dracula-laser) .nav-share-btn {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+}
+:is(html.dracula, html.dracula-laser) .nav-share-btn:hover {
+    color: var(--accent) !important;
+    border: none !important;
 }
 :is(html.dracula, html.dracula-laser) .leaflet-control-layers-list { padding: 10px !important; }
 :is(html.dracula, html.dracula-laser) .leaflet-control-layers label {
@@ -702,7 +730,6 @@ html.dark:not(.dracula):not(.dracula-laser) .leaflet-control-attribution {
 	font-size: 18px !important;
 	margin: 0 !important;
 	padding: 0 !important;
-	vertical-align: 0 !important;
 	flex-shrink: 0 !important;
 }
 
@@ -1492,8 +1519,8 @@ html.dark:not(.dracula):not(.dracula-laser) .leaflet-control-attribution {
 .dark .leaflet-control-layers-group-name { color: #71717a !important; }
 /* ===== DWD Warning Zones — diagonal hatching via CSS mask ===== */
 .leaflet-layer.dwd-warn-tile {
-	filter: blur(1.1px) saturate(1.28) contrast(1.08);
-	border
+	filter: saturate(1.28) contrast(1.08);
+	border: 2px solid;
 	mix-blend-mode: add;
 	opacity: 0.96;
 	transition: opacity 1.0s ease, filter 1.0s ease;
@@ -1645,7 +1672,7 @@ button:hover .nav-icon-wrap .nav-outline {
 	border-radius: 6px;
 	position: relative;
 	background: transparent;
-	overflow: hidden;
+	overflow: visible; /* allow icon transform to escape clip box */
 	transition: color 0.18s ease;
 }
 .dark .nav-share-btn {

@@ -1,16 +1,17 @@
-/* Kirschblüte Theme — CSS class: "kirschbluete" on <html>
-   Theme bridge (Tailwind overrides) lives in styles.css.
-   This file: --theme-* token values + Kirschblüte-specific effects. */
+﻿/* Kirschblüte Theme — CSS class: "kirschbluete" on <html>
+   Canvas petals are driven by js/theme-effects.js (ThemeEffects.apply).
+   This file: token values, jelly UI effects, SWR logo animation.
+   DWD levels, scrollbars, component overrides. */
 
-/* -------------------------------------------------------------------
+/* ═══════════════════════════════════════════════════════════════
    THEME TOKENS — light mode
-   ------------------------------------------------------------------- */
+   ═══════════════════════════════════════════════════════════════ */
 html.kirschbluete:not(.dark) {
     /* Surfaces */
     --theme-bg:               #fff4f8;
     --theme-surface:          #ffffff;
-    --theme-surface-alt:      #ffffff;
-    --theme-hover:            #fffafb;
+    --theme-surface-alt:      #fff8fb;
+    --theme-hover:            #ffedf4;
     /* Borders */
     --theme-border:           #fce6ed;
     --theme-border-subtle:    #fce6ed;
@@ -21,12 +22,23 @@ html.kirschbluete:not(.dark) {
     /* Accent (cherry pink) */
     --theme-accent:           #e88ba4;
     --theme-accent-hover:     #d1748d;
-    --theme-accent-text:      #e88ba4;
+    --theme-accent-text:      #c9607e;
     --theme-accent-bg:        #fef0f4;
     --theme-accent-bg-hover:  #fce1e8;
     /* Focus / glow */
-    --theme-focus-ring:       rgba(255, 107, 158, 0.40);
+    --theme-focus-ring:       rgba(255, 107, 158, 0.35);
     --theme-focus-glow:       rgba(255, 107, 158, 0.40);
+    /* Overlay panel */
+    --ov-bg:                  #ffffff;
+    --ov-border:              #fce6ed;
+    --ov-section-bg:          #fff8fb;
+    --ov-body-text:           #3b252b;
+    --ov-muted:               #b8a2a9;
+    --ov-divider:             #fce6ed;
+    --ov-accent-bg:           rgba(232, 139, 164, 0.12);
+    --ov-accent-text:         #c9607e;
+    /* Split-pane divider */
+    --divider-color:          #fce6ed;
     /* DWD warning levels */
     --dwd-level-1: #d4af30;
     --dwd-level-2: #e07e40;
@@ -36,16 +48,28 @@ html.kirschbluete:not(.dark) {
     --dwd-level-2-filter: brightness(0) saturate(100%) invert(62%) sepia(50%) saturate(1900%) hue-rotate(342deg) brightness(93%) contrast(90%);
     --dwd-level-3-filter: brightness(0) saturate(100%) invert(52%) sepia(48%) saturate(1400%) hue-rotate(320deg) brightness(90%) contrast(90%);
     --dwd-level-4-filter: brightness(0) saturate(100%) invert(52%) sepia(28%) saturate(2000%) hue-rotate(234deg) brightness(94%) contrast(90%);
+    /* Interaction state tokens (3-state: hover / selected / press) */
+    --kb-hover-bg:           rgba(255, 107, 158, 0.09);
+    --kb-hover-color:        #b85070;
+    --kb-sel-bg:             #ffd6e7;
+    --kb-sel-color:          #9c0045;
+    --kb-sel-border:         rgba(200, 0, 95, 0.45);
+    --kb-sel-shadow:         0 0 0 1.5px rgba(255, 51, 119, 0.22),
+                             0 0 10px rgba(255, 51, 119, 0.22);
+    --kb-click-bg:           #ffbcd8;
+    --kb-click-color:        #7a0036;
+    --kb-click-shadow:       0 0 0 2.5px rgba(255, 0, 102, 0.32),
+                             0 0 16px rgba(255, 0, 102, 0.38);
 }
 
-/* -------------------------------------------------------------------
+/* ═══════════════════════════════════════════════════════════════
    THEME TOKENS — dark mode
-   ------------------------------------------------------------------- */
+   ═══════════════════════════════════════════════════════════════ */
 html.kirschbluete.dark {
     /* Surfaces */
     --theme-bg:               #0d0814;
     --theme-surface:          #1a1224;
-    --theme-surface-alt:      #1a1224;
+    --theme-surface-alt:      #150d1e;
     --theme-hover:            #241933;
     /* Borders */
     --theme-border:           #3b264d;
@@ -61,8 +85,19 @@ html.kirschbluete.dark {
     --theme-accent-bg:        #381228;
     --theme-accent-bg-hover:  #4f1536;
     /* Focus / glow */
-    --theme-focus-ring:       rgba(255, 51, 119, 0.50);
+    --theme-focus-ring:       rgba(255, 51, 119, 0.45);
     --theme-focus-glow:       rgba(255, 51, 119, 0.40);
+    /* Overlay panel */
+    --ov-bg:                  #1a1224;
+    --ov-border:              #3b264d;
+    --ov-section-bg:          #150d1e;
+    --ov-body-text:           #fff0f5;
+    --ov-muted:               #c48eab;
+    --ov-divider:             #3b264d;
+    --ov-accent-bg:           rgba(255, 51, 119, 0.12);
+    --ov-accent-text:         #ff3377;
+    /* Split-pane divider */
+    --divider-color:          #3b264d;
     /* DWD warning levels */
     --dwd-level-1: #f5cc60;
     --dwd-level-2: #ff9a60;
@@ -72,44 +107,94 @@ html.kirschbluete.dark {
     --dwd-level-2-filter: brightness(0) saturate(100%) invert(74%) sepia(43%) saturate(1962%) hue-rotate(333deg) brightness(103%) contrast(101%);
     --dwd-level-3-filter: brightness(0) saturate(100%) invert(72%) sepia(35%) saturate(2100%) hue-rotate(312deg) brightness(103%) contrast(102%);
     --dwd-level-4-filter: brightness(0) saturate(100%) invert(74%) sepia(24%) saturate(2800%) hue-rotate(222deg) brightness(110%) contrast(100%);
+    /* Interaction state tokens */
+    --kb-hover-bg:           rgba(255, 51, 119, 0.11);
+    --kb-hover-color:        #ff9ab8;
+    --kb-sel-bg:             rgba(255, 51, 119, 0.24);
+    --kb-sel-color:          #ffcee0;
+    --kb-sel-border:         rgba(255, 51, 119, 0.55);
+    --kb-sel-shadow:         0 0 0 1.5px rgba(255, 51, 119, 0.35),
+                             0 0 12px rgba(255, 51, 119, 0.42);
+    --kb-click-bg:           rgba(255, 51, 119, 0.50);
+    --kb-click-color:        #ffffff;
+    --kb-click-shadow:       0 0 0 2.5px rgba(255, 0, 102, 0.55),
+                             0 0 18px rgba(255, 0, 102, 0.60);
 }
 
-/* -------------------------------------------------------------------
-   FLOATING CHERRY PETALS
-   ------------------------------------------------------------------- */
-html.kirschbluete body {
-    position: relative;
-    overflow-x: hidden;
+/* ═══════════════════════════════════════════════════════════════
+   JELLY ANIMATIONS
+   ═══════════════════════════════════════════════════════════════ */
+@keyframes kb-jelly-pop {
+    0%   { transform: scale(0.86); opacity: 0; }
+    55%  { transform: scale(1.03); }
+    75%  { transform: scale(0.98); }
+    88%  { transform: scale(1.01); }
+    100% { transform: scale(1.00); opacity: 1; }
 }
 
-html.kirschbluete body::before,
-html.kirschbluete body::after {
-    content: "🌸";
-    position: fixed;
-    font-size: 20px;
-    z-index: 100;
-    pointer-events: none;
-    opacity: 0.6;
-    animation: cherry-float 10s linear infinite;
-}
-html.kirschbluete body::before { left: 10%;  top: -50px; animation-delay: 0s; }
-html.kirschbluete body::after  { right: 20%; top: -50px; animation-delay: 5s; font-size: 15px; }
-
-@keyframes cherry-float {
-    0%   { transform: translateY(0) rotate(0); opacity: 0; }
-    10%  { opacity: 0.6; }
-    90%  { opacity: 0.6; }
-    100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+html.kirschbluete [id$="Modal"] > div,
+html.kirschbluete [id$="Modal"] > div > div {
+    animation: kb-jelly-pop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
-/* -------------------------------------------------------------------
-   SURFACES — extra box-shadow / border effects on top of the bridge
-   ------------------------------------------------------------------- */
+/* ═══════════════════════════════════════════════════════════════
+   SWR LOGO — idle breathing glow + hover jelly spring
+   ═══════════════════════════════════════════════════════════════ */
+@keyframes kb-logo-breathe {
+    0%,  100% { filter: drop-shadow(0 0 3px rgba(255, 107, 158, 0.50)); }
+    50%       { filter: drop-shadow(0 0 10px rgba(255, 51, 119, 0.95)) drop-shadow(0 0 22px rgba(255, 107, 158, 0.45)); }
+}
+@keyframes kb-logo-hue {
+    0%,  100% { fill: #ff6b9e; }
+    30%       { fill: #ff3377; }
+    65%       { fill: #ffb6c8; }
+}
+
+/* Allow the logo glow / scale to paint outside h1's truncate clip */
+html.kirschbluete h1 {
+    overflow: visible !important;
+}
+/* Re-apply truncation to the title text-span only */
+html.kirschbluete h1 .swr-title {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    min-width: 0 !important;
+}
+
+html.kirschbluete h1 svg {
+    animation: kb-logo-breathe 3.6s ease-in-out 2.2s infinite;
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.4),
+                filter 0.4s ease !important;
+    transform-origin: left center;
+    will-change: filter, transform;
+    overflow: visible !important; /* glow must not be self-clipped */
+}
+html.kirschbluete h1 svg path {
+    animation: kb-logo-hue 5.5s ease-in-out 2.2s infinite;
+    transition: fill 0.6s ease !important;
+}
+html.kirschbluete h1:hover svg {
+    animation-play-state: paused;
+    transform: scale(1.09) rotate(1.5deg) !important;
+    filter: drop-shadow(0 0 14px rgba(255, 51, 119, 0.95))
+            drop-shadow(0 0 32px rgba(255, 107, 158, 0.55))
+            drop-shadow(0 0  6px rgba(255, 180, 200, 0.80)) !important;
+}
+html.kirschbluete h1:hover svg path {
+    animation-play-state: paused;
+    fill: #ff3377 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SURFACES — card depth + jelly border
+   ═══════════════════════════════════════════════════════════════ */
 html.kirschbluete:not(.dark) .bg-white,
 html.kirschbluete:not(.dark) .bg-slate-50,
 html.kirschbluete:not(.dark) .bg-slate-100 {
-    box-shadow: 0 8px 32px rgba(232, 139, 164, 0.15) !important;
-    border: 2px solid #fffafb !important;
+    box-shadow: 0 4px 20px rgba(232, 139, 164, 0.12),
+                0 1px  4px rgba(232, 139, 164, 0.08) !important;
+    border: 1.5px solid #fce6ed !important;
 }
 html.kirschbluete.dark .bg-white,
 html.kirschbluete.dark .bg-slate-50,
@@ -118,32 +203,29 @@ html.kirschbluete.dark .dark\:bg-zinc-950,
 html.kirschbluete.dark .dark\:bg-zinc-900,
 html.kirschbluete.dark .dark\:bg-oled,
 html.kirschbluete.dark .dark\:bg-zinc-800 {
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
-    border: 2px solid #2a1b38 !important;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.42),
+                0 0  12px rgba(255, 51, 119, 0.06) !important;
+    border: 1.5px solid #2a1b38 !important;
 }
 
-/* -------------------------------------------------------------------
-   LIST ITEM SELECTED — cherry style with 4px border
-   ------------------------------------------------------------------- */
-html.kirschbluete:not(.dark) .list-item-selected {
-    border-left: 4px solid var(--theme-accent) !important;
-    padding-left: calc(0.75rem - 4px) !important;
-}
-html.kirschbluete.dark .list-item-selected {
+/* ═══════════════════════════════════════════════════════════════
+   LIST ITEM SELECTED
+   ═══════════════════════════════════════════════════════════════ */
+html.kirschbluete .list-item-selected {
     border-left: 4px solid var(--theme-accent) !important;
     padding-left: calc(0.75rem - 4px) !important;
 }
 
-/* -------------------------------------------------------------------
-   INPUTS
-   ------------------------------------------------------------------- */
+/* ═══════════════════════════════════════════════════════════════
+   INPUTS — jelly focus bloom
+   ═══════════════════════════════════════════════════════════════ */
 html.kirschbluete:not(.dark) input[type="text"],
 html.kirschbluete:not(.dark) textarea,
 html.kirschbluete:not(.dark) select {
     background-color: #ffffff !important;
     color: #4a343b !important;
     border: 2px solid #fce6ed !important;
-    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) !important;
+    transition: all 0.28s cubic-bezier(0.68, -0.45, 0.265, 1.45) !important;
 }
 html.kirschbluete.dark input[type="text"],
 html.kirschbluete.dark textarea,
@@ -151,71 +233,442 @@ html.kirschbluete.dark select {
     background-color: #120b1c !important;
     color: #fff0f5 !important;
     border: 2px solid #3b264d !important;
-    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) !important;
+    transition: all 0.28s cubic-bezier(0.68, -0.45, 0.265, 1.45) !important;
 }
 html.kirschbluete:not(.dark) input[type="text"]:focus,
 html.kirschbluete:not(.dark) textarea:focus,
 html.kirschbluete:not(.dark) select:focus {
     border-color: #ff6b9e !important;
-    box-shadow: 0 0 15px rgba(255, 107, 158, 0.4) !important;
+    box-shadow: 0 0 0 4px rgba(255, 107, 158, 0.18),
+                0 0 16px rgba(255, 107, 158, 0.22) !important;
     outline: none !important;
-    transform: scale(1.02);
+    transform: scale(1.015);
 }
 html.kirschbluete.dark input[type="text"]:focus,
 html.kirschbluete.dark textarea:focus,
 html.kirschbluete.dark select:focus {
     border-color: #ff3377 !important;
-    box-shadow: 0 0 15px rgba(255, 51, 119, 0.5) !important;
+    box-shadow: 0 0 0 4px rgba(255, 51, 119, 0.22),
+                0 0 18px rgba(255, 51, 119, 0.28) !important;
     outline: none !important;
-    transform: scale(1.02);
+    transform: scale(1.015);
+}
+/* Search bar lives inside overflow:hidden wrapper — disable horizontal expansion */
+html.kirschbluete #searchInput:focus {
+    transform: none !important;
 }
 
-/* -------------------------------------------------------------------
-   ROUNDED STYLING — softer corners
-   ------------------------------------------------------------------- */
+/* ═══════════════════════════════════════════════════════════════
+   ROUNDED STYLING — soft jelly corners
+   ═══════════════════════════════════════════════════════════════ */
 html.kirschbluete .rounded-md { border-radius: 16px !important; }
 html.kirschbluete input,
-html.kirschbluete button { border-radius: 12px !important; }
+html.kirschbluete button       { border-radius: 12px !important; }
 
+/* ═══════════════════════════════════════════════════════════════
+   BUTTONS — jelly micro-interactions + 3-state cherry interaction
+   Note: :not([id="clearSearchBtn"]) uses attribute syntax (NOT ID selector)
+   so the general rule stays at specificity (0,8,2), letting all ID-based
+   overrides below win cleanly even with !important on both sides.
+   ═══════════════════════════════════════════════════════════════ */
 html.kirschbluete a[id*="btn"],
-html.kirschbluete button:not(.text-xs):not([title="Suchen"]):not([title*="Favorit"]):not([title*="Navigation"]):not(#clearSearchBtn):not([onclick^="close"]) {
+html.kirschbluete button:not(.text-xs):not([title="Suchen"]):not([title*="Favorit"]):not([title*="Navigation"]):not([id="clearSearchBtn"]):not([onclick^="close"]):not(.nav-share-btn):not([onclick="copyCoords()"]):not(#btnAddToPlanner) {
     border-radius: 12px !important;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
-    border: 2px solid transparent !important;
+    transition: background-color 0.22s ease,
+                color 0.22s ease,
+                box-shadow 0.22s ease,
+                transform  0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                border-color 0.22s ease !important;
+    border: 1.5px solid var(--theme-border) !important;
 }
-html.kirschbluete button:hover,
+/* nav-share-btn: borderless, 3-state cherry icon interaction */
+html.kirschbluete .nav-share-btn {
+    border: none !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    color: var(--theme-text-muted) !important;
+    transition: color 0.20s ease, filter 0.20s ease, transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+/* Hover: warm cherry blush */
+html.kirschbluete .nav-share-btn:hover {
+    color:  var(--kb-hover-color) !important;
+    filter: drop-shadow(0 0 4px rgba(255, 107, 158, 0.40)) !important;
+    transform: scale(1.18) rotate(-8deg) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+/* Press: vivid cherry burst */
+html.kirschbluete .nav-share-btn:active {
+    color:  var(--kb-click-color) !important;
+    filter: drop-shadow(0 0 8px rgba(255, 0, 102, 0.60)) !important;
+    transform: scale(0.90) rotate(0deg) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+/* ── Hover: faint cherry blossom wash ── */
+html.kirschbluete button:hover:not(.nav-share-btn):not([id="clearSearchBtn"]),
 html.kirschbluete a[id*="btn"]:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(232, 139, 164, 0.25) !important;
+    background-color: var(--kb-hover-bg) !important;
+    color:            var(--kb-hover-color) !important;
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 0 6px 18px rgba(255, 51, 119, 0.16),
+                0 2px  6px rgba(232, 139, 164, 0.14) !important;
+}
+/* ── :active (press): vivid cherry blossom + glow ── */
+html.kirschbluete button:active:not(.nav-share-btn):not([id="clearSearchBtn"]),
+html.kirschbluete a[id*="btn"]:active {
+    background-color: var(--kb-click-bg)    !important;
+    color:            var(--kb-click-color) !important;
+    transform: scale(0.93) !important;
+    box-shadow: var(--kb-click-shadow) !important;
+}
+/* ClearSearch button — keep its own hover/active (inherits global styles) */
+html.kirschbluete #clearSearchBtn:hover {
+    color: var(--theme-accent) !important;
 }
 
-/* -------------------------------------------------------------------
-   SCROLLBARS — bright cherry pink
-   ------------------------------------------------------------------- */
-html.kirschbluete ::-webkit-scrollbar { width: 10px; height: 10px; }
+/* ── Search bar — magnifying glass icon follows focus ── */
+/* group-focus-within:text-blue-500 → cherry pink when input is active */
+html.kirschbluete .group-focus-within\:text-blue-500 {
+    color: var(--theme-accent) !important;
+}
+html.kirschbluete .group:focus-within .group-focus-within\:text-blue-500,
+html.kirschbluete .group:focus-within svg[class*="group-focus-within"] {
+    color: #ff3377 !important;
+    filter: drop-shadow(0 0 5px rgba(255, 51, 119, 0.60)) !important;
+}
+
+/* ── List row navigation icon (the start-nav link, not a btn) ── */
+/* The link uses hover:text-blue-600 — already handled by global .hover:text-blue-600
+   override in styles.css, which maps to --theme-accent-hover.
+   Below we add the cherry icon glow on hover. */
+html.kirschbluete a[title="Navigation starten"]:hover {
+    color: var(--kb-hover-color) !important;
+    filter: drop-shadow(0 0 4px rgba(255, 107, 158, 0.40)) !important;
+}
+html.kirschbluete a[title="Navigation starten"]:active {
+    color: var(--kb-click-color) !important;
+    filter: drop-shadow(0 0 8px rgba(255, 0, 102, 0.60)) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DETAIL PANEL / FOOTER ACTION BUTTONS — no border, 3-state pink
+   These IDs have specificity (1,1,x); general button rule dropped
+   its ID-in-:not() so it's now (0,8,2) — footer rules reliably win.
+   ═══════════════════════════════════════════════════════════════ */
+html.kirschbluete a#btnTagebuch,
+html.kirschbluete a#btnOrdner,
+html.kirschbluete a#btnRoute,
+html.kirschbluete button#btnAddToPlanner,
+html.kirschbluete button[onclick="copyCoords()"] {
+    border-width:  0 !important;
+    border-style:  none !important;
+    border-color:  transparent !important;
+    background:    var(--theme-surface-alt) !important;
+    box-shadow:    none !important;
+}
+/* Hover: faint cherry */
+html.kirschbluete a#btnTagebuch:hover,
+html.kirschbluete a#btnOrdner:hover,
+html.kirschbluete a#btnRoute:hover,
+html.kirschbluete button#btnAddToPlanner:hover,
+html.kirschbluete button[onclick="copyCoords()"]:hover {
+    background:    var(--kb-hover-bg) !important;
+    color:         var(--kb-hover-color) !important;
+}
+/* Press: vivid cherry glow */
+html.kirschbluete a#btnTagebuch:active,
+html.kirschbluete a#btnOrdner:active,
+html.kirschbluete a#btnRoute:active,
+html.kirschbluete button#btnAddToPlanner:active,
+html.kirschbluete button[onclick="copyCoords()"]:active {
+    background:    var(--kb-click-bg)    !important;
+    color:         var(--kb-click-color) !important;
+    box-shadow:    var(--kb-click-shadow) !important;
+    transform:     scale(0.93) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INTERACTIVE SELECTION STATES — all blue Tailwind tokens → cherry
+   Covers: filter count badge, sort options, direction buttons,
+   theme/mode selection pills, focus rings.
+   3-state: hover = faint pink, selected = vibrant glowing pink,
+            press (:active) = even brighter.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* bg-blue-50 & bg-blue-100 → selected cherry bg */
+html.kirschbluete .bg-blue-50,
+html.kirschbluete .bg-blue-100 {
+    background-color: var(--kb-sel-bg)    !important;
+    color:            var(--kb-sel-color) !important;
+}
+html.kirschbluete .dark\:bg-blue-900\/50,
+html.kirschbluete .dark\:bg-blue-900\/30 {
+    background-color: var(--kb-sel-bg)    !important;
+    color:            var(--kb-sel-color) !important;
+}
+html.kirschbluete .text-blue-700,
+html.kirschbluete .dark\:text-blue-300 {
+    color: var(--kb-sel-color) !important;
+}
+html.kirschbluete .border-blue-500 {
+    border-color: var(--kb-sel-border) !important;
+}
+/* Any element carrying both an active bg and a border gets the full glow */
+html.kirschbluete .bg-blue-50.border-blue-500,
+html.kirschbluete .bg-blue-100.border-blue-500 {
+    box-shadow: var(--kb-sel-shadow) !important;
+}
+/* Hover blue overrides → faint cherry */
+html.kirschbluete .hover\:bg-blue-100:hover,
+html.kirschbluete .dark\:hover\:bg-blue-100:hover,
+html.kirschbluete .dark\:hover\:bg-blue-900:hover,
+html.kirschbluete .dark\:hover\:bg-blue-900\/50:hover {
+    background-color: var(--kb-hover-bg)    !important;
+    color:            var(--kb-hover-color) !important;
+}
+/* :active press on any button/link that has a blue-class → brighter cherry */
+html.kirschbluete button:active .bg-blue-50,
+html.kirschbluete button:active .bg-blue-100,
+html.kirschbluete button.bg-blue-50:active,
+html.kirschbluete button.bg-blue-100:active {
+    background-color: var(--kb-click-bg)    !important;
+    color:            var(--kb-click-color) !important;
+    box-shadow:       var(--kb-click-shadow) !important;
+}
+/* Active filter count badge */
+html.kirschbluete #activeFilterCount {
+    background-color: var(--kb-sel-bg)    !important;
+    color:            var(--kb-sel-color) !important;
+    border:           1px solid var(--kb-sel-border) !important;
+    box-shadow:       var(--kb-sel-shadow) !important;
+}
+
+/* Primary CTA buttons */
+html.kirschbluete .bg-blue-600 {
+    background: var(--theme-accent) !important;
+    border-color: var(--theme-accent) !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+html.kirschbluete .bg-blue-600:hover {
+    background: var(--theme-accent-hover) !important;
+    border-color: var(--theme-accent-hover) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SETTINGS / APPSETTINGS MODAL — active option = vibrant cherry
+   Scoped to modals so they use the full glow rather than the soft token.
+   ═══════════════════════════════════════════════════════════════ */
+html.kirschbluete :is(#settingsModal, #appSettingsModal) .bg-blue-100,
+html.kirschbluete :is(#settingsModal, #appSettingsModal) .bg-blue-50,
+html.kirschbluete :is(#settingsModal, #appSettingsModal) .dark\:bg-blue-900\/50,
+html.kirschbluete :is(#settingsModal, #appSettingsModal) .dark\:bg-blue-900\/30 {
+    background-color: var(--kb-sel-bg)     !important;
+    border-color:     var(--kb-sel-border) !important;
+    color:            var(--kb-sel-color)  !important;
+    box-shadow:       var(--kb-sel-shadow) !important;
+    font-weight: 600 !important;
+}
+html.kirschbluete :is(#settingsModal, #appSettingsModal) .text-blue-700,
+html.kirschbluete :is(#settingsModal, #appSettingsModal) .dark\:text-blue-300 {
+    color: var(--kb-sel-color) !important;
+}
+/* Hover inside modals */
+html.kirschbluete :is(#settingsModal, #appSettingsModal) button:hover {
+    background-color: var(--kb-hover-bg)    !important;
+    color:            var(--kb-hover-color) !important;
+}
+/* Press inside modals */
+html.kirschbluete :is(#settingsModal, #appSettingsModal) button:active {
+    background-color: var(--kb-click-bg)    !important;
+    color:            var(--kb-click-color) !important;
+    box-shadow:       var(--kb-click-shadow) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FILTER CHIPS — 3-state pink system
+   Include state (green) = soft petal pink + "+ " suffix
+   Exclude state (red)   = deeper rose + "− " suffix
+   Neutral              = standard surface, hover = faint pink
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Include chips (green → petal pink) */
+html.kirschbluete .border-green-500         { border-color: #e88ba4 !important; }
+html.kirschbluete .bg-green-100             { background-color: #ffe0ec !important; }
+html.kirschbluete .text-green-700           { color: #9c0045 !important; }
+html.kirschbluete .dark\:bg-green-900\/30   { background-color: rgba(255, 107, 158, 0.18) !important; }
+html.kirschbluete .dark\:text-green-300     { color: #ff9ab8 !important; }
+html.kirschbluete .dark\:border-green-500   { border-color: #ff6b9e !important; }
+
+/* Exclude chips (red → deep cherry) */
+html.kirschbluete .border-red-500           { border-color: #c8005f !important; }
+html.kirschbluete .bg-red-100               { background-color: #ffc5dc !important; }
+html.kirschbluete .text-red-700             { color: #7a0036 !important; }
+html.kirschbluete .dark\:bg-red-900\/30     { background-color: rgba(255, 0, 102, 0.22) !important; }
+html.kirschbluete .dark\:text-red-300       { color: #ff6888 !important; }
+html.kirschbluete .dark\:border-red-500     { border-color: #ff3377 !important; }
+
+/* Chip hover → faint cherry on neutral state only */
+html.kirschbluete #areaChipsContainer button:hover {
+    background-color: var(--kb-hover-bg)    !important;
+    color:            var(--kb-hover-color) !important;
+    border-color:     var(--theme-accent)   !important;
+}
+/* Chip :active → vivid cherry glow */
+html.kirschbluete #areaChipsContainer button:active {
+    background-color: var(--kb-click-bg)    !important;
+    color:            var(--kb-click-color) !important;
+    box-shadow:       var(--kb-click-shadow) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FAVORITE STAR → cherry rose
+   ═══════════════════════════════════════════════════════════════ */
+html.kirschbluete:not(.dark) .text-amber-500 { color: #e88ba4 !important; }
+html.kirschbluete.dark       .text-amber-500 { color: #ff6b9e !important; }
+
+/* ═══════════════════════════════════════════════════════════════
+   BUG REPORT MODAL
+   ═══════════════════════════════════════════════════════════════ */
+html.kirschbluete #bugReportModal > div {
+    background: var(--theme-surface) !important;
+    border-color: var(--theme-border) !important;
+}
+html.kirschbluete #bugReportModal .bg-slate-50 { background: var(--theme-surface-alt) !important; }
+html.kirschbluete #bugReportModal .bug-type-btn {
+    border-radius: 10px !important;
+    transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+html.kirschbluete #bugReportModal .bug-type-btn:hover {
+    transform: translateY(-2px) scale(1.03) !important;
+    border-color: var(--theme-accent) !important;
+    background: var(--theme-accent-bg) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TOURENPLANER DRAWER
+   ═══════════════════════════════════════════════════════════════ */
+html.kirschbluete #plannerDrawer {
+    background: var(--theme-surface) !important;
+    border-color: var(--theme-border) !important;
+}
+html.kirschbluete .planner-stop-row      { border-color: var(--theme-border) !important; }
+html.kirschbluete .planner-suggest-row:hover { background: var(--theme-accent-bg) !important; }
+html.kirschbluete .planner-ep-result {
+    background: var(--theme-surface-alt) !important;
+    border-color: var(--theme-border) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   OVERLAY PANEL — --ov-* tokens
+   ═══════════════════════════════════════════════════════════════ */
+html.kirschbluete .ov-panel {
+    background: var(--ov-bg) !important;
+    border-color: var(--ov-border) !important;
+    box-shadow: 0 8px 32px rgba(232, 139, 164, 0.15) !important;
+}
+html.kirschbluete .ov-header {
+    background: var(--ov-section-bg) !important;
+    border-color: var(--ov-divider) !important;
+}
+html.kirschbluete .ov-header-station  { color: var(--ov-body-text) !important; }
+html.kirschbluete .ov-header-name     { color: var(--ov-muted) !important; }
+html.kirschbluete .ov-toolbar         { background: var(--ov-bg) !important; border-color: var(--ov-divider) !important; }
+html.kirschbluete .ov-tb-cat          { color: var(--ov-body-text) !important; border-radius: 10px !important; }
+html.kirschbluete .ov-tb-cat:hover    { background: var(--kb-hover-bg)   !important; color: var(--kb-hover-color) !important; }
+html.kirschbluete .ov-tb-cat.active   {
+    background: var(--kb-sel-bg)    !important;
+    color:      var(--kb-sel-color) !important;
+    box-shadow: var(--kb-sel-shadow) !important;
+}
+html.kirschbluete .ov-tb-cat:active   {
+    background: var(--kb-click-bg)    !important;
+    color:      var(--kb-click-color) !important;
+    box-shadow: var(--kb-click-shadow) !important;
+}
+html.kirschbluete .ov-sub-btn         { border-radius: 8px !important; }
+html.kirschbluete .ov-sub-btn:hover   { background: var(--kb-hover-bg)   !important; color: var(--kb-hover-color) !important; }
+html.kirschbluete .ov-sub-btn.active  {
+    background:   var(--kb-sel-bg)    !important;
+    color:        var(--kb-sel-color) !important;
+    border-color: var(--kb-sel-border) !important;
+    box-shadow:   var(--kb-sel-shadow) !important;
+}
+html.kirschbluete .ov-sub-btn:active  {
+    background: var(--kb-click-bg)    !important;
+    color:      var(--kb-click-color) !important;
+    box-shadow: var(--kb-click-shadow) !important;
+}
+html.kirschbluete .ov-body            { background: var(--ov-bg) !important; }
+html.kirschbluete .ov-footer          { background: var(--ov-section-bg) !important; border-color: var(--ov-divider) !important; }
+html.kirschbluete .ov-trigger-btn     { background: var(--ov-section-bg) !important; border-radius: 10px !important; }
+html.kirschbluete .ov-trigger-btn:hover  { background: var(--kb-hover-bg)   !important; color: var(--kb-hover-color) !important; }
+html.kirschbluete .ov-trigger-btn.active {
+    background: var(--kb-sel-bg)    !important;
+    color:      var(--kb-sel-color) !important;
+    box-shadow: var(--kb-sel-shadow) !important;
+}
+html.kirschbluete .ov-trigger-btn:active {
+    background: var(--kb-click-bg)    !important;
+    color:      var(--kb-click-color) !important;
+    box-shadow: var(--kb-click-shadow) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TUTORIAL KBD BADGES
+   ═══════════════════════════════════════════════════════════════ */
+html.kirschbluete .tutorial-kbd {
+    background: var(--theme-accent-bg) !important;
+    color: var(--theme-accent-text) !important;
+    border-color: var(--theme-border) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SCROLLBARS — cherry gradient
+   ═══════════════════════════════════════════════════════════════ */
+html.kirschbluete ::-webkit-scrollbar         { width: 8px; height: 8px; }
 html.kirschbluete:not(.dark) ::-webkit-scrollbar-track { background: #fff4f8 !important; border-radius: 10px; }
-html.kirschbluete.dark      ::-webkit-scrollbar-track { background: #0d0814 !important; border-radius: 10px; }
+html.kirschbluete.dark       ::-webkit-scrollbar-track { background: #0d0814 !important; border-radius: 10px; }
 html.kirschbluete:not(.dark) ::-webkit-scrollbar-thumb {
-    background: #ff6b9e !important; border-radius: 10px;
+    background: linear-gradient(160deg, #ff85a0, #ff6b9e) !important;
+    border-radius: 10px;
     border: 2px solid #fff4f8;
 }
 html.kirschbluete.dark ::-webkit-scrollbar-thumb {
-    background: #ff3377 !important; border-radius: 10px;
+    background: linear-gradient(160deg, #ff3377, #ff6b9e) !important;
+    border-radius: 10px;
     border: 2px solid #0d0814;
 }
-html.kirschbluete:not(.dark) ::-webkit-scrollbar-thumb:hover { background: #ff4785 !important; }
-html.kirschbluete.dark       ::-webkit-scrollbar-thumb:hover { background: #ff6699 !important; }
+html.kirschbluete ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(160deg, #ff1166, #ff4d88) !important;
+}
 
-/* -------------------------------------------------------------------
-   HEADER SVG — cherry pink SWR logo
-   ------------------------------------------------------------------- */
-html.kirschbluete h1 svg path,
-html.kirschbluete.dark h1 svg path { fill: #ff6b9e !important; transition: all 0.8s ease-in-out; }
-html.kirschbluete h1:hover svg { transform: rotate(2deg) scale(1.1); }
+/* ═══════════════════════════════════════════════════════════════
+   SPLIT-PANE DIVIDER — turns cherry on hover / drag
+   ═══════════════════════════════════════════════════════════════ */
+html.kirschbluete #splitDivider:hover #splitDividerBar,
+html.kirschbluete body.split-dragging #splitDividerBar {
+    background: #ff3377 !important;
+    box-shadow: 0 0 8px rgba(255, 51, 119, 0.60) !important;
+    width: 3px !important;
+}
 
-/* -------------------------------------------------------------------
-   FILTER CHIPS
-   ------------------------------------------------------------------- */
-html.kirschbluete .border-red-500 { border-color: #f3a6b6 !important; }
-html.kirschbluete .bg-red-100     { background: #ffe6eb !important; }
-html.kirschbluete .text-red-700   { color: #d66b86 !important; }
+/* ═══════════════════════════════════════════════════════════════
+   FILTER / SORT MENU ROWS — 3-state pink via Tailwind hover classes
+   ═══════════════════════════════════════════════════════════════ */
+/* The sort option and direction buttons generated by JS use Tailwind
+   hover:bg-slate-50 / dark:hover:bg-zinc-800 on non-active rows.
+   Override those to a faint cherry hover. */
+html.kirschbluete .hover\:bg-slate-50:hover,
+html.kirschbluete .dark\:hover\:bg-zinc-800:hover,
+html.kirschbluete .hover\:bg-slate-100:hover {
+    background-color: var(--kb-hover-bg)    !important;
+    color:            var(--kb-hover-color) !important;
+}
+/* Focus ring — cherry glow instead of blue outline */
+html.kirschbluete :focus-visible {
+    outline-color: #ff3377 !important;
+    box-shadow: 0 0 0 2px rgba(255, 51, 119, 0.30) !important;
+}

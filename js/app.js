@@ -41,6 +41,18 @@ const customThemes = [
 let currentAppearance = localStorage.getItem('appearance') || 'system';
 let currentColorTheme = localStorage.getItem('colorTheme') || 'standard';
 
+/* Lazy-loads js/theme-effects.js on first use (kirschbluete only) then fires callback */
+function _ensureThemeEffects(callback) {
+    if (typeof ThemeEffects !== 'undefined') { callback(); return; }
+    const existing = document.getElementById('theme-effects-script');
+    if (existing) { existing.addEventListener('load', callback, { once: true }); return; }
+    const s = document.createElement('script');
+    s.id  = 'theme-effects-script';
+    s.src = 'js/theme-effects.js';
+    s.addEventListener('load', callback, { once: true });
+    document.head.appendChild(s);
+}
+
 function changeAppearance(mode) {
     currentAppearance = mode;
     localStorage.setItem('appearance', mode);
@@ -84,6 +96,13 @@ function applyThemeAndAppearance() {
     updateSettingsUI();
     if (typeof updateLeafletMapTheme === 'function') {
         updateLeafletMapTheme();
+    }
+    /* Trigger JS-driven theme particle effects — script is lazy-loaded only for kirschbluete */
+    const themeId = theme ? theme.id : 'standard';
+    if (themeId === 'kirschbluete') {
+        _ensureThemeEffects(function () { ThemeEffects.apply('kirschbluete'); });
+    } else if (typeof ThemeEffects !== 'undefined') {
+        ThemeEffects.destroy();
     }
 }
 
