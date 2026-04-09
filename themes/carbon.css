@@ -592,19 +592,23 @@ html.carbon body.planner-mode .planner-add-btn {
     display: inline-flex;
 }
 
-/* ─── Tour nav button (header) ──────────────────────────────────────────────────────
-   The global html.carbon button rule forces min-height:32px and padding-inline:15px,
-   which makes the small text-xs nav button oversized. Reset to auto sizing. */
-html.carbon button[title="Tourenplaner"] {
-    min-height: unset !important;
-    padding-inline: 0.75rem !important;  /* px-3 = 12px */
-}
-
-/* ─── Planner badge — restore circular shape ─────────────────────────────────────────
-   html.carbon .rounded-full zeroes border-radius globally; the count bubble
-   on the Tour button must stay a circle. */
+/* ─── Planner badge — pin to 16×16px circle ─────────────────────────────────────────
+   Carbon's global button sizing and .rounded-full reset can inflate / square it. */
 html.carbon #plannerBadge {
+    position:      absolute !important;
+    width:         16px !important;
+    height:        16px !important;
+    min-width:     16px !important;
+    min-height:    0    !important;
+    max-width:     16px !important;
+    max-height:    16px !important;
     border-radius: 9999px !important;
+    padding:       0 !important;
+    font-size:     10px !important;
+    line-height:   16px !important;
+    display:       flex !important;
+    align-items:   center !important;
+    justify-content: center !important;
 }
 
 /* ─── Filter chips ──────────────────────────────────────────────────────────────── */
