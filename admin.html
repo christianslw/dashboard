@@ -115,7 +115,6 @@
     <!-- Tabs -->
     <div class="flex gap-1 mb-4 border-b border-slate-200 dark:border-zinc-800">
         <button onclick="switchTab('standorte')" id="tab-standorte" class="tab-btn px-4 py-2 text-sm font-medium border-b-2 border-blue-500 text-blue-600 dark:text-blue-400">Standorte</button>
-        <button onclick="switchTab('overlays')" id="tab-overlays" class="tab-btn px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100">Overlay-Übersicht</button>
         <button onclick="switchTab('fahrtanweisungen')" id="tab-fahrtanweisungen" class="tab-btn px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100">Fahrtanweisungen</button>
     </div>
 
@@ -132,43 +131,26 @@
             <table class="w-full text-sm" id="standorteTable">
                 <thead>
                     <tr class="border-b border-slate-200 dark:border-zinc-800 text-left text-xs text-slate-500 dark:text-zinc-400 uppercase tracking-wide">
-                        <th class="cell w-24">Nr.</th>
-                        <th class="cell">Name</th>
+                        <th class="cell w-24 cursor-pointer select-none hover:text-slate-700 dark:hover:text-zinc-200 transition-colors whitespace-nowrap" onclick="setSortStandorte('nummer')">Nr. <i id="sort-icon-nummer" class="mdi mdi-sort-ascending text-blue-500 dark:text-blue-400"></i></th>
+                        <th class="cell cursor-pointer select-none hover:text-slate-700 dark:hover:text-zinc-200 transition-colors whitespace-nowrap" onclick="setSortStandorte('name')">Name <i id="sort-icon-name" class="mdi mdi-sort opacity-40"></i></th>
                         <th class="cell w-28">Lat</th>
                         <th class="cell w-28">Lon</th>
                         <th class="cell w-24 text-center">Fahrtanw.</th>
                         <th class="cell w-20 text-center">Overlays</th>
+                        <th class="cell w-44 cursor-pointer select-none hover:text-slate-700 dark:hover:text-zinc-200 transition-colors whitespace-nowrap" onclick="setSortStandorte('updatedAt')">Letzte Änderung <i id="sort-icon-updatedAt" class="mdi mdi-sort opacity-40"></i></th>
+                        <th class="cell w-36">Geändert von</th>
                         <th class="cell w-16 text-right">Aktionen</th>
                     </tr>
                 </thead>
                 <tbody id="standorteBody">
-                    <tr><td colspan="7" class="cell text-center text-slate-400 py-8">Lädt…</td></tr>
+                    <tr><td colspan="9" class="cell text-center text-slate-400 py-8">Lädt…</td></tr>
                 </tbody>
             </table>
         </div>
         <p id="tableCount" class="text-xs text-slate-400 dark:text-zinc-500 mt-2"></p>
     </div>
 
-    <!-- ─── TAB: Overlay-Übersicht ─────────────────────────────────────────── -->
-    <div id="pane-overlays" class="hidden">
-        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
-            <table class="w-full text-sm" id="overlaysTable">
-                <thead>
-                    <tr class="border-b border-slate-200 dark:border-zinc-800 text-left text-xs text-slate-500 dark:text-zinc-400 uppercase tracking-wide">
-                        <th class="cell w-24">Nr.</th>
-                        <th class="cell">Name</th>
-                        <th class="cell w-28 text-center">Elemente</th>
-                        <th class="cell w-44">Letzte Änderung</th>
-                        <th class="cell w-36">Geändert von</th>
-                        <th class="cell w-14 text-right">Aktionen</th>
-                    </tr>
-                </thead>
-                <tbody id="overlaysBody">
-                    <tr><td colspan="6" class="cell text-center text-slate-400 py-8">Lädt…</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+
 
     <!-- ─── TAB: Fahrtanweisungen ──────────────────────────────────────────── -->
     <div id="pane-fahrtanweisungen" class="hidden">
@@ -273,6 +255,54 @@ let standorte    = [];
 let overlayData  = {};
 let editMode     = 'add'; // 'add' | 'edit'
 let currentTab   = 'standorte';
+let standortSort = { col: 'nummer', dir: 'asc' };
+
+function sortedStandorte(data) {
+    return [...data].sort((a, b) => {
+        const { col, dir } = standortSort;
+        if (col === 'nummer') {
+            const cmp = String(a.nummer).localeCompare(String(b.nummer), undefined, { numeric: true, sensitivity: 'base' });
+            return dir === 'asc' ? cmp : -cmp;
+        }
+        if (col === 'name') {
+            const cmp = (a.name || '').localeCompare(b.name || '', 'de', { sensitivity: 'base' });
+            return dir === 'asc' ? cmp : -cmp;
+        }
+        if (col === 'updatedAt') {
+            const ta = overlayData[String(a.nummer)]?.updatedAt ? new Date(overlayData[String(a.nummer)].updatedAt).getTime() : 0;
+            const tb = overlayData[String(b.nummer)]?.updatedAt ? new Date(overlayData[String(b.nummer)].updatedAt).getTime() : 0;
+            if (!ta && !tb) return 0;
+            if (!ta) return 1;
+            if (!tb) return -1;
+            return dir === 'asc' ? ta - tb : tb - ta;
+        }
+        return 0;
+    });
+}
+
+function setSortStandorte(col) {
+    if (standortSort.col === col) {
+        standortSort.dir = standortSort.dir === 'asc' ? 'desc' : 'asc';
+    } else {
+        standortSort.col = col;
+        standortSort.dir = 'asc';
+    }
+    updateSortIcons();
+    renderStandorteTable(standorte);
+    filterTable();
+}
+
+function updateSortIcons() {
+    ['nummer', 'name', 'updatedAt'].forEach(col => {
+        const el = document.getElementById(`sort-icon-${col}`);
+        if (!el) return;
+        if (standortSort.col === col) {
+            el.className = 'mdi ' + (standortSort.dir === 'asc' ? 'mdi-sort-ascending' : 'mdi-sort-descending') + ' text-blue-500 dark:text-blue-400';
+        } else {
+            el.className = 'mdi mdi-sort opacity-40';
+        }
+    });
+}
 
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
 
@@ -317,14 +347,13 @@ function logout() {
 
 function switchTab(tab) {
     currentTab = tab;
-    ['standorte', 'overlays', 'fahrtanweisungen'].forEach(t => {
+    ['standorte', 'fahrtanweisungen'].forEach(t => {
         document.getElementById(`tab-${t}`).className =
             t === tab
             ? 'tab-btn px-4 py-2 text-sm font-medium border-b-2 border-blue-500 text-blue-600 dark:text-blue-400'
             : 'tab-btn px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100';
         document.getElementById(`pane-${t}`).classList.toggle('hidden', t !== tab);
     });
-    if (tab === 'overlays' && Object.keys(overlayData).length === 0) loadOverlays();
     if (tab === 'fahrtanweisungen') loadFahrtanweisungen();
 }
 
@@ -479,7 +508,7 @@ async function loadOverlays() {
     try {
         const res = await fetch('/api/overlays');
         overlayData = await res.json();
-        renderOverlaysTable();
+        renderStandorteTable(standorte);
     } catch { overlayData = {}; }
 }
 
@@ -488,22 +517,27 @@ async function loadOverlays() {
 function renderStandorteTable(data) {
     const tbody = document.getElementById('standorteBody');
     if (!data.length) {
-        tbody.innerHTML = `<tr><td colspan="7" class="cell text-center text-slate-400 py-10">
+        tbody.innerHTML = `<tr><td colspan="9" class="cell text-center text-slate-400 py-10">
             Keine Standorte im Backend. Klicke "Seed von standorte.js" um die statischen Daten zu importieren.
         </td></tr>`;
         document.getElementById('tableCount').textContent = '';
         return;
     }
-    const sorted = [...data].sort((a, b) => String(a.nummer).localeCompare(String(b.nummer)));
+    const sorted = sortedStandorte(data);
     tbody.innerHTML = sorted.map(s => {
-        const ovCount = (overlayData[String(s.nummer)]?.features?.length) ?? '—';
+        const ovEntry  = overlayData[String(s.nummer)];
+        const ovCount  = ovEntry?.features?.length ?? 0;
+        const updatedAt = ovEntry?.updatedAt ? new Date(ovEntry.updatedAt).toLocaleString('de-DE') : '—';
+        const updatedBy = ovEntry?.updatedBy || '—';
         return `<tr class="border-b border-slate-100 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors" data-nummer="${s.nummer}" data-name="${(s.name||'').toLowerCase()}">
             <td class="cell font-mono font-semibold">${esc(s.nummer)}</td>
             <td class="cell">${esc(s.name || '—')}</td>
             <td class="cell font-mono text-xs text-slate-500 dark:text-zinc-400">${s.lat?.toFixed(6) ?? '—'}</td>
             <td class="cell font-mono text-xs text-slate-500 dark:text-zinc-400">${s.lon?.toFixed(6) ?? '—'}</td>
             <td class="cell text-center text-xs">${s.fahrtanweisung ? `<span class="px-1.5 py-0.5 rounded bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400"><i class="mdi mdi-check"></i></span>` : '<span class="text-slate-300 dark:text-zinc-600">—</span>'}</td>
-            <td class="cell text-center text-xs">${typeof ovCount === 'number' && ovCount > 0 ? `<button onclick="openOverlayDetail('${esc(s.nummer)}')" class="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800/40 transition-colors font-medium">${ovCount}</button>` : `<button onclick="openOverlayDetail('${esc(s.nummer)}')" class="text-slate-300 dark:text-zinc-600 hover:text-blue-400 transition-colors px-1">+</button>`}</td>
+            <td class="cell text-center text-xs">${ovCount > 0 ? `<button onclick="openOverlayDetail('${esc(s.nummer)}')" class="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800/40 transition-colors font-medium">${ovCount}</button>` : `<button onclick="openOverlayDetail('${esc(s.nummer)}')" class="text-slate-300 dark:text-zinc-600 hover:text-blue-400 transition-colors px-1">+</button>`}</td>
+            <td class="cell text-xs text-slate-500 dark:text-zinc-400 whitespace-nowrap">${updatedAt}</td>
+            <td class="cell text-xs text-slate-500 dark:text-zinc-400">${esc(updatedBy)}</td>
             <td class="cell text-right">
                 <div class="inline-flex items-center gap-0.5">
                     <button onclick="editStandort('${esc(s.nummer)}')" title="Bearbeiten"
@@ -521,36 +555,6 @@ function renderStandorteTable(data) {
     document.getElementById('tableCount').textContent = `${data.length} Standorte`;
 }
 
-function renderOverlaysTable() {
-    const tbody = document.getElementById('overlaysBody');
-    const entries = Object.entries(overlayData);
-    if (!entries.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="cell text-center text-slate-400 py-8">Keine Overlay-Einträge vorhanden.</td></tr>';
-        return;
-    }
-    const sorted = entries.sort(([a], [b]) => a.localeCompare(b));
-    tbody.innerHTML = sorted.map(([nummer, payload]) => {
-        const s = standorte.find(x => String(x.nummer) === String(nummer));
-        const name = s ? s.name : '—';
-        const count = Array.isArray(payload.features) ? payload.features.length : 0;
-        const updAt = payload.updatedAt ? new Date(payload.updatedAt).toLocaleString('de-DE') : '—';
-        return `<tr class="border-b border-slate-100 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
-            <td class="cell font-mono font-semibold">${esc(nummer)}</td>
-            <td class="cell">${esc(name)}</td>
-            <td class="cell text-center"><span class="px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-medium">${count}</span></td>
-            <td class="cell text-xs text-slate-500 dark:text-zinc-400">${updAt}</td>
-            <td class="cell text-xs text-slate-500 dark:text-zinc-400">${esc(payload.updatedBy || '—')}</td>
-            <td class="cell text-right">
-                <div class="inline-flex items-center justify-end">
-                    <button onclick="deleteOverlay('${esc(nummer)}')" title="Overlay löschen"
-                        class="inline-flex items-center justify-center w-7 h-7 rounded text-slate-400 dark:text-zinc-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors">
-                        <i class="mdi mdi-delete-outline text-base leading-none"></i>
-                    </button>
-                </div>
-            </td>
-        </tr>`;
-    }).join('');
-}
 
 // ─── SEARCH FILTER ────────────────────────────────────────────────────────────
 
@@ -921,7 +925,6 @@ async function deleteOverlayFeature(idx) {
     overlayData[overlayDetailNummer] = newPayload;
     renderOverlayDetail();
     renderStandorteTable(standorte);
-    renderOverlaysTable();
     setStatus(`Element entfernt (Standort ${overlayDetailNummer}) — ${new Date().toLocaleTimeString()}`);
 }
 
@@ -939,7 +942,6 @@ async function clearAllOverlaysDetail() {
     overlayDetailPayload = { features: [], updatedAt: null, updatedBy: null };
     renderOverlayDetail();
     renderStandorteTable(standorte);
-    renderOverlaysTable();
     setStatus(`Overlays für ${overlayDetailNummer} gelöscht — ${new Date().toLocaleTimeString()}`);
 }
 

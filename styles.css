@@ -2082,3 +2082,83 @@ body.planner-mode .planner-add-btn.is-queued .planner-add-icon {
     background: rgba(59,130,246,0.12);
     color: #60a5fa;
 }
+
+/* ─── Changelog Modal Content ──────────────────────────────────────────────── */
+
+.changelog-content { color: var(--theme-text-primary); }
+
+.cl-h2 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--theme-accent-text);
+    margin: 1.1rem 0 0.4rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid var(--theme-border);
+}
+.cl-h2:first-child { margin-top: 0; }
+
+.cl-h3 {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--theme-text-secondary);
+    margin: 0.85rem 0 0.3rem;
+}
+
+.cl-h4 {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--theme-text-secondary);
+    margin: 0.6rem 0 0.2rem;
+}
+
+.cl-p {
+    font-size: 0.8rem;
+    line-height: 1.55;
+    color: var(--theme-text-secondary);
+    margin: 0.25rem 0;
+}
+
+.cl-ul {
+    list-style: none;
+    padding: 0;
+    margin: 0.3rem 0 0.5rem;
+}
+
+.cl-li {
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--theme-text-secondary);
+    padding: 0.15rem 0 0.15rem 1.1rem;
+    position: relative;
+}
+.cl-li::before {
+    content: '–';
+    position: absolute;
+    left: 0;
+    color: var(--theme-text-muted);
+}
+
+.cl-hr {
+    border: none;
+    border-top: 1px solid var(--theme-border);
+    margin: 0.75rem 0;
+}
+
+.cl-code {
+    font-family: 'Consolas', 'Menlo', monospace;
+    font-size: 0.75rem;
+    background: var(--theme-surface-alt);
+    border: 1px solid var(--theme-border);
+    border-radius: 3px;
+    padding: 0.05em 0.35em;
+    color: var(--theme-accent-text);
+}
+
+.cl-a {
+    color: var(--theme-accent-text);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.cl-a:hover { opacity: 0.75; }

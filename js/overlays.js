@@ -19,6 +19,7 @@ const OVERLAY_DEFAULT_COLORS = {
     schranke:     '#ef4444',
     tresor:       '#3b82f6',
     hinweis:      '#eab308',
+    tor:          '#78716c',
     eisabfall_poly:  '#eab308',
     eisabfall_kreis: '#eab308',
     zone_poly:    '#8b5cf6',
@@ -57,7 +58,8 @@ const PFAD_STYLE_ICONS = {
 const OVERLAY_ICONS = {
     schranke: { label: 'Schranke',        symbol: '\u26d4', mdi: 'boom-gate'      },
     tresor:   { label: 'Schl\u00fcsseltresor', symbol: '\ud83d\udd10', mdi: 'lock' },
-    hinweis:  { label: 'Hinweis',         symbol: '\ud83d\udcac', mdi: 'comment-text' }
+    hinweis:  { label: 'Hinweis',         symbol: '\ud83d\udcac', mdi: 'comment-text' },
+    tor:      { label: 'Tor',             symbol: '\ud83d\udecb', mdi: 'gate'          }
 };
 
 /** Returns a colored MDI icon element as an HTML string. */
@@ -186,6 +188,7 @@ function describeFeature(f) {
         if (p.iconType === 'schranke') return { icon: mdiIcon('boom-gate',     color), label: p.label || 'Schranke',           color };
         if (p.iconType === 'tresor')   return { icon: mdiIcon('lock',          color), label: p.label || 'Schl\u00fcsseltresor', color };
         if (p.iconType === 'hinweis')  return { icon: mdiIcon('comment-text',  color), label: (p.note || 'Hinweis').substring(0, 35), color };
+        if (p.iconType === 'tor')      return { icon: mdiIcon('gate',          color), label: p.label || 'Tor',                color };
     }
     if (p.overlayType === 'zone' || p.overlayType === 'gefahrenzone') {
         const color = p.color || '#8b5cf6';
@@ -214,6 +217,7 @@ function getRouteLabel(rt) {
 function getIconTypeForTool(t) {
     if (t === 'schranke') return 'schranke';
     if (t === 'tresor') return 'tresor';
+    if (t === 'tor') return 'tor';
     return 'hinweis';
 }
 
@@ -1503,7 +1507,7 @@ function activateTool(toolId) {
             else if (overlayAnfahrtDrawMode === 'snap') startSnapRouteDraw();
             else startLineDraw();
             break;
-        case 'schranke': case 'tresor': case 'hinweis':
+        case 'schranke': case 'tresor': case 'hinweis': case 'tor':
             startMarkerDraw(getIconTypeForTool(toolId)); break;
         case 'eisabfall_poly': case 'zone_poly':
             startPolygonDraw(); break;
@@ -1953,6 +1957,12 @@ function updateToolBtnStates() {
     });
     updateDrawModeBtnStates();
     updateToolbarState();
+    // Show draw-mode selector only when a route tool is active
+    const drawModeGroup = document.getElementById('ovDrawModeGroup');
+    if (drawModeGroup) {
+        const routeActive = ['hauptzufahrt', 'alternativ', 'route_custom'].includes(overlayActiveTool);
+        drawModeGroup.classList.toggle('ov-hidden', !routeActive);
+    }
 }
 
 function updateDrawModeBtnStates() {
@@ -2072,9 +2082,9 @@ function buildPanelHTML() {
                     Frei
                 </button>
             </div>
-            <!-- Divider -->
+            <!-- Row 2: Drawing mode (only visible when a route tool is active) -->
+            <div id="ovDrawModeGroup" class="ov-hidden">
             <div class="ov-drawmode-divider"></div>
-            <!-- Row 2: Drawing mode -->
             <div class="ov-draw-mode-row">
                 <button type="button" class="ov-draw-mode-btn" data-drawmode="path" title="Wegpunkte durch Klicken setzen (Standard)">
                     <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3,17 9,11 13,15 21,7"/><circle cx="3" cy="17" r="1.5" fill="currentColor" stroke="none"/><circle cx="9" cy="11" r="1.5" fill="currentColor" stroke="none"/><circle cx="13" cy="15" r="1.5" fill="currentColor" stroke="none"/><circle cx="21" cy="7" r="1.5" fill="currentColor" stroke="none"/></svg>
@@ -2089,6 +2099,7 @@ function buildPanelHTML() {
                     Straße
                 </button>
             </div>
+            </div><!-- /ovDrawModeGroup -->
         </div>
 
         <!-- Sub-toolbar: Pfade -->
@@ -2119,6 +2130,10 @@ function buildPanelHTML() {
             <button type="button" class="ov-sub-btn" data-tool="tresor" title="Schlüsseltresor">
                 <i class="mdi mdi-lock" aria-hidden="true"></i>
                 Tresor
+            </button>
+            <button type="button" class="ov-sub-btn" data-tool="tor" title="Tor setzen">
+                <i class="mdi mdi-gate" aria-hidden="true"></i>
+                Tor
             </button>
             <button type="button" class="ov-sub-btn" data-tool="hinweis" title="Hinweis hinzufügen">
                 <i class="mdi mdi-comment-text" aria-hidden="true"></i>

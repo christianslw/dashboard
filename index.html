@@ -216,7 +216,11 @@
     <!-- Footer -->
     <div class="mx-4 md:mx-8 px-2 mb-4 flex items-center text-slate-400 dark:text-zinc-600">
         <div class="flex items-center gap-4 flex-1">
-            <div class="text-[10px] uppercase tracking-wider font-semibold">Standort DB v0.1</div>
+            <span id="appVersionBadge" class="text-[10px] uppercase tracking-wider font-semibold">Standort DB v0.1</span>
+            <button onclick="openChangelogModal()" class="text-[11px] font-medium text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1" title="Was ist neu?">
+                <i class="mdi mdi-tag-outline text-base"></i>
+                Was ist neu?
+            </button>
             <button id="helpBtn" onclick="openTutorial()" class="text-[11px] font-medium text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1">
                 <i class="mdi mdi-help-circle-outline text-base"></i>
                 Hilfe
@@ -953,10 +957,35 @@
     <script defer src="js/planner.js"></script>
     <script defer src="js/tutorial.js"></script>
     <script defer src="js/bugreport.js"></script>
+    <script defer src="js/changelog.js"></script>
     <!-- theme-effects.js is lazy-loaded by app.js only when the kirschbluete theme is active -->
     <script defer src="js/init.js"></script>
 
-    <!-- Bug Report Modal -->
+    <!-- CHANGELOG MODAL -->
+    <div id="changelogModal" class="fixed inset-0 bg-slate-900/50 dark:bg-black/80 z-[65] hidden flex items-center justify-center p-4" onclick="if(event.target===this)closeChangelogModal()">
+        <div class="bg-white dark:bg-zinc-900 rounded-md shadow-xl w-full max-w-lg border border-slate-200 dark:border-zinc-700 overflow-hidden flex flex-col" style="max-height:85vh">
+            <div class="p-4 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center bg-slate-50 dark:bg-zinc-900/50 shrink-0">
+                <h3 class="font-semibold text-slate-800 dark:text-zinc-100 flex items-center gap-2">
+                    <i class="mdi mdi-tag-outline text-slate-500 dark:text-zinc-400 text-xl"></i>
+                    Was ist neu?
+                </h3>
+                <button onclick="closeChangelogModal()" class="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors" title="Schließen">
+                    <i class="mdi mdi-close text-xl leading-none"></i>
+                </button>
+            </div>
+            <div id="changelogBody" class="overflow-y-auto flex-1 p-5 changelog-content"></div>
+            <div class="p-4 border-t border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/50 flex items-center justify-between shrink-0">
+                <label class="flex items-center gap-2 cursor-pointer select-none">
+                    <input type="checkbox" id="changelogHideFuture"
+                        onchange="onChangelogHideFutureChange(this.checked)"
+                        class="w-4 h-4 accent-blue-600 rounded">
+                    <span class="text-xs text-slate-500 dark:text-zinc-400">Zukünftige Meldungen nicht anzeigen</span>
+                </label>
+                <button onclick="closeChangelogModal()" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition-colors">OK</button>
+            </div>
+        </div>
+    </div>
+
     <div id="bugReportModal" class="fixed inset-0 bg-slate-900/60 dark:bg-black/80 z-[70] hidden flex items-center justify-center p-4" onclick="if(event.target===this)BugReport.close()">
         <div class="bg-white dark:bg-zinc-950 w-full max-w-lg rounded-md shadow-2xl border border-slate-200 dark:border-zinc-800 flex flex-col" style="max-height:90vh">
             <!-- Header -->

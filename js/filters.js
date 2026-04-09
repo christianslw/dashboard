@@ -1,5 +1,12 @@
 // ─── Filters ───────────────────────────────────────────────────────────────────────
 
+// Normalize a search string: lowercase + expand German umlauts so that
+// e.g. "grünsfeld" and "gruensfeld" both match the station name "GRUENSFELD".
+function normalizeSearchQuery(str) {
+    return String(str).toLowerCase()
+        .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss');
+}
+
 function loadFilterState() {
     try {
         const saved = localStorage.getItem('stationFilterState');
@@ -222,7 +229,7 @@ function initFilterMenu() {
 
 function getFilteredStandorte() {
     const searchInput = document.getElementById('searchInput');
-    const query = searchInput ? searchInput.value.toLowerCase() : '';
+    const query = normalizeSearchQuery(searchInput ? searchInput.value : '');
 
     const seen = new Set();
     const filtered = standorte.filter(s => {
@@ -230,8 +237,8 @@ function getFilteredStandorte() {
         if (seen.has(key)) return false;
         seen.add(key);
 
-        const matchesSearch = key.toLowerCase().includes(query) ||
-            String(s.name).toLowerCase().includes(query);
+        const matchesSearch = key.includes(query) ||
+            normalizeSearchQuery(s.name).includes(query);
 
         const areaCode = getStandortAreaCode(s.nummer);
         const matchesIncludedAreas = includedAreaCodes.size === 0 || (areaCode && includedAreaCodes.has(areaCode));

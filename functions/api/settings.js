@@ -13,6 +13,7 @@ const ALLOWED_KEYS = new Set([
     'navMode',
     'favoriteStations',
     'stationFilterState',
+    'hideChangelog',
 ]);
 
 // ─── GET ──────────────────────────────────────────────────────────────────────

@@ -28,3 +28,21 @@ id       = "e87705c3c7524995a4ccfe3c60b21b7a"
 
 # [vars]
 # ADMIN_SECRET is hidden, find it
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Preview / Staging Environment
+# Used for all dev/staging builds
+# ──────────────────────────────────────────────────────────────────────────────
+
+[env.preview]
+[[env.preview.kv_namespaces]]
+binding  = "OVERLAYS_KV"
+id       = "REPLACE_WITH_STAGING_OVERLAYS_KV_ID"
+
+[[env.preview.kv_namespaces]]
+binding  = "SETTINGS_KV"
+id       = "REPLACE_WITH_STAGING_SETTINGS_KV_ID"
+
+[[env.preview.kv_namespaces]]
+binding  = "STANDORTE_KV"
+id       = "REPLACE_WITH_STAGING_STANDORTE_KV_ID"

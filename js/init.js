@@ -136,6 +136,9 @@ window.onload = async () => {
 
     initTutorialHighlight();
 
+    // ── Changelog: show if new version available ───────────────────────────────
+    if (typeof initChangelog === 'function') initChangelog();
+
     // ── Deep link: open site from ?standort=NUMMER in URL ─────────────────────
     const urlParams = new URLSearchParams(location.search);
     const deepLinkNummer = urlParams.get('standort');
@@ -188,6 +191,7 @@ function handleGlobalKeydown(e) {
     if (e.key === 'Escape') {
         const modals = [
             { id: 'bugReportModal',      close: () => { if (typeof BugReport !== 'undefined') BugReport.close(); } },
+            { id: 'changelogModal',      close: () => { if (typeof closeChangelogModal === 'function') closeChangelogModal(); } },
             { id: 'overlayInputModal',   close: () => { if (typeof cancelOverlayInput === 'function') cancelOverlayInput(); } },
             { id: 'savedToursModal',     close: () => { if (typeof closeSavedToursModal === 'function') closeSavedToursModal(); } },
             { id: 'locationModal',       close: () => { if (typeof closeLocationModal === 'function') closeLocationModal(); } },
