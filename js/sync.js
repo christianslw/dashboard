@@ -26,6 +26,7 @@
     let _overlayLastVersion  = null;   // null means "first check"
     let _lastSettingsHash    = null;
     let _backendReachable    = false;
+    let _localSettingsDirty = false;   // true when local changes haven't been pushed yet
 
     // ─── USER ID ─────────────────────────────────────────────────────────────────
 
@@ -100,20 +101,30 @@
             const res = await fetch(`/api/settings?userId=${encodeURIComponent(uid)}`);
             if (!res.ok) return;
             const data = await res.json();
-            if (data.settings) _applySettings(data.settings);
+            // Skip applying backend settings if local changes are pending push —
+            // otherwise the pull would overwrite uncommitted changes and the
+            // debounced push would then send the stale backend values back.
+            if (data.settings && !_localSettingsDirty && !_settingsPushTimer) {
+                _applySettings(data.settings);
+            }
             _lastSettingsHash = _settingsHash(); // mark as clean after pulling
         } catch { /* backend may not be reachable — local fallback */ }
     }
 
     async function _pushSettings() {
         const uid = getUserId();
+        const snapshot = _collectSettings(); // capture before any concurrent change
+        _localSettingsDirty = false;         // optimistically clear; restore on failure
         try {
-            await fetch('/api/settings', {
+            const res = await fetch('/api/settings', {
                 method:  'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ userId: uid, settings: _collectSettings() }),
+                body:    JSON.stringify({ userId: uid, settings: snapshot }),
             });
-        } catch { /* silent */ }
+            if (!res.ok) _localSettingsDirty = true; // push failed — keep dirty flag
+        } catch {
+            _localSettingsDirty = true; // push failed — keep dirty flag
+        }
     }
 
     function _schedulePush() {
@@ -128,6 +139,7 @@
             const current = _settingsHash();
             if (current !== _lastSettingsHash) {
                 _lastSettingsHash = current;
+                _localSettingsDirty = true;
                 _schedulePush();
             }
         }, 2_000);

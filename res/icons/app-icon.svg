@@ -1,11 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#09090b"/>
-  <!-- SWR double-arrow motif, scaled to fit icon -->
-  <g fill="#ffffff">
-    <!-- Left arrow >>  -->
-    <path d="M160 370 L255 256 L160 142 L160 202 L213 256 L160 310 Z"/>
-    <path d="M248 370 L343 256 L248 142 L248 202 L301 256 L248 310 Z"/>
-    <!-- Accent dot -->
-    <circle cx="380" cy="256" r="22" fill="#3b82f6"/>
-  </g>
+    <!-- Schwarzer Hintergrund mit abgerundeten Ecken (App-Symbol) -->
+    <rect width="512" height="512" rx="115" fill="#000000" />
+
+    <!-- Bunte Punkte (Yellow, Red, Blue, Green, Orange, Purple) -->
+    <circle cx="75" cy="350" r="90" fill="#FFD60A" />   <!-- Gelb -->
+    <circle cx="380" cy="85" r="12" fill="#FF9F0A" />  <!-- Orange -->
+    <circle cx="150" cy="90" r="50" fill="#FF3B30" />  <!-- Rot -->
+    <circle cx="430" cy="380" r="70" fill="#30D158" />  <!-- Grün -->
+    <circle cx="60" cy="200" r="20" fill="#BF5AF2" /> <!-- Lila -->
+    <circle cx="280" cy="460" r="30" fill="#0A84FF" /> <!-- Blau -->
+
+    <!-- Nach rechts zeigende Pfeile -->
+    <g fill="#FFFFFF" transform="translate(85.75, 256)">
+        <!-- Linker Pfeil -->
+        <path d="M 0 -180 V -63 L 63 0 L 0 63 V 180 L 180 0 Z" />
+        <!-- Rechter Pfeil -->
+        <path d="M 160.5 -180 V -63 L 223.5 0 L 160.5 63 V 180 L 340.5 0 Z" />
+    </g>
 </svg>
