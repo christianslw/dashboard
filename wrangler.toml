@@ -37,12 +37,12 @@ id       = "e87705c3c7524995a4ccfe3c60b21b7a"
 [env.preview]
 [[env.preview.kv_namespaces]]
 binding  = "OVERLAYS_KV"
-id       = "REPLACE_WITH_STAGING_OVERLAYS_KV_ID"
+id       = "5fde906d066549ec84756b95807ebd84"
 
 [[env.preview.kv_namespaces]]
 binding  = "SETTINGS_KV"
-id       = "REPLACE_WITH_STAGING_SETTINGS_KV_ID"
+id       = "d26865586af44b4ba84f4496f19c1d64"
 
 [[env.preview.kv_namespaces]]
 binding  = "STANDORTE_KV"
-id       = "REPLACE_WITH_STAGING_STANDORTE_KV_ID"
+id       = "5c9bfa81bd6e45c8bb87db506fdd2441"
