@@ -256,3 +256,26 @@ function handleGlobalKeydown(e) {
         }
         return;
     }}
+
+// ─── PWA Install ─────────────────────────────────────────────────────────────
+
+let _pwaInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    _pwaInstallPrompt = e;
+    const btn = document.getElementById('btn-install-pwa');
+    if (btn) btn.classList.remove('hidden');
+});
+
+window.addEventListener('appinstalled', () => {
+    _pwaInstallPrompt = null;
+    const btn = document.getElementById('btn-install-pwa');
+    if (btn) btn.classList.add('hidden');
+});
+
+function installPWA() {
+    if (!_pwaInstallPrompt) return;
+    _pwaInstallPrompt.prompt();
+    _pwaInstallPrompt.userChoice.then(() => { _pwaInstallPrompt = null; });
+}

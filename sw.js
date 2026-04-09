@@ -1,7 +1,7 @@
 // ─── SWR Standort Dashboard — Service Worker ─────────────────────────────────
 // App shell → cache-first | /api/* → network-first | CDN → network-only
 
-const CACHE_NAME = 'swr-standorte-v1';
+const CACHE_NAME = 'swr-standorte-v2';
 
 const APP_SHELL = [
     '/',
@@ -10,6 +10,8 @@ const APP_SHELL = [
     '/standorte.js',
     '/manifest.json',
     '/res/icons/app-icon.svg',
+    '/res/icons/app-icon-192.png',
+    '/res/icons/app-icon-512.png',
     '/res/mdi/css/materialdesignicons.min.css',
     '/themes/carbon.css',
     '/themes/dracula.css',
