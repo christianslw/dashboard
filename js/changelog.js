@@ -1,7 +1,8 @@
 // ─── Changelog Modal ─────────────────────────────────────────────────────────
 //
-// Fetches /api/changelog (Cloudflare Pages Function that reads CHANGELOG.md
-// from the private GitHub repo). Shows a modal when a new version is detected.
+// In production: fetches /api/changelog (Cloudflare Pages Function that reads
+// CHANGELOG.md from the private GitHub repo via GITHUB_TOKEN secret).
+// Fallback for local dev / unconfigured secrets: fetches /CHANGELOG.md directly.
 //
 // localStorage keys:
 //   seenChangelogVersion  — last version string the user has seen
@@ -14,7 +15,6 @@
     const HIDE_KEY = 'hideChangelog';
 
     // ─── Minimal Markdown → HTML renderer ────────────────────────────────────
-    // Supports: h2, h3, h4, unordered lists, bold, inline code, links, hr
     function _mdToHtml(md) {
         const lines = md.split('\n');
         const html  = [];
@@ -37,7 +37,6 @@
 
         for (const raw of lines) {
             const t = raw.trim();
-
             if (/^#### /.test(t)) {
                 closeList();
                 html.push(`<h4 class="cl-h4">${inline(t.slice(5).trim())}</h4>`);
@@ -64,10 +63,31 @@
         return html.join('\n');
     }
 
-    // ─── Internal helpers ─────────────────────────────────────────────────────
+    // ─── Data fetcher — API first, raw file fallback ──────────────────────────
+    async function _fetchChangelog() {
+        // 1. Try the Cloudflare Pages Function (production)
+        try {
+            const res = await fetch('/api/changelog');
+            if (res.ok) {
+                const data = await res.json();
+                if (data?.markdown) return data;
+            }
+        } catch { /* fall through */ }
 
-    let _cachedData = null;  // { markdown, version } once fetched
+        // 2. Fallback: fetch the raw CHANGELOG.md file directly (local dev)
+        try {
+            const res = await fetch('/CHANGELOG.md');
+            if (res.ok) {
+                const markdown = await res.text();
+                const versionMatch = markdown.match(/^##\s+\[?(v?[\d]+\.[\d]+(?:\.[\d]+)?)\]?/m);
+                return { markdown, version: versionMatch ? versionMatch[1] : null };
+            }
+        } catch { /* fall through */ }
 
+        return null;
+    }
+
+    // ─── Render helpers ───────────────────────────────────────────────────────
     function _render(markdown, version) {
         const body = document.getElementById('changelogBody');
         if (!body) return;
@@ -76,86 +96,77 @@
         const modal = document.getElementById('changelogModal');
         if (modal) modal.dataset.loaded = 'true';
 
-        // Sync the "hide future" checkbox to stored preference
         const cb = document.getElementById('changelogHideFuture');
         if (cb) cb.checked = localStorage.getItem(HIDE_KEY) === 'true';
-
-        if (version) localStorage.setItem(SEEN_KEY, version);
-        _cachedData = { markdown, version };
     }
 
-    function _open() {
+    function _showLoading() {
+        const body = document.getElementById('changelogBody');
+        if (body) body.innerHTML = '<p class="cl-p text-center py-4 text-slate-400 dark:text-zinc-500"><i class="mdi mdi-loading mdi-spin mr-1"></i> Laden…</p>';
+    }
+
+    function _showError() {
+        const body = document.getElementById('changelogBody');
+        if (body) body.innerHTML = '<p class="cl-p text-center py-4 text-slate-400 dark:text-zinc-500">Changelog konnte nicht geladen werden.</p>';
+    }
+
+    function _updateVersionBadge(version) {
+        if (!version) return;
+        const badge = document.getElementById('appVersionBadge');
+        if (badge) badge.textContent = `Standort DB ${version}`;
+    }
+
+    function _openModal() {
         const modal = document.getElementById('changelogModal');
         if (modal) modal.classList.remove('hidden');
     }
 
-    // ─── Public API (exposed on window) ──────────────────────────────────────
-
+    // ─── Auto-init on page load ───────────────────────────────────────────────
     async function initChangelog() {
-        let data = null;
-        try {
-            const res = await fetch('/api/changelog');
-            if (res.ok) data = await res.json();
-        } catch {
-            return; // non-critical — silently skip
-        }
+        const data = await _fetchChangelog();
 
+        if (data?.version) _updateVersionBadge(data.version);
         if (!data?.markdown) return;
 
-        // Update the footer version badge regardless of hide setting
-        if (data.version) {
-            const badge = document.getElementById('appVersionBadge');
-            if (badge) badge.textContent = `Standort DB ${data.version}`;
-        }
-
-        // Auto-show only if not hidden and version is newer than last seen
         const hideAll = localStorage.getItem(HIDE_KEY) === 'true';
         const seen    = localStorage.getItem(SEEN_KEY);
-        if (!hideAll && seen !== data.version) {
-            _render(data.markdown, data.version);
-            _open();
-        } else if (data.version) {
-            // Pre-render in the background so manual open is instant
-            _render(data.markdown, data.version);
-            // Don't open — version already seen or user opted out
-            // (but we still marked it as "seen" in _render — only update if new)
-            if (hideAll && seen !== data.version) {
-                // Don't mark as seen when user has opted out — respect their choice
-                // but keep the badge updated (already done above)
-                // Re-set to previous seen value to not consume the "new" state
-                if (seen) localStorage.setItem(SEEN_KEY, seen);
-                else localStorage.removeItem(SEEN_KEY);
-            }
+        const isNew   = data.version ? seen !== data.version : !seen;
+
+        // Always pre-render so manual open via button is instant
+        _render(data.markdown, data.version);
+
+        if (!hideAll && isNew) {
+            // Mark as seen only when we actually show it
+            if (data.version) localStorage.setItem(SEEN_KEY, data.version);
+            _openModal();
         }
     }
 
+    // ─── Manual open (footer button) ─────────────────────────────────────────
     function openChangelogModal() {
         const modal = document.getElementById('changelogModal');
         if (!modal) return;
 
-        // If already rendered, just open
+        // Already rendered — just open
         if (modal.dataset.loaded === 'true') {
-            // Re-sync the checkbox
             const cb = document.getElementById('changelogHideFuture');
             if (cb) cb.checked = localStorage.getItem(HIDE_KEY) === 'true';
-            _open();
+            _openModal();
             return;
         }
 
-        // Fetch and render on demand
-        fetch('/api/changelog')
-            .then(r => r.ok ? r.json() : null)
-            .then(data => {
-                if (!data?.markdown) return;
-                if (data.version) {
-                    const badge = document.getElementById('appVersionBadge');
-                    if (badge) badge.textContent = `Standort DB ${data.version}`;
-                    localStorage.setItem(SEEN_KEY, data.version);
-                }
-                _render(data.markdown, data.version);
-                _open();
-            })
-            .catch(() => {});
+        // Show modal immediately with a spinner, then load
+        _showLoading();
+        _openModal();
+
+        _fetchChangelog().then(data => {
+            if (!data?.markdown) { _showError(); return; }
+            if (data.version) {
+                _updateVersionBadge(data.version);
+                localStorage.setItem(SEEN_KEY, data.version);
+            }
+            _render(data.markdown, data.version);
+        }).catch(() => _showError());
     }
 
     function closeChangelogModal() {
@@ -167,9 +178,9 @@
         localStorage.setItem(HIDE_KEY, checked ? 'true' : 'false');
     }
 
-    // Expose on window for inline onclick handlers
-    window.initChangelog            = initChangelog;
-    window.openChangelogModal       = openChangelogModal;
-    window.closeChangelogModal      = closeChangelogModal;
+    window.initChangelog               = initChangelog;
+    window.openChangelogModal          = openChangelogModal;
+    window.closeChangelogModal         = closeChangelogModal;
     window.onChangelogHideFutureChange = onChangelogHideFutureChange;
 })();
+
