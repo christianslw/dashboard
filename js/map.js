@@ -29,6 +29,7 @@ function restoreActiveOverlayLayers(overlayLayers) {
         const layer = overlayLayers[normalizedName];
         if (!layer || leafletMap.hasLayer(layer)) return;
         layer.addTo(leafletMap);
+        _maybeInitDroneLayer(layer);
         if (normalizedName === RAINVIEWER_LAYER_NAME) {
             loadRadarFrames();
             showRadarTimeline();
@@ -44,6 +45,64 @@ function getThemeAwareOsmUrl() {
 function getThemeAwareCartoUrl(isDarkMode) {
     return `https://{s}.basemaps.cartocdn.com/${isDarkMode ? 'dark_all' : 'light_all'}/{z}/{x}/{y}{r}.png`;
 }
+
+// ─── Lazy drone layer infrastructure ─────────────────────────────────────────
+// /api/config is only fetched the first time a drone layer is enabled.
+// The promise is cached so repeated toggles never re-request.
+let _droneConfigPromise = null;
+function _fetchDroneConfig() {
+    if (!_droneConfigPromise) {
+        _droneConfigPromise = fetch('/api/config')
+            .then(r => r.ok ? r.json() : {})
+            .catch(() => ({}));
+    }
+    return _droneConfigPromise;
+}
+
+// Registered in initLeafletMap: layerGroup → layer type ('openaip' | 'icao')
+const _lazyDroneLayers = new Map();
+
+async function _initializeDroneGroup(group, type) {
+    if (group.getLayers().length > 0) return; // already initialized
+    if (type === 'icao') {
+        L.tileLayer(
+            'https://server.arcgisonline.com/ArcGIS/rest/services/Specialty/World_Navigation_Charts/MapServer/tile/{z}/{y}/{x}',
+            {
+                attribution: '© Esri, ICAO',
+                opacity: 0.7,
+                className: 'no-filter',
+                zIndex: 290,
+                maxNativeZoom: 10,
+                maxZoom: 22
+            }
+        ).addTo(group);
+    } else if (type === 'openaip') {
+        const config = await _fetchDroneConfig();
+        const key = config.openaipApiKey || '';
+        if (!key) {
+            console.warn('[map] OpenAIP API key not set – layer will be empty.');
+            return;
+        }
+        L.tileLayer(
+            `https://api.tiles.openaip.net/api/data/openaip/{z}/{x}/{y}.png?apiKey=${key}`,
+            {
+                attribution: '© <a href="https://www.openaip.net" target="_blank">OpenAIP</a>',
+                opacity: 0.8,
+                className: 'no-filter',
+                zIndex: 300,
+                maxNativeZoom: 14,
+                maxZoom: 22,
+                crossOrigin: true
+            }
+        ).addTo(group);
+    }
+}
+
+function _maybeInitDroneLayer(layer) {
+    const type = _lazyDroneLayers.get(layer);
+    if (type) _initializeDroneGroup(layer, type);
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 function initLeafletMap() {
     leafletMap = L.map('mainMap').setView([48.6, 9.2], 7);
@@ -140,10 +199,19 @@ function initLeafletMap() {
         }
     );
 
+    // ── Drohnenflugzonen / Luftraum (lazy) ───────────────────────────────────
+    // Empty layer groups — tiles are injected only when first activated.
+    const openAIPGroup = L.layerGroup();
+    const icaoGroup    = L.layerGroup();
+    _lazyDroneLayers.set(openAIPGroup, 'openaip');
+    _lazyDroneLayers.set(icaoGroup,    'icao');
+
     const overlayLayers = {
         'DWD Warnzonen': dwdWarningsLayer,
         [RAINVIEWER_LAYER_NAME]: radarOverlayGroup,
-        'Blitzortung ⚡': lightningLayer
+        'Blitzortung ⚡': lightningLayer,
+        'Luftraum / No-Fly Zones 🚁': openAIPGroup,
+        'ICAO Luftfahrtkarte 🚁':     icaoGroup
     };
 
     L.control.layers(baseLayers, overlayLayers, { position: 'topright' }).addTo(leafletMap);
@@ -178,6 +246,7 @@ function initLeafletMap() {
             loadRadarFrames();
             showRadarTimeline();
         }
+        _maybeInitDroneLayer(e.layer);
     });
     leafletMap.on('overlayremove', function(e) {
         saveActiveOverlayLayerNames(overlayLayers);
