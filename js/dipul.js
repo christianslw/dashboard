@@ -12,7 +12,7 @@ const DIPUL_STATE_KEY = 'dipulState_v2';
 const DIPUL_LAYER_DEFS = [
     { id: 'flugbeschraenkungsgebiete', wmsLayer: 'dipul:flugbeschraenkungsgebiete',           label: 'Flugbeschr\u00e4nkungsgebiete', color: '#ef4444', tileClass: 'dipul-tile-fbg'  },
     { id: 'kontrollzonen',             wmsLayer: 'dipul:kontrollzonen',                        label: 'Kontrollzonen (CTR)',            color: '#a855f7', tileClass: 'dipul-tile-kz'   },
-    { id: 'temporaere',                wmsLayer: 'dipul:temporaere_betriebseinschraenkungen',  label: 'Temp. Betriebseinschr.',         color: '#f97316', tileClass: 'dipul-tile-tmp'  },
+    { id: 'temporaere',                wmsLayer: 'dipul:temporaere_betriebseinschraenkungen',  label: 'Temp. Betriebseinschr.',         color: '#eab308', tileClass: 'dipul-tile-tmp'  },
     { id: 'flugplaetze',               wmsLayer: 'dipul:flugplaetze',                          label: 'Flugpl\u00e4tze',               color: '#3b82f6', tileClass: 'dipul-tile-fp'   },
     { id: 'flughaefen',                wmsLayer: 'dipul:flughaefen',                           label: 'Flugh\u00e4fen',                color: '#06b6d4', tileClass: 'dipul-tile-fh'   },
     { id: 'modellflugplaetze',         wmsLayer: 'dipul:modellflugplaetze',                    label: 'Modellflugpl\u00e4tze',         color: '#22c55e', tileClass: 'dipul-tile-mfp'  }

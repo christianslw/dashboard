@@ -2221,7 +2221,7 @@ body.planner-mode .planner-add-btn.is-queued .planner-add-icon {
    browser doesn't have to CPU-repaint on every pan/zoom frame.              */
 .dipul-tile-fbg { filter: saturate(1.2) brightness(1.05);              will-change: transform; }
 .dipul-tile-kz  { filter: hue-rotate(274deg) saturate(1.2);            will-change: transform; }
-.dipul-tile-tmp { filter: hue-rotate(25deg)  saturate(1.3) brightness(1.05); will-change: transform; }
+.dipul-tile-tmp { filter: hue-rotate(58deg)  saturate(1.4) brightness(1.05); will-change: transform; }
 .dipul-tile-fp  { filter: hue-rotate(217deg) saturate(1.1);            will-change: transform; }
 .dipul-tile-fh  { filter: hue-rotate(190deg) saturate(1.2);            will-change: transform; }
 .dipul-tile-mfp { filter: hue-rotate(142deg) saturate(1.1);            will-change: transform; }
