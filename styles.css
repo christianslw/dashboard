@@ -2162,3 +2162,67 @@ body.planner-mode .planner-add-btn.is-queued .planner-add-icon {
     text-underline-offset: 2px;
 }
 .cl-a:hover { opacity: 0.75; }
+
+/* ── DiPUL Flugzonen – master + sub-layer rows inside the layer panel ── */
+
+.dipul-master-label {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    cursor: pointer;
+    padding: 2px 0 2px 2px;
+    border-radius: 4px;
+    user-select: none;
+}
+
+.dipul-master-label:hover {
+    background: rgba(59,130,246,0.07);
+}
+
+.dark .dipul-master-label:hover {
+    background: rgba(96,165,250,0.09);
+}
+
+.dipul-sublayers {
+    overflow: hidden;
+    margin-top: 1px;
+}
+
+.dipul-sub-label {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 2px 2px 2px 14px !important;
+    cursor: pointer;
+    border-radius: 4px;
+    user-select: none;
+}
+
+.dipul-sub-label:hover {
+    background: rgba(59,130,246,0.07);
+}
+
+.dark .dipul-sub-label:hover {
+    background: rgba(96,165,250,0.09);
+}
+
+/* DiPUL per-layer tile tinting via CSS hue-rotate.
+   The DiPUL WMS server renders all zones in a base red (~0deg).
+   We shift each layer to its assigned colour.
+   fbg = Flugbeschränkungsgebiete  (red,    0deg - no change)
+   kz  = Kontrollzonen             (purple, 274deg)
+   tmp = Temp. Betriebseinschr.    (orange,  25deg)
+   fp  = Flugplätze                (blue,   217deg)
+   fh  = Flughäfen                 (cyan,   190deg)
+   mfp = Modellflugplätze          (green,  142deg) */
+/* Filter applied to the layer container div (Leaflet's className target).
+   One GPU compositing layer per zone type — far cheaper than per-tile filters.
+   will-change: transform promotes each container to its own GPU layer so the
+   browser doesn't have to CPU-repaint on every pan/zoom frame.              */
+.dipul-tile-fbg { filter: saturate(1.2) brightness(1.05);              will-change: transform; }
+.dipul-tile-kz  { filter: hue-rotate(274deg) saturate(1.2);            will-change: transform; }
+.dipul-tile-tmp { filter: hue-rotate(25deg)  saturate(1.3) brightness(1.05); will-change: transform; }
+.dipul-tile-fp  { filter: hue-rotate(217deg) saturate(1.1);            will-change: transform; }
+.dipul-tile-fh  { filter: hue-rotate(190deg) saturate(1.2);            will-change: transform; }
+.dipul-tile-mfp { filter: hue-rotate(142deg) saturate(1.1);            will-change: transform; }
+

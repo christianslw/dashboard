@@ -149,7 +149,7 @@ function initLeafletMap() {
     L.control.layers(baseLayers, overlayLayers, { position: 'topright' }).addTo(leafletMap);
     restoreActiveOverlayLayers(overlayLayers);
 
-    // Inject MDI icons into Leaflet controls
+    // Inject MDI icons, then init DiPUL control inside the same overlay panel
     requestAnimationFrame(function() {
         const defs = [
             { sel: '.leaflet-control-layers-toggle', icon: 'layers-outline' },
@@ -165,6 +165,11 @@ function initLeafletMap() {
             i.style.cssText = 'font-size:18px;line-height:1;pointer-events:none';
             el.appendChild(i);
         });
+
+        // DiPUL Flugzonen: master checkbox + collapsible colored sub-layers
+        if (typeof initDipulControl === 'function') {
+            initDipulControl(leafletMap);
+        }
     });
 
     leafletMap.on('baselayerchange', function(e) {
@@ -185,6 +190,7 @@ function initLeafletMap() {
             hideRadarTimeline();
         }
     });
+
 }
 
 function updateLeafletMapTheme() {

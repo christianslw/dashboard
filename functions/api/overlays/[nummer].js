@@ -13,7 +13,8 @@ export async function onRequestGet({ params, env }) {
     if (nummer === 'version') {
         const v = await env.OVERLAYS_KV.get('overlays:_version', { type: 'json' });
         return Response.json(v ?? { updatedAt: null }, {
-            headers: { 'Cache-Control': 'no-store' }
+            // Cache at edge for 30 s — version changes only on admin saves, clients poll every 60 s.
+            headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' }
         });
     }
 

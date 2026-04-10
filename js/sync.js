@@ -13,15 +13,13 @@
         'tagebuchMode', 'navMode',
         'favoriteStations', 'stationFilterState',
     ];
-    const SETTINGS_POLL_MS       = 45_000;   // Pull settings from backend every 45 s
     const SETTINGS_DEBOUNCE_MS   = 2_000;    // Wait 2 s after a change before pushing
-    const OVERLAY_POLL_MS        = 5_000;    // Poll overlay version every 5 s
+    const OVERLAY_POLL_MS        = 60_000;   // Poll overlay version every 60 s
 
     // ─── STATE ───────────────────────────────────────────────────────────────────
 
     let _userId              = null;
     let _settingsPushTimer   = null;
-    let _settingsPollTimer   = null;
     let _overlayPollTimer    = null;
     let _overlayLastVersion  = null;   // null means "first check"
     let _lastSettingsHash    = null;
@@ -143,12 +141,6 @@
                 _schedulePush();
             }
         }, 2_000);
-    }
-
-    /** Periodically pull settings to sync across devices. */
-    function _startSettingsPoll() {
-        if (_settingsPollTimer) clearInterval(_settingsPollTimer);
-        _settingsPollTimer = setInterval(loadSettingsFromBackend, SETTINGS_POLL_MS);
     }
 
     // ─── STANDORTE ───────────────────────────────────────────────────────────────
@@ -283,9 +275,9 @@
         // Settings
         loadSettingsFromBackend,
         pushSettingsNow: _pushSettings,
+        // Load on boot (called by init.js) + push on change covers all sync needs.
         startSettingsSync() {
             _startSettingsChangeWatcher();
-            _startSettingsPoll();
         },
 
         // Standorte
