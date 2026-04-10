@@ -38,7 +38,7 @@ function openDashboard(nummer) {
         document.getElementById("driveDistValue").innerText = "Start fehlt";
     }
 
-    document.getElementById("windyIframe").src = `https://embed.windy.com/embed.html?type=map&location=coordinates&lat=${standort.lat}&lon=${standort.lon}&zoom=11&overlay=wind&marker=true&metricWind=m/s`;
+    document.getElementById("windyIframe").src = `${WINDY_EMBED_URL}?type=map&location=coordinates&lat=${standort.lat}&lon=${standort.lon}&zoom=11&overlay=wind&marker=true&metricWind=m/s`;
 
     document.getElementById("btnTagebuch").href = getTagebuchLink(standort);
     const ordnerLink = standort.link.includes("/_standortinfo") ? standort.link.split("/_standortinfo")[0] : standort.link;
@@ -216,7 +216,7 @@ async function fetchRealRouteTimeDashboard(lat1, lon1, lat2, lon2, fallbackDist)
     }
     try {
         const res = await fetch(
-            `https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=full&geometries=geojson`
+            `${OSRM_BASE_URL}/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=full&geometries=geojson`
         );
         if (!res.ok) throw new Error("API Limit");
 

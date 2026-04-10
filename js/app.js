@@ -1,3 +1,23 @@
+// ─── External Service URLs ────────────────────────────────────────────────────
+// Swap any of these to a self-hosted or paid alternative without hunting the
+// codebase. See THIRD_PARTY_LICENSES.md for licensing notes on each service.
+
+const OSRM_BASE_URL                 = 'https://router.project-osrm.org';
+const NOMINATIM_BASE_URL            = 'https://nominatim.openstreetmap.org';
+const WINDY_EMBED_URL               = 'https://embed.windy.com/embed.html';
+const OPEN_METEO_BASE_URL           = 'https://api.open-meteo.com/v1/forecast';
+const BRIGHTSKY_BASE_URL            = 'https://api.brightsky.dev';
+const RAINVIEWER_API_URL            = 'https://api.rainviewer.com/public/weather-maps.json';
+const RAINVIEWER_TILE_HOST_FALLBACK = 'https://tilecache.rainviewer.com';
+const BLITZORTUNG_TILE_URL          = 'https://map.blitzortung.org/L/{z}/{x}/{y}.png';
+const DWD_WMS_URL                   = 'https://maps.dwd.de/geoserver/dwd/wms';
+const ESRI_IMAGERY_URL              = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+const ESRI_TRANSPORT_URL            = 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}';
+const ESRI_BOUNDARIES_URL           = 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}';
+const OSM_TILE_URL                  = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+const CARTODB_TILE_BASE_URL         = 'https://{s}.basemaps.cartocdn.com';
+const OPENTOPOMAP_TILE_URL          = 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
+
 // ─── Global State & Configuration ────────────────────────────────────────────
 
 let standorte = typeof standorteDaten !== 'undefined' ? standorteDaten : [
@@ -22,7 +42,7 @@ let radarLayerCache = {};
 let radarCurrentFrameIndex = 0;
 let radarIsPlaying = false;
 let radarPlayTimer = null;
-let radarHost = 'https://tilecache.rainviewer.com';
+let radarHost = RAINVIEWER_TILE_HOST_FALLBACK;
 const warningsCache = {}, routeCache = {};
 
 // Backend sync is handled by js/sync.js  (window.__cfSync)

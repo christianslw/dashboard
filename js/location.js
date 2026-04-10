@@ -114,7 +114,7 @@ async function searchCity() {
         // no station found – fall through to Nominatim (e.g. partial PLZ)
     }
     try {
-        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&countrycodes=de&limit=5&format=json&addressdetails=1&accept-language=de`;
+        const url = `${NOMINATIM_BASE_URL}/search?q=${encodeURIComponent(query)}&countrycodes=de&limit=5&format=json&addressdetails=1&accept-language=de`;
         const res = await fetch(url, { headers: { 'Accept-Language': 'de' } });
         const data = await res.json();
         if (!data || data.length === 0) {

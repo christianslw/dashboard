@@ -5,7 +5,7 @@ async function fetchDWD(lat, lon) {
     if (warningsCache[cacheKey] !== undefined) return warningsCache[cacheKey];
 
     try {
-        const res = await fetch(`https://api.brightsky.dev/alerts?lat=${lat}&lon=${lon}`);
+        const res = await fetch(`${BRIGHTSKY_BASE_URL}/alerts?lat=${lat}&lon=${lon}`);
         if (!res.ok) throw new Error("DWD Limit");
         const data = await res.json();
         const activeAlerts = data.alerts || [];
@@ -243,7 +243,7 @@ async function fetchWeather(lat, lon) {
     // ── Current conditions — original working format ─────────────────────────
     try {
         const res = await fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`
+            `${OPEN_METEO_BASE_URL}?latitude=${lat}&longitude=${lon}&current_weather=true`
         );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
@@ -262,7 +262,7 @@ async function fetchWeather(lat, lon) {
     // 24h hourly forecast (isolated — failure must not affect current weather)
     try {
         const res2 = await fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+            `${OPEN_METEO_BASE_URL}?latitude=${lat}&longitude=${lon}` +
             `&hourly=temperature_2m,weathercode,windspeed_10m,precipitation` +
             `&forecast_days=2&timezone=auto`
         );

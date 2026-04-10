@@ -1713,7 +1713,7 @@ function simplifyFreehandPoints(points, tolerance) {
 
 async function fetchOSRMSegment(from, to) {
     try {
-        const url = `https://router.project-osrm.org/route/v1/driving/${from.lng},${from.lat};${to.lng},${to.lat}?overview=full&geometries=geojson`;
+        const url = `${OSRM_BASE_URL}/route/v1/driving/${from.lng},${from.lat};${to.lng},${to.lat}?overview=full&geometries=geojson`;
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 8000);
         const resp = await fetch(url, { signal: controller.signal });

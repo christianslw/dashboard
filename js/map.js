@@ -38,11 +38,11 @@ function restoreActiveOverlayLayers(overlayLayers) {
 }
 
 function getThemeAwareOsmUrl() {
-    return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+    return OSM_TILE_URL;
 }
 
 function getThemeAwareCartoUrl(isDarkMode) {
-    return `https://{s}.basemaps.cartocdn.com/${isDarkMode ? 'dark_all' : 'light_all'}/{z}/{x}/{y}{r}.png`;
+    return `${CARTODB_TILE_BASE_URL}/${isDarkMode ? 'dark_all' : 'light_all'}/{z}/{x}/{y}{r}.png`;
 }
 
 function initLeafletMap() {
@@ -63,30 +63,30 @@ function initLeafletMap() {
         className: 'no-filter'
     });
 
-    const openTopoMapLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+    const openTopoMapLayer = L.tileLayer(OPENTOPOMAP_TILE_URL, {
         attribution: '© OpenTopoMap',
         maxZoom: 17,
         className: 'no-filter'
     });
 
-    const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    const satelliteLayer = L.tileLayer(ESRI_IMAGERY_URL, {
         attribution: '© Esri, DigitalGlobe, Earthstar Geographics',
         maxZoom: 19,
         className: 'no-filter'
     });
 
     const hybridLayer = L.layerGroup([
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        L.tileLayer(ESRI_IMAGERY_URL, {
             attribution: '© Esri',
             maxZoom: 19,
             className: 'no-filter'
         }),
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', {
+        L.tileLayer(ESRI_TRANSPORT_URL, {
             attribution: '© Esri',
             maxZoom: 19,
             className: 'no-filter'
         }),
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+        L.tileLayer(ESRI_BOUNDARIES_URL, {
             attribution: '© Esri',
             maxZoom: 19,
             className: 'no-filter'
@@ -114,7 +114,7 @@ function initLeafletMap() {
     }
 
     // DWD Warning Zones (WMS)
-    const dwdWarningsLayer = L.tileLayer.wms('https://maps.dwd.de/geoserver/dwd/wms', {
+    const dwdWarningsLayer = L.tileLayer.wms(DWD_WMS_URL, {
         layers: 'dwd:Warnungen_Gemeinden_vereinigt',
         format: 'image/png',
         transparent: true,
@@ -129,7 +129,7 @@ function initLeafletMap() {
 
     // Lightning overlay (Blitzortung community tiles, no API key)
     const lightningLayer = L.tileLayer(
-        'https://map.blitzortung.org/L/{z}/{x}/{y}.png',
+        BLITZORTUNG_TILE_URL,
         {
             attribution: '© <a href="https://www.blitzortung.org" target="_blank">Blitzortung.org</a>',
             opacity: 0.85,
@@ -384,9 +384,9 @@ async function loadRadarFrames() {
     radarCurrentFrameIndex = 0;
     updateRadarTimeline();
     try {
-        const res = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+        const res = await fetch(RAINVIEWER_API_URL);
         const data = await res.json();
-        radarHost = data.host || 'https://tilecache.rainviewer.com';
+        radarHost = data.host || RAINVIEWER_TILE_HOST_FALLBACK;
         radarFrames = [...(data.radar?.past || []), ...(data.radar?.nowcast || [])];
         updateRadarTimeline();
         setRadarFrame(radarFrames.length - 1);

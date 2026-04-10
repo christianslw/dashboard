@@ -1026,8 +1026,8 @@ async function runPlannerRoute() {
 
     const stdCoords = stdPoints.map(p => `${p.lon},${p.lat}`).join(';');
     const optCoords = optPoints.map(p => `${p.lon},${p.lat}`).join(';');
-    const stdUrl = `https://router.project-osrm.org/route/v1/driving/${stdCoords}?overview=full&geometries=geojson`;
-    const optUrl = `https://router.project-osrm.org/trip/v1/driving/${optCoords}?roundtrip=false&source=first&destination=last&overview=full&geometries=geojson`;
+    const stdUrl = `${OSRM_BASE_URL}/route/v1/driving/${stdCoords}?overview=full&geometries=geojson`;
+    const optUrl = `${OSRM_BASE_URL}/trip/v1/driving/${optCoords}?roundtrip=false&source=first&destination=last&overview=full&geometries=geojson`;
 
     try {
         const [stdRes, optRes] = await Promise.all([fetch(stdUrl), fetch(optUrl)]);
@@ -1221,7 +1221,7 @@ async function _endpointSearch(query, type) {
     _epSearchTimer = setTimeout(async () => {
         res.innerHTML = '<p class="text-[11px] text-slate-400 dark:text-zinc-500 py-1">Sucht\u2026</p>';
         try {
-            const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&countrycodes=de&limit=5&format=json&addressdetails=1&accept-language=de`;
+            const url = `${NOMINATIM_BASE_URL}/search?q=${encodeURIComponent(q)}&countrycodes=de&limit=5&format=json&addressdetails=1&accept-language=de`;
             const data = await fetch(url, { headers: { 'Accept-Language': 'de' } }).then(r => r.json());
             if (!data || data.length === 0) { res.innerHTML = '<p class="text-[11px] text-red-500 py-1">Nichts gefunden.</p>'; return; }
             res.innerHTML = '';
