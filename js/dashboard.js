@@ -76,6 +76,7 @@ function openDashboard(nummer) {
     setTimeout(() => modal.classList.add("modal-enter-active"), 10);
 
     displayWayInstructions();
+    updateDashboardPrintButton();
 }
 
 function setupMobileMap(standort) {
@@ -306,6 +307,7 @@ function saveWayInstructions() {
     const instructions = document.getElementById('wayInstructionsInput').value;
     saveWayInstructionsToStorage(currentStandort.nummer, instructions);
     displayWayInstructions();
+    updateDashboardPrintButton();
     closeWayInstructionsModal();
     // Sync to backend
     if (instructions.trim() === '') {
@@ -320,6 +322,7 @@ function deleteWayInstructions() {
     if (confirm('Fahrtanweisungen wirklich löschen?')) {
         saveWayInstructionsToStorage(currentStandort.nummer, '');
         displayWayInstructions();
+        updateDashboardPrintButton();
         closeWayInstructionsModal();
         // Sync to backend
         window.__cfSync?.deleteFahrtanweisung(currentStandort.nummer);
@@ -356,4 +359,146 @@ function getHauptzufahrtEntryPoint(nummer) {
         if (d > maxDist) { maxDist = d; entry = c; }
     }
     return { lat: entry[1], lon: entry[0] };
+}
+
+// ─── Print: Anfahrt PDF ───────────────────────────────────────────────────────
+
+let _printMap = null;
+let _printMapOverlays = null;
+
+/**
+ * Show/hide the “Anfahrt drucken” button depending on whether the current
+ * station has a Fahrtanweisung text and/or at least one overlay feature.
+ */
+function updateDashboardPrintButton() {
+    const btn = document.getElementById('btnPrintAnfahrt');
+    if (!btn || !currentStandort) return;
+
+    const hasText    = !!getWayInstructions(currentStandort.nummer);
+    const hasOverlay = typeof getOverlayPayloadForStandort === 'function' &&
+        (getOverlayPayloadForStandort(currentStandort.nummer)?.features?.length > 0);
+
+    btn.classList.toggle('hidden', !hasText && !hasOverlay);
+}
+
+/**
+ * Build a print-ready PDF page for the current station:
+ * one DIN-A4 page with the Zufahrtsoverlay rendered on a map and
+ * the Fahrtanweisung text below it (sections are omitted when absent).
+ *
+ * Uses native window.print() so tile images render without CORS issues.
+ * An extra Leaflet instance (#printMap) is used so print zoom/bounds are
+ * independent of the dashboard map.
+ */
+function printAnfahrt() {
+    if (!currentStandort) return;
+    const standort  = currentStandort;
+    const container = document.getElementById('printAnfahrt');
+
+    // —— Populate header ——
+    document.getElementById('printTitle').textContent =
+        `${standort.nummer} – ${standort.name}`;
+    document.getElementById('printDate').textContent =
+        new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    document.getElementById('printCoords').textContent =
+        `${standort.lat.toFixed(5)}\u00b0 N, ${standort.lon.toFixed(5)}\u00b0 E`;
+
+    // —— Populate Fahrtanweisung text ——
+    const text        = getWayInstructions(standort.nummer);
+    const textSection = document.getElementById('printTextSection');
+    document.getElementById('printText').textContent = text || '';
+    textSection.style.display = text ? '' : 'none';
+
+    // —— Place container off-screen but rendered so Leaflet can size itself ——
+    container.style.cssText =
+        'display:block;position:fixed;top:0;left:-9999px;width:210mm;z-index:-1;pointer-events:none;';
+
+    // —— Initialise print Leaflet map (lazy, one-time) ——
+    if (!_printMap) {
+        _printMap = L.map('printMap', {
+            zoomControl: false,
+            attributionControl: false,
+            dragging: false,
+            scrollWheelZoom: false,
+            doubleClickZoom: false,
+            boxZoom: false,
+            keyboard: false,
+            tap: false
+        });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            crossOrigin: true
+        }).addTo(_printMap);
+    }
+
+    // Clear overlays from previous call
+    if (_printMapOverlays) _printMap.removeLayer(_printMapOverlays);
+    _printMapOverlays = L.layerGroup().addTo(_printMap);
+
+    // Station marker (same colour scheme as the main map)
+    const markerColors = {
+        1: '#8b5cf6', 2: '#10b981', 3: '#f59e0b', 4: '#ef4444',
+        5: '#ec4899', 6: '#06b6d4', 8: '#6366f1', 9: '#eab308'
+    };
+    const prefix = Math.floor(Number(standort.nummer) / 1000);
+    const mc = markerColors[prefix] || '#3b82f6';
+    const icon = L.divIcon({
+        html: `<div style="width:14px;height:14px;background:${mc};border-radius:50%;border:3px solid white;box-shadow:0 2px 5px rgba(0,0,0,.4)"></div>`,
+        className: '',
+        iconSize: [14, 14],
+        iconAnchor: [7, 7]
+    });
+    L.marker([standort.lat, standort.lon], { icon }).addTo(_printMapOverlays);
+
+    // Overlay features (routes, markers, zones)
+    if (typeof getOverlayPayloadForStandort === 'function' && typeof createLayerFromFeature === 'function') {
+        const payload = getOverlayPayloadForStandort(standort.nummer);
+        if (payload?.features) {
+            payload.features.forEach(f => {
+                const lyr = createLayerFromFeature(f);
+                if (lyr) _printMapOverlays.addLayer(lyr);
+            });
+        }
+    }
+
+    // Compute bounds from station + overlay geometries
+    let bounds = L.latLngBounds([[standort.lat, standort.lon]]);
+    if (typeof getOverlayPayloadForStandort === 'function') {
+        const payload = getOverlayPayloadForStandort(standort.nummer);
+        if (payload?.features) {
+            payload.features.forEach(f => {
+                const geom = f.geometry;
+                if (!geom?.coordinates) return;
+                if (geom.type === 'Point') {
+                    bounds.extend([geom.coordinates[1], geom.coordinates[0]]);
+                } else if (geom.type === 'LineString') {
+                    geom.coordinates.forEach(c => bounds.extend([c[1], c[0]]));
+                } else if (geom.type === 'Polygon' && geom.coordinates[0]) {
+                    geom.coordinates[0].forEach(c => bounds.extend([c[1], c[0]]));
+                }
+            });
+        }
+    }
+
+    _printMap.invalidateSize({ animate: false });
+    if (bounds.isValid() && !bounds.getNorthEast().equals(bounds.getSouthWest())) {
+        _printMap.fitBounds(bounds, { padding: [28, 28], maxZoom: 16, animate: false });
+    } else {
+        _printMap.setView([standort.lat, standort.lon], 14, { animate: false });
+    }
+
+    // Let tiles load (≈900 ms) then trigger print
+    setTimeout(() => {
+        // Reset inline styles — @media print rules take over from here
+        container.style.cssText = '';
+        window.print();
+
+        // After the print dialog closes, hide the container again
+        const cleanup = () => {
+            container.style.display = 'none';
+            window.removeEventListener('afterprint', cleanup);
+        };
+        window.addEventListener('afterprint', cleanup);
+        setTimeout(cleanup, 5000); // fallback if afterprint doesn’t fire
+    }, 900);
 }

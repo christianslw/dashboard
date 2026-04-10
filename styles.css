@@ -2226,3 +2226,216 @@ body.planner-mode .planner-add-btn.is-queued .planner-add-icon {
 .dipul-tile-fh  { filter: hue-rotate(190deg) saturate(1.2);            will-change: transform; }
 .dipul-tile-mfp { filter: hue-rotate(142deg) saturate(1.1);            will-change: transform; }
 
+
+/* ─── Print: Anfahrt PDF ─────────────────────────────────────────────────── */
+
+#printAnfahrt {
+    display: none;
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    color: #0f172a;
+    background: #ffffff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+#printPage {
+    padding: 1.2cm 1.4cm;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+#printHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 2px solid #1e40af;
+    padding-bottom: 0.5cm;
+    margin-bottom: 0.5cm;
+}
+
+#printTitle {
+    font-size: 20pt;
+    font-weight: 700;
+    color: #1e3a8a;
+    margin: 0 0 4px 0;
+    line-height: 1.2;
+}
+
+#printMeta {
+    font-size: 9pt;
+    color: #64748b;
+    margin: 0;
+}
+
+.print-brand {
+    font-size: 8pt;
+    font-weight: 600;
+    color: #94a3b8;
+    text-align: right;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-top: 2px;
+}
+
+#printMapWrap {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5cm;
+    background: #f1f5f9;
+}
+
+#printMap {
+    width: 100%;
+    height: 11cm;
+    display: block;
+}
+
+/* Print map: always light OSM — suppress all dark-mode tile filters */
+html.dark #printAnfahrt .leaflet-layer,
+html.dark #printAnfahrt .osm-tiles,
+html.dark #printAnfahrt .leaflet-tile,
+html.dark #printAnfahrt .leaflet-tile-container {
+    filter: none !important;
+}
+
+/* Print map: force all overlay markers / tooltips / labels to light-mode appearance */
+html.dark #printAnfahrt .overlay-poi-marker {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-color: #cbd5e1 !important;
+}
+html.dark #printAnfahrt .overlay-poi-marker-hinweis {
+    background: rgba(254, 252, 232, 0.97) !important;
+}
+html.dark #printAnfahrt .overlay-hinweis-permanent {
+    background: #fefce8 !important;
+    border-color: #ca8a04 !important;
+    color: #78350f !important;
+}
+html.dark #printAnfahrt .overlay-danger-tooltip {
+    background: rgba(239, 68, 68, 0.08) !important;
+    border-color: rgba(239, 68, 68, 0.4) !important;
+    color: #b91c1c !important;
+}
+/* Leaflet control chrome (zoom buttons, attribution) inside print map */
+html.dark #printAnfahrt .leaflet-bar a,
+html.dark #printAnfahrt .leaflet-control-attribution {
+    filter: none !important;
+    background: #fff !important;
+    color: #333 !important;
+    border-color: #ccc !important;
+}
+
+.print-section-title {
+    font-size: 10pt;
+    font-weight: 700;
+    color: #1e3a8a;
+    margin: 0 0 0.25cm 0;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.print-section-title .mdi {
+    margin-right: 4px;
+}
+
+#printText {
+    font-size: 10pt;
+    line-height: 1.65;
+    color: #1e293b;
+    white-space: pre-wrap;
+    margin: 0;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 0.3cm 0.4cm;
+}
+
+#printFooter {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.6cm;
+    padding-top: 0.3cm;
+    border-top: 1px solid #e2e8f0;
+    font-size: 8pt;
+    color: #94a3b8;
+}
+
+@media print {
+    /* Reveal print container; hide everything else on the page */
+    body > *:not(#printAnfahrt) {
+        display: none !important;
+    }
+
+    #printAnfahrt {
+        display: block !important;
+        position: static !important;
+        left: auto !important;
+        top: auto !important;
+        transform: none !important;
+        width: 100% !important;
+        height: auto !important;
+        z-index: auto !important;
+    }
+
+    #printMap {
+        height: 11cm;
+    }
+
+    /* Prevent tiles from being cut across pages */
+    #printMapWrap {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    #printText {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    /* Print map: always light OSM — suppress dark-mode tile filters */
+    #printAnfahrt .leaflet-layer,
+    #printAnfahrt .osm-tiles,
+    #printAnfahrt .leaflet-tile,
+    #printAnfahrt .leaflet-tile-container {
+        filter: none !important;
+    }
+
+    /* Print map: force overlay markers / labels to light-mode appearance */
+    #printAnfahrt .overlay-poi-marker {
+        background: rgba(255, 255, 255, 0.95) !important;
+        border-color: #cbd5e1 !important;
+    }
+    #printAnfahrt .overlay-poi-marker-hinweis {
+        background: rgba(254, 252, 232, 0.97) !important;
+    }
+    #printAnfahrt .overlay-hinweis-permanent {
+        background: #fefce8 !important;
+        border-color: #ca8a04 !important;
+        color: #78350f !important;
+    }
+    #printAnfahrt .overlay-danger-tooltip {
+        background: rgba(239, 68, 68, 0.08) !important;
+        border-color: rgba(239, 68, 68, 0.4) !important;
+        color: #b91c1c !important;
+    }
+    #printAnfahrt .leaflet-bar a,
+    #printAnfahrt .leaflet-control-attribution {
+        filter: none !important;
+        background: #fff !important;
+        color: #333 !important;
+        border-color: #ccc !important;
+    }
+
+    /* Ensure Leaflet tile images print */
+    .leaflet-tile {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .leaflet-overlay-pane svg {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
