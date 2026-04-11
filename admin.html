@@ -232,6 +232,78 @@
                 <input id="fLink" type="url" class="form-input" placeholder="https://…" />
             </div>
 
+            <!-- ── Section: Standort-Kurzdaten ──────────────────────────────── -->
+            <div class="pt-2">
+                <p class="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-3">Standort-Details</p>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide" title="max. 3 Zeichen">Kürzel <span class="font-normal normal-case tracking-normal">(max. 3 Z.)</span></label>
+                        <input id="fKuerzel" type="text" maxlength="3" class="form-input" placeholder="z.B. STR" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">DFMG-ID</label>
+                        <input id="fDfmgId" type="text" class="form-input" placeholder="z.B. DE-001" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Section: Richtfunk ─────────────────────────────────────── -->
+            <div>
+                <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">Richtfunk-Verbindungen</label>
+                <input id="fRichtfunk" type="text" class="form-input" placeholder="Kommagetrennte Nummern, z.B. 8100, 8317" />
+                <p class="text-[11px] text-slate-400 dark:text-zinc-500 mt-1">Gegenrichtung (B→A) wird automatisch synchronisiert.</p>
+            </div>
+
+            <!-- ── Section: Paten ─────────────────────────────────────────── -->
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">PV-Pate</label>
+                    <input id="fPvPate" type="text" class="form-input" />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">PV-Vertretung</label>
+                    <input id="fPvVertretung" type="text" class="form-input" />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">IFS-Pate</label>
+                    <input id="fIfsPate" type="text" class="form-input" />
+                </div>
+            </div>
+
+            <!-- ── Section: Betreiber ─────────────────────────────────────── -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">Betreiber Standort</label>
+                    <select id="fBetreiberStandortSelect" class="form-input" onchange="toggleBetreiberCustom('StandortSelect','StandortCustom')">
+                        <option value="SWR">SWR</option>
+                        <option value="SMS">SMS</option>
+                        <option value="DFMG">DFMG</option>
+                        <option value="BR">BR</option>
+                        <option value="SR">SR</option>
+                        <option value="ORF">ORF</option>
+                        <option value="MB">MB</option>
+                        <option value="Swisscom">Swisscom</option>
+                        <option value="__custom__">Sonstige…</option>
+                    </select>
+                    <input id="fBetreiberStandortCustom" type="text" class="form-input mt-1 hidden" placeholder="Betreiber eingeben…" />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">Betreiber Sender</label>
+                    <select id="fBetreiberSenderSelect" class="form-input" onchange="toggleBetreiberCustom('SenderSelect','SenderCustom')">
+                        <option value="SWR">SWR</option>
+                        <option value="SMS">SMS</option>
+                        <option value="DFMG">DFMG</option>
+                        <option value="BR">BR</option>
+                        <option value="SR">SR</option>
+                        <option value="ORF">ORF</option>
+                        <option value="MB">MB</option>
+                        <option value="Swisscom">Swisscom</option>
+                        <option value="__custom__">Sonstige…</option>
+                    </select>
+                    <input id="fBetreiberSenderCustom" type="text" class="form-input mt-1 hidden" placeholder="Betreiber eingeben…" />
+                </div>
+            </div>
+
             <div id="formError" class="hidden text-sm text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2"></div>
             <div class="flex justify-end gap-2 pt-2">
                 <button type="button" onclick="closeModal()"
@@ -572,6 +644,55 @@ function filterTable() {
 
 // ─── CRUD ─────────────────────────────────────────────────────────────────────
 
+// ─── Betreiber helpers ───────────────────────────────────────────────────────
+
+const BETREIBER_KNOWN = ['SWR','SMS','DFMG','BR','SR','ORF','MB','Swisscom'];
+
+function toggleBetreiberCustom(selectSuffix, customSuffix) {
+    const sel = document.getElementById('fBetreiber' + selectSuffix);
+    const inp = document.getElementById('fBetreiber' + customSuffix);
+    if (sel.value === '__custom__') {
+        inp.classList.remove('hidden');
+        inp.focus();
+    } else {
+        inp.classList.add('hidden');
+        inp.value = '';
+    }
+}
+
+function getBetreiberValue(selectSuffix, customSuffix) {
+    const sel = document.getElementById('fBetreiber' + selectSuffix);
+    const inp = document.getElementById('fBetreiber' + customSuffix);
+    return sel.value === '__custom__' ? (inp.value.trim() || 'SWR') : sel.value;
+}
+
+function setBetreiberValue(selectSuffix, customSuffix, value) {
+    const sel = document.getElementById('fBetreiber' + selectSuffix);
+    const inp = document.getElementById('fBetreiber' + customSuffix);
+    if (!value || BETREIBER_KNOWN.includes(value)) {
+        sel.value = value || 'SWR';
+        inp.classList.add('hidden');
+        inp.value = '';
+    } else {
+        sel.value = '__custom__';
+        inp.value = value;
+        inp.classList.remove('hidden');
+    }
+}
+
+function clearNewFields() {
+    document.getElementById('fKuerzel').value = '';
+    document.getElementById('fDfmgId').value = '';
+    document.getElementById('fRichtfunk').value = '';
+    document.getElementById('fPvPate').value = '';
+    document.getElementById('fPvVertretung').value = '';
+    document.getElementById('fIfsPate').value = '';
+    setBetreiberValue('StandortSelect', 'StandortCustom', 'SWR');
+    setBetreiberValue('SenderSelect', 'SenderCustom', 'SWR');
+}
+
+// ─── CRUD ─────────────────────────────────────────────────────────────────────
+
 function openAddForm() {
     editMode = 'add';
     document.getElementById('editModalTitle').textContent = 'Neuer Standort';
@@ -581,6 +702,7 @@ function openAddForm() {
     document.getElementById('fLat').value = '';
     document.getElementById('fLon').value = '';
     document.getElementById('fLink').value = '';
+    clearNewFields();
 
     hideFormError();
     document.getElementById('editModal').classList.remove('hidden');
@@ -598,6 +720,15 @@ function editStandort(nummer) {
     document.getElementById('fLat').value = s.lat ?? '';
     document.getElementById('fLon').value = s.lon ?? '';
     document.getElementById('fLink').value = s.link || '';
+    // Extended fields
+    document.getElementById('fKuerzel').value = s.standortkuerzel || '';
+    document.getElementById('fDfmgId').value = s.dfmg_id || '';
+    document.getElementById('fRichtfunk').value = Array.isArray(s.richtfunk) ? s.richtfunk.join(', ') : '';
+    document.getElementById('fPvPate').value = s.pv_pate || '';
+    document.getElementById('fPvVertretung').value = s.pv_vertretung || '';
+    document.getElementById('fIfsPate').value = s.ifs_pate || '';
+    setBetreiberValue('StandortSelect', 'StandortCustom', s.betreiber_standort || 'SWR');
+    setBetreiberValue('SenderSelect', 'SenderCustom', s.betreiber_sender || 'SWR');
 
     hideFormError();
     document.getElementById('editModal').classList.remove('hidden');
@@ -614,12 +745,28 @@ async function submitForm(event) {
     const nummer = document.getElementById('fNummer').value.trim();
     const originalNummer = document.getElementById('fOriginalNummer').value.trim();
 
+    // Parse richtfunk: comma- or space-separated list of station numbers
+    const richtfunkRaw = document.getElementById('fRichtfunk').value;
+    const richtfunk = richtfunkRaw
+        .split(/[,\s]+/)
+        .map(v => v.trim())
+        .filter(Boolean);
+
     const body = {
         nummer,
-        name:    document.getElementById('fName').value.trim(),
-        lat:     parseFloat(document.getElementById('fLat').value),
-        lon:     parseFloat(document.getElementById('fLon').value),
-        link:    document.getElementById('fLink').value.trim(),
+        name:               document.getElementById('fName').value.trim(),
+        lat:                parseFloat(document.getElementById('fLat').value),
+        lon:                parseFloat(document.getElementById('fLon').value),
+        link:               document.getElementById('fLink').value.trim(),
+        // Extended fields
+        standortkuerzel:    document.getElementById('fKuerzel').value.trim().slice(0, 3),
+        dfmg_id:            document.getElementById('fDfmgId').value.trim(),
+        richtfunk,
+        pv_pate:            document.getElementById('fPvPate').value.trim(),
+        pv_vertretung:      document.getElementById('fPvVertretung').value.trim(),
+        ifs_pate:           document.getElementById('fIfsPate').value.trim(),
+        betreiber_standort: getBetreiberValue('StandortSelect', 'StandortCustom'),
+        betreiber_sender:   getBetreiberValue('SenderSelect', 'SenderCustom'),
     };
 
     // If nummer changed in edit mode, delete the old record first

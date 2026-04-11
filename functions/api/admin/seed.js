@@ -61,6 +61,18 @@ export async function onRequestPost({ env, request }) {
                     lat:     Number(r.lat),
                     lon:     Number(r.lon),
                     link:    r.link    ?? '',
+                    // ── Extended station metadata ─────────────────────────
+                    richtfunk:          Array.isArray(r.richtfunk)
+                        ? [...new Set(r.richtfunk.map(id => String(id)).filter(id => id && id !== nummer))]
+                        : (existing?.richtfunk ?? []),
+                    standortkuerzel:    String(r.standortkuerzel ?? existing?.standortkuerzel ?? '').trim().slice(0, 3),
+                    pv_pate:            String(r.pv_pate          ?? existing?.pv_pate          ?? '').trim(),
+                    pv_vertretung:      String(r.pv_vertretung    ?? existing?.pv_vertretung    ?? '').trim(),
+                    ifs_pate:           String(r.ifs_pate         ?? existing?.ifs_pate         ?? '').trim(),
+                    betreiber_standort: String(r.betreiber_standort ?? existing?.betreiber_standort ?? 'SWR').trim(),
+                    betreiber_sender:   String(r.betreiber_sender   ?? existing?.betreiber_sender   ?? 'SWR').trim(),
+                    dfmg_id:            String(r.dfmg_id            ?? existing?.dfmg_id            ?? '').trim(),
+                    // ─────────────────────────────────────────────────────
                     updatedAt: now,
                 };
                 if (existing?.fahrtanweisung) {

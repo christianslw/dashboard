@@ -63,6 +63,7 @@ function openDashboard(nummer) {
 
     fetchWeather(standort.lat, standort.lon);
     updateDWDDetailBox(standort.lat, standort.lon);
+    updateStandortInfoPanel(standort);
 
     setupMobileMap(standort);
 
@@ -265,6 +266,66 @@ function copyCoords() {
 }
 
 // ─── Way Instructions ──────────────────────────────────────────────────────────────
+
+// ─── Standort-Info Panel ───────────────────────────────────────────────────────────
+
+/**
+ * Populate (or hide) the Standort-Info metadata panel in the dashboard modal.
+ * All fields are optional; the panel hides itself when none are present.
+ */
+function updateStandortInfoPanel(standort) {
+    const panel = document.getElementById('standortInfoPanel');
+    if (!panel) return;
+
+    /** Helper: show/hide a wrapper element and set text or innerHTML in its child. */
+    function setField(wrapId, contentId, value, isHtml = false) {
+        const wrap = document.getElementById(wrapId);
+        const el   = document.getElementById(contentId);
+        if (!wrap || !el) return;
+        if (value) {
+            if (isHtml) el.innerHTML = value;
+            else el.textContent = value;
+            wrap.classList.remove('hidden');
+        } else {
+            wrap.classList.add('hidden');
+        }
+    }
+
+    setField('siKuerzelWrap',           'siKuerzel',           standort.standortkuerzel || '');
+    setField('siDfmgWrap',              'siDfmg',              standort.dfmg_id || '');
+    setField('siBetreiberStandortWrap', 'siBetreiberStandort', standort.betreiber_standort || '');
+    setField('siBetreiberSenderWrap',   'siBetreiberSender',   standort.betreiber_sender   || '');
+    setField('siPvPateWrap',            'siPvPate',            standort.pv_pate || '');
+    setField('siPvVertretungWrap',      'siPvVertretung',      standort.pv_vertretung || '');
+    setField('siIfsPateWrap',           'siIfsPate',           standort.ifs_pate || '');
+
+    // Richtfunk: render as clickable chips so users can jump to linked stations
+    const rfWrap = document.getElementById('siRichtfunkWrap');
+    const rfEl   = document.getElementById('siRichtfunk');
+    if (rfWrap && rfEl) {
+        const rf = Array.isArray(standort.richtfunk) ? standort.richtfunk.filter(Boolean) : [];
+        if (rf.length > 0) {
+            rfEl.innerHTML = rf.map(id => {
+                const linked = (typeof standorte !== 'undefined' ? standorte : []).find(s => String(s.nummer) === String(id));
+                const label  = linked ? `${id} – ${linked.name}` : id;
+                return `<button onclick="openDashboard('${id}')" class="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800/60 transition-colors font-mono text-[11px]">${label}</button>`;
+            }).join('');
+            rfWrap.classList.remove('hidden');
+        } else {
+            rfWrap.classList.add('hidden');
+        }
+    }
+
+    // Show panel only if at least one field has content
+    const hasData = [
+        standort.standortkuerzel, standort.dfmg_id,
+        standort.betreiber_standort, standort.betreiber_sender,
+        standort.pv_pate, standort.pv_vertretung, standort.ifs_pate,
+    ].some(v => v && String(v).trim()) ||
+        (Array.isArray(standort.richtfunk) && standort.richtfunk.length > 0);
+
+    panel.classList.toggle('hidden', !hasData);
+}
 
 function getWayInstructions(nummer) {
     const stored = localStorage.getItem(`wayInstructions_${nummer}`);

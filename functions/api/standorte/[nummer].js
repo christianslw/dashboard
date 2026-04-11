@@ -54,6 +54,11 @@ export async function onRequestPut({ params, env, request }) {
         // Preserve existing fahrtanweisung (not admin-managed)
     const existing = await env.STANDORTE_KV.get(`standort:${nummer}`, { type: 'json' });
 
+    // Normalise richtfunk to deduplicated array of strings, excluding self
+    const newRichtfunk = Array.isArray(body.richtfunk)
+        ? [...new Set(body.richtfunk.map(id => String(id)).filter(id => id && id !== String(nummer)))]
+        : [];
+
     const record = {
         nummer: String(body.nummer),
         name:    body.name   ?? '',
@@ -61,6 +66,16 @@ export async function onRequestPut({ params, env, request }) {
         lon:     Number(body.lon),
         link:    body.link   ?? '',
         ...(body.extra ? { extra: body.extra } : {}),
+        // ── Extended station metadata ─────────────────────────────────────
+        richtfunk:          newRichtfunk,
+        standortkuerzel:    String(body.standortkuerzel ?? '').trim().slice(0, 3),
+        pv_pate:            String(body.pv_pate          ?? '').trim(),
+        pv_vertretung:      String(body.pv_vertretung    ?? '').trim(),
+        ifs_pate:           String(body.ifs_pate         ?? '').trim(),
+        betreiber_standort: String(body.betreiber_standort ?? 'SWR').trim(),
+        betreiber_sender:   String(body.betreiber_sender   ?? 'SWR').trim(),
+        dfmg_id:            String(body.dfmg_id           ?? '').trim(),
+        // ─────────────────────────────────────────────────────────────────
         updatedAt: new Date().toISOString(),
     };
 
@@ -71,6 +86,41 @@ export async function onRequestPut({ params, env, request }) {
 
     await env.STANDORTE_KV.put(`standort:${nummer}`, JSON.stringify(record));
     await rebuildIndex(env);
+
+    // ── Bidirectional Richtfunk sync ──────────────────────────────────────
+    // Determine which peers were added or removed compared to the old state.
+    const oldRichtfunk = Array.isArray(existing?.richtfunk)
+        ? existing.richtfunk.map(String)
+        : [];
+    const thisNummer = String(nummer);
+
+    const added   = newRichtfunk.filter(id => !oldRichtfunk.includes(id));
+    const removed = oldRichtfunk.filter(id => !newRichtfunk.includes(id));
+
+    // Add back-link: thisnummer → peer
+    for (const peerId of added) {
+        const peer = await env.STANDORTE_KV.get(`standort:${peerId}`, { type: 'json' });
+        if (!peer) continue;
+        const peerRf = Array.isArray(peer.richtfunk) ? peer.richtfunk.map(String) : [];
+        if (!peerRf.includes(thisNummer)) {
+            peer.richtfunk = [...peerRf, thisNummer];
+            peer.updatedAt = new Date().toISOString();
+            await env.STANDORTE_KV.put(`standort:${peerId}`, JSON.stringify(peer));
+        }
+    }
+
+    // Remove back-link: thisNummer is no longer in peer's richtfunk
+    for (const peerId of removed) {
+        const peer = await env.STANDORTE_KV.get(`standort:${peerId}`, { type: 'json' });
+        if (!peer) continue;
+        const peerRf = Array.isArray(peer.richtfunk) ? peer.richtfunk.map(String) : [];
+        if (peerRf.includes(thisNummer)) {
+            peer.richtfunk = peerRf.filter(id => id !== thisNummer);
+            peer.updatedAt = new Date().toISOString();
+            await env.STANDORTE_KV.put(`standort:${peerId}`, JSON.stringify(peer));
+        }
+    }
+    // ─────────────────────────────────────────────────────────────────────
 
     return Response.json({ ok: true, record });
 }
