@@ -25,6 +25,7 @@ function openDashboard(nummer) {
 
     document.getElementById("dashTitleNum").innerText = standort.nummer;
     document.getElementById("dashTitleName").innerText = standort.name;
+    updateDashKuerzel(standort);
     updateDashboardFavoriteButton();
 
     document.getElementById("trafficAlertBox").classList.add("hidden");
@@ -269,15 +270,23 @@ function copyCoords() {
 
 // ─── Standort-Info Panel ───────────────────────────────────────────────────────────
 
-/**
- * Populate (or hide) the Standort-Info metadata panel in the dashboard modal.
- * All fields are optional; the panel hides itself when none are present.
- */
+// ─── Dashboard title kürzel ──────────────────────────────────────────────────────────
+
+function updateDashKuerzel(standort) {
+    const el = document.getElementById('dashTitleKuerzel');
+    if (!el) return;
+    const k = (standort.standortkuerzel || '').trim();
+    if (k) { el.textContent = '(' + k + ')'; el.classList.remove('hidden'); }
+    else    { el.classList.add('hidden'); }
+}
+
+/** Refresh the Standort-Info metadata panel. Always visible; shows empty state when no data. */
 function updateStandortInfoPanel(standort) {
     const panel = document.getElementById('standortInfoPanel');
     if (!panel) return;
 
-    /** Helper: show/hide a wrapper element and set text or innerHTML in its child. */
+    panel.classList.remove('hidden');
+
     function setField(wrapId, contentId, value, isHtml = false) {
         const wrap = document.getElementById(wrapId);
         const el   = document.getElementById(contentId);
@@ -299,7 +308,7 @@ function updateStandortInfoPanel(standort) {
     setField('siPvVertretungWrap',      'siPvVertretung',      standort.pv_vertretung || '');
     setField('siIfsPateWrap',           'siIfsPate',           standort.ifs_pate || '');
 
-    // Richtfunk: render as clickable chips so users can jump to linked stations
+    // Richtfunk: clickable chips
     const rfWrap = document.getElementById('siRichtfunkWrap');
     const rfEl   = document.getElementById('siRichtfunk');
     if (rfWrap && rfEl) {
@@ -316,7 +325,6 @@ function updateStandortInfoPanel(standort) {
         }
     }
 
-    // Show panel only if at least one field has content
     const hasData = [
         standort.standortkuerzel, standort.dfmg_id,
         standort.betreiber_standort, standort.betreiber_sender,
@@ -324,7 +332,130 @@ function updateStandortInfoPanel(standort) {
     ].some(v => v && String(v).trim()) ||
         (Array.isArray(standort.richtfunk) && standort.richtfunk.length > 0);
 
-    panel.classList.toggle('hidden', !hasData);
+    const empty  = document.getElementById('siEmptyState');
+    const fields = document.getElementById('siFieldList');
+    if (empty)  empty.classList.toggle('hidden',  hasData);
+    if (fields) fields.classList.toggle('hidden', !hasData);
+}
+
+// ─── Standort Edit (frontend PATCH) ──────────────────────────────────────────────────
+
+const SE_BETREIBER_KNOWN = ['SWR','SMS','DFMG','BR','SR','ORF','MB','Swisscom'];
+
+function seToggleBetreiber(selSuffix, customSuffix) {
+    const sel = document.getElementById('seBetreiber' + selSuffix);
+    const inp = document.getElementById('seBetreiber' + customSuffix);
+    if (sel.value === '__custom__') { inp.classList.remove('hidden'); inp.focus(); }
+    else { inp.classList.add('hidden'); inp.value = ''; }
+}
+
+function seGetBetreiber(selSuffix, customSuffix) {
+    const sel = document.getElementById('seBetreiber' + selSuffix);
+    const inp = document.getElementById('seBetreiber' + customSuffix);
+    return sel.value === '__custom__' ? (inp.value.trim() || 'SWR') : sel.value;
+}
+
+function seSetBetreiber(selSuffix, customSuffix, value) {
+    const sel = document.getElementById('seBetreiber' + selSuffix);
+    const inp = document.getElementById('seBetreiber' + customSuffix);
+    if (!value || SE_BETREIBER_KNOWN.includes(value)) {
+        sel.value = value || 'SWR';
+        inp.classList.add('hidden'); inp.value = '';
+    } else {
+        sel.value = '__custom__'; inp.value = value;
+        inp.classList.remove('hidden');
+    }
+}
+
+function openStandortEdit() {
+    if (!currentStandort) return;
+    const s = currentStandort;
+    document.getElementById('standortEditModalTitle').textContent =
+        `${s.nummer} – ${s.name} bearbeiten`;
+    document.getElementById('seNameInput').value         = s.name              || '';
+    document.getElementById('seKuerzelInput').value      = s.standortkuerzel   || '';
+    document.getElementById('seDfmgInput').value         = s.dfmg_id           || '';
+    document.getElementById('seRichtfunkInput').value    = Array.isArray(s.richtfunk) ? s.richtfunk.join(', ') : '';
+    document.getElementById('sePvPateInput').value       = s.pv_pate           || '';
+    document.getElementById('sePvVertretungInput').value = s.pv_vertretung     || '';
+    document.getElementById('seIfsPateInput').value      = s.ifs_pate          || '';
+    seSetBetreiber('StandortSel', 'StandortCustom', s.betreiber_standort || 'SWR');
+    seSetBetreiber('SenderSel',   'SenderCustom',   s.betreiber_sender   || 'SWR');
+    document.getElementById('seError').classList.add('hidden');
+    document.getElementById('seSubmitBtn').disabled = false;
+    document.getElementById('seSubmitBtn').textContent = 'Speichern';
+    document.getElementById('standortEditModal').classList.remove('hidden');
+    setTimeout(() => document.getElementById('seNameInput').focus(), 50);
+}
+
+function closeStandortEdit() {
+    document.getElementById('standortEditModal').classList.add('hidden');
+}
+
+async function saveStandortEdit() {
+    if (!currentStandort) return;
+    const btn   = document.getElementById('seSubmitBtn');
+    const errEl = document.getElementById('seError');
+    btn.disabled = true;
+    btn.textContent = 'Speichere…';
+    errEl.classList.add('hidden');
+
+    const richtfunk = document.getElementById('seRichtfunkInput').value
+        .split(/[,\s]+/).map(v => v.trim()).filter(Boolean);
+
+    const body = {
+        name:               document.getElementById('seNameInput').value.trim(),
+        standortkuerzel:    document.getElementById('seKuerzelInput').value.trim().slice(0, 3),
+        dfmg_id:            document.getElementById('seDfmgInput').value.trim(),
+        richtfunk,
+        pv_pate:            document.getElementById('sePvPateInput').value.trim(),
+        pv_vertretung:      document.getElementById('sePvVertretungInput').value.trim(),
+        ifs_pate:           document.getElementById('seIfsPateInput').value.trim(),
+        betreiber_standort: seGetBetreiber('StandortSel', 'StandortCustom'),
+        betreiber_sender:   seGetBetreiber('SenderSel',   'SenderCustom'),
+    };
+
+    let res;
+    try {
+        res = await fetch(`/api/standorte/${encodeURIComponent(currentStandort.nummer)}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+    } catch (err) {
+        errEl.textContent = 'Netzwerkfehler: ' + err.message;
+        errEl.classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = 'Speichern';
+        return;
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Speichern';
+
+    if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        errEl.textContent = data.error || 'Fehler beim Speichern.';
+        errEl.classList.remove('hidden');
+        return;
+    }
+
+    const data = await res.json();
+    // Merge updated record into in-memory standort
+    Object.assign(currentStandort, data.record ?? body);
+    const idx = (typeof standorte !== 'undefined' ? standorte : [])
+        .findIndex(s => String(s.nummer) === String(currentStandort.nummer));
+    if (idx !== -1) standorte[idx] = currentStandort;
+
+    closeStandortEdit();
+
+    // Refresh dashboard display
+    document.getElementById('dashTitleName').innerText = currentStandort.name;
+    updateDashKuerzel(currentStandort);
+    updateStandortInfoPanel(currentStandort);
+
+    // Refresh list so name + kürzel chip update
+    if (typeof filterStandorte === 'function') filterStandorte();
 }
 
 function getWayInstructions(nummer) {

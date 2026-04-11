@@ -196,6 +196,7 @@ function handleGlobalKeydown(e) {
             { id: 'savedToursModal',     close: () => { if (typeof closeSavedToursModal === 'function') closeSavedToursModal(); } },
             { id: 'locationModal',       close: () => { if (typeof closeLocationModal === 'function') closeLocationModal(); } },
             { id: 'wayInstructionsModal', close: () => { if (typeof closeWayInstructionsModal === 'function') closeWayInstructionsModal(); } },
+            { id: 'standortEditModal',     close: () => { if (typeof closeStandortEdit === 'function') closeStandortEdit(); } },
             { id: 'settingsModal',       close: () => { if (typeof closeSettingsModal === 'function') closeSettingsModal(); } },
             { id: 'appSettingsModal',    close: () => { if (typeof closeAppSettingsModal === 'function') closeAppSettingsModal(); } },
             { id: 'tutorialModal',       close: () => { if (typeof closeTutorial === 'function') closeTutorial(); } },

@@ -317,7 +317,7 @@
             <div class="flex justify-between items-center p-5 border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900">
                 <div>
                     <h2 class="text-xl font-bold text-slate-900 dark:text-zinc-100">
-                        <span id="dashTitleNum"></span> <span id="dashTitleName" class="font-normal text-slate-600 dark:text-zinc-400"></span>
+                        <span id="dashTitleNum"></span> <span id="dashTitleName" class="font-normal text-slate-600 dark:text-zinc-400"></span><span id="dashTitleKuerzel" class="hidden text-base font-mono font-normal text-slate-400 dark:text-zinc-500 ml-1.5"></span>
                         <button id="dashFavoriteBtn" type="button" onclick="toggleCurrentDashboardFavorite(event)" class="ml-2 transition-colors text-slate-300 dark:text-zinc-600 hover:text-amber-500" title="Favorit umschalten"><i class="mdi mdi-star"></i></button>
                     </h2>
                 </div>
@@ -450,11 +450,15 @@
                         </div>
 
                         <!-- Standort-Info (new metadata fields) -->
-                        <div id="standortInfoPanel" class="border border-slate-200 dark:border-zinc-800 rounded-md overflow-hidden hidden">
-                            <div class="bg-slate-50 dark:bg-zinc-900 px-3 py-2.5 border-b border-slate-200 dark:border-zinc-800">
+                        <div id="standortInfoPanel" class="border border-slate-200 dark:border-zinc-800 rounded-md overflow-hidden">
+                            <div class="bg-slate-50 dark:bg-zinc-900 px-3 py-2.5 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between">
                                 <h3 class="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wide">Standort-Info</h3>
+                                <button onclick="openStandortEdit()" class="text-xs flex items-center gap-1 px-2 py-1 rounded text-slate-500 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-800 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors" title="Infos bearbeiten">
+                                    <i class="mdi mdi-pencil-outline text-sm leading-none"></i>
+                                    Bearbeiten
+                                </button>
                             </div>
-                            <dl class="p-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                            <dl id="siFieldList" class="p-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
                                 <div id="siKuerzelWrap" class="hidden">
                                     <dt class="font-semibold text-slate-500 dark:text-zinc-400">Kürzel</dt>
                                     <dd id="siKuerzel" class="text-slate-800 dark:text-zinc-200 font-mono"></dd>
@@ -488,6 +492,8 @@
                                     <dd id="siRichtfunk" class="flex flex-wrap gap-1"></dd>
                                 </div>
                             </dl>
+                            <!-- Empty state -->
+                            <p id="siEmptyState" class="hidden px-3 pb-3 text-xs text-slate-400 dark:text-zinc-600 italic">Noch keine Infos hinterlegt.</p>
                         </div>
                     </div>
                 </div>
@@ -753,6 +759,102 @@
                 <div class="mt-4 flex gap-2">
                     <button onclick="saveWayInstructions()" class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition-colors">Speichern</button>
                     <button onclick="deleteWayInstructions()" class="flex-1 px-4 py-2 border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md font-medium transition-colors">Löschen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STANDORT EDIT MODAL (frontend soft-field editor) -->
+    <div id="standortEditModal" class="fixed inset-0 bg-slate-900/60 dark:bg-black/80 z-[55] hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-zinc-950 w-full max-w-xl rounded-md shadow-2xl border border-slate-200 dark:border-zinc-800 flex flex-col" style="max-height:90vh">
+            <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 shrink-0">
+                <h3 class="font-semibold text-slate-800 dark:text-zinc-100 text-sm flex items-center gap-2">
+                    <i class="mdi mdi-pencil-outline text-slate-400 dark:text-zinc-500 text-base"></i>
+                    <span id="standortEditModalTitle">Standort-Info bearbeiten</span>
+                </h3>
+                <button onclick="closeStandortEdit()" class="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors" title="Schließen">
+                    <i class="mdi mdi-close text-xl leading-none"></i>
+                </button>
+            </div>
+            <div class="overflow-y-auto flex-1 p-5 space-y-4">
+                <!-- Name -->
+                <div>
+                    <label class="se-label">Name</label>
+                    <input id="seNameInput" type="text" class="se-input" />
+                </div>
+                <!-- Kürzel + DFMG -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="se-label">Kürzel <span class="normal-case font-normal tracking-normal">(max. 3 Z.)</span></label>
+                        <input id="seKuerzelInput" type="text" maxlength="3" class="se-input font-mono" placeholder="z.B. STR" />
+                    </div>
+                    <div>
+                        <label class="se-label">DFMG-ID</label>
+                        <input id="seDfmgInput" type="text" class="se-input" />
+                    </div>
+                </div>
+                <!-- Richtfunk -->
+                <div>
+                    <label class="se-label">Richtfunk-Verbindungen</label>
+                    <input id="seRichtfunkInput" type="text" class="se-input" placeholder="Nummern kommagetrennt, z.B. 8100, 8317" />
+                    <p class="mt-1 text-[11px] text-slate-400 dark:text-zinc-500">Gegenrichtung wird automatisch eingetragen. Leer lassen zum Entfernen.</p>
+                </div>
+                <!-- Paten -->
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="se-label">PV-Pate</label>
+                        <input id="sePvPateInput" type="text" class="se-input" />
+                    </div>
+                    <div>
+                        <label class="se-label">PV-Vertretung</label>
+                        <input id="sePvVertretungInput" type="text" class="se-input" />
+                    </div>
+                    <div>
+                        <label class="se-label">IFS-Pate</label>
+                        <input id="seIfsPateInput" type="text" class="se-input" />
+                    </div>
+                </div>
+                <!-- Betreiber -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="se-label">Betreiber Standort</label>
+                        <select id="seBetreiberStandortSel" class="se-input" onchange="seToggleBetreiber('StandortSel','StandortCustom')">
+                            <option value="SWR">SWR</option>
+                            <option value="SMS">SMS</option>
+                            <option value="DFMG">DFMG</option>
+                            <option value="BR">BR</option>
+                            <option value="SR">SR</option>
+                            <option value="ORF">ORF</option>
+                            <option value="MB">MB</option>
+                            <option value="Swisscom">Swisscom</option>
+                            <option value="__custom__">Sonstige…</option>
+                        </select>
+                        <input id="seBetreiberStandortCustom" type="text" class="se-input mt-1 hidden" placeholder="Name eingeben…" />
+                    </div>
+                    <div>
+                        <label class="se-label">Betreiber Sender</label>
+                        <select id="seBetreiberSenderSel" class="se-input" onchange="seToggleBetreiber('SenderSel','SenderCustom')">
+                            <option value="SWR">SWR</option>
+                            <option value="SMS">SMS</option>
+                            <option value="DFMG">DFMG</option>
+                            <option value="BR">BR</option>
+                            <option value="SR">SR</option>
+                            <option value="ORF">ORF</option>
+                            <option value="MB">MB</option>
+                            <option value="Swisscom">Swisscom</option>
+                            <option value="__custom__">Sonstige…</option>
+                        </select>
+                        <input id="seBetreiberSenderCustom" type="text" class="se-input mt-1 hidden" placeholder="Name eingeben…" />
+                    </div>
+                </div>
+                <!-- Error -->
+                <div id="seError" class="hidden text-xs text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded px-3 py-2"></div>
+            </div>
+            <div class="px-5 py-3.5 border-t border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 flex items-center justify-between shrink-0">
+                <p class="text-[11px] text-slate-400 dark:text-zinc-500">Änderungen können vom Admin überschrieben werden.</p>
+                <div class="flex gap-2">
+                    <button onclick="closeStandortEdit()" class="px-3 py-1.5 text-sm border border-slate-300 dark:border-zinc-600 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors">Abbrechen</button>
+                    <button id="seSubmitBtn" onclick="saveStandortEdit()" class="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition-colors">Speichern</button>
                 </div>
             </div>
         </div>
