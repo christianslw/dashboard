@@ -217,8 +217,11 @@
                 Object.entries(data).forEach(([nummer, entry]) => {
                     if (entry?.text) {
                         localStorage.setItem(`wayInstructions_${nummer}`, entry.text);
+                        if (entry.edited_by) localStorage.setItem(`wayInstructionsBy_${nummer}`, entry.edited_by);
+                        else                 localStorage.removeItem(`wayInstructionsBy_${nummer}`);
                     } else {
                         localStorage.removeItem(`wayInstructions_${nummer}`);
+                        localStorage.removeItem(`wayInstructionsBy_${nummer}`);
                     }
                 });
             }
@@ -232,10 +235,11 @@
         _fahrtanweisungenPushTimers[key] = setTimeout(async () => {
             delete _fahrtanweisungenPushTimers[key];
             try {
+                const edited_by = localStorage.getItem('nickname') || '';
                 await fetch(`/api/fahrtanweisungen/${encodeURIComponent(key)}`, {
                     method:  'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body:    JSON.stringify({ text, updatedAt: new Date().toISOString() }),
+                    body:    JSON.stringify({ text, updatedAt: new Date().toISOString(), edited_by }),
                 });
             } catch { /* silent */ }
         }, 500);

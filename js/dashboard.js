@@ -301,7 +301,9 @@ function updateStandortInfoPanel(standort) {
     }
 
     setField('siKuerzelWrap',           'siKuerzel',           standort.standortkuerzel || '');
-    setField('siDfmgWrap',              'siDfmg',              standort.dfmg_id || '');
+    // DFMG-ID is only shown when the site or tower is operated by DFMG
+    const isDfmg = standort.betreiber_standort === 'DFMG' || standort.betreiber_sender === 'DFMG';
+    setField('siDfmgWrap',              'siDfmg',              (isDfmg && standort.dfmg_id) ? standort.dfmg_id : '');
     setField('siBetreiberStandortWrap', 'siBetreiberStandort', standort.betreiber_standort || '');
     setField('siBetreiberSenderWrap',   'siBetreiberSender',   standort.betreiber_sender   || '');
     setField('siPvPateWrap',            'siPvPate',            standort.pv_pate || '');
@@ -466,19 +468,26 @@ function getWayInstructions(nummer) {
 function saveWayInstructionsToStorage(nummer, instructions) {
     if (instructions.trim() === '') {
         localStorage.removeItem(`wayInstructions_${nummer}`);
+        localStorage.removeItem(`wayInstructionsBy_${nummer}`);
     } else {
         localStorage.setItem(`wayInstructions_${nummer}`, instructions);
+        const nick = localStorage.getItem('nickname');
+        if (nick) localStorage.setItem(`wayInstructionsBy_${nummer}`, nick);
+        else      localStorage.removeItem(`wayInstructionsBy_${nummer}`);
     }
 }
 
 function displayWayInstructions() {
     if (!currentStandort) return;
     const instructions = getWayInstructions(currentStandort.nummer);
+    const by = localStorage.getItem(`wayInstructionsBy_${currentStandort.nummer}`);
     const display = document.getElementById('wayInstructionsDisplay');
     if (instructions) {
         display.innerText = instructions;
+        display.title = by ? `Bearbeitet von: ${by}` : '';
     } else {
         display.innerText = 'Keine Anweisungen';
+        display.title = '';
     }
 }
 

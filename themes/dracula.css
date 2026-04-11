@@ -698,6 +698,22 @@ html.dracula .leaflet-control-layers label {
 html.dracula .leaflet-control-layers label:hover { color: var(--theme-text-primary) !important; }
 /* Leaflet toggle styling is fully handled by the shared bridge in styles.css.
    No override needed here — avoids duplicate icon conflict. */
+/* Custom layer control */
+html.dracula .clc-toggle {
+    background: var(--theme-surface) !important;
+    border-color: var(--theme-border) !important;
+    color: var(--theme-text-secondary) !important;
+}
+html.dracula .clc-toggle:hover { background: var(--theme-hover) !important; color: var(--theme-text-primary) !important; }
+html.dracula .clc-panel {
+    background: var(--theme-surface) !important;
+    border-color: var(--theme-border) !important;
+    border-radius: 8px !important;
+}
+html.dracula .clc-section-head { color: var(--theme-text-muted, #71717a) !important; }
+html.dracula .clc-divider      { background: var(--theme-border) !important; }
+html.dracula .clc-row          { color: var(--theme-text-secondary) !important; }
+html.dracula .clc-row:hover    { background: var(--theme-hover) !important; color: var(--theme-text-primary) !important; }
 html.dracula .leaflet-bar { background: var(--theme-surface) !important; border-color: var(--theme-border) !important; border-radius: 8px !important; }
 html.dracula .leaflet-bar a {
     background: var(--theme-surface) !important;

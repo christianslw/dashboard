@@ -33,6 +33,9 @@ function restoreActiveOverlayLayers(overlayLayers) {
             loadRadarFrames();
             showRadarTimeline();
         }
+        if (normalizedName === 'Richtfunkstrecken') {
+            drawRichtfunkLines(layer);
+        }
     });
     saveActiveOverlayLayerNames(overlayLayers);
 }
@@ -43,6 +46,160 @@ function getThemeAwareOsmUrl() {
 
 function getThemeAwareCartoUrl(isDarkMode) {
     return `${CARTODB_TILE_BASE_URL}/${isDarkMode ? 'dark_all' : 'light_all'}/{z}/{x}/{y}{r}.png`;
+}
+
+// ─── Custom Kartenebenen Control ─────────────────────────────────────────────
+// Replaces the stock Leaflet L.control.layers with a grouped, styled panel:
+//   · Karten    → mutually-exclusive radio buttons (base layer selection)
+//   · Overlays  → checkboxes (DWD, Regenradar, Richtfunk…)
+//   DiPUL injects its section into .leaflet-control-layers-overlays after init.
+
+function _buildCustomLayerControl(map, baseLayers, overlayLayers) {
+    const ctrl = L.control({ position: 'topright' });
+
+    ctrl.onAdd = function() {
+        const wrap = L.DomUtil.create('div', 'clc-wrap');
+        L.DomEvent.disableClickPropagation(wrap);
+        L.DomEvent.disableScrollPropagation(wrap);
+
+        // ── Toggle button ────────────────────────────────────────────
+        const btn = L.DomUtil.create('button', 'clc-toggle', wrap);
+        btn.title = 'Kartenebenen';
+        const btnIcon = document.createElement('i');
+        btnIcon.className = 'mdi mdi-layers-outline';
+        btnIcon.style.cssText = 'font-size:18px;line-height:1;pointer-events:none';
+        btn.appendChild(btnIcon);
+
+        // ── Panel ────────────────────────────────────────────────
+        const panel = L.DomUtil.create('div', 'clc-panel', wrap);
+        panel.style.display = 'none';
+
+        // ——— Karten ———
+        const kHead = document.createElement('div');
+        kHead.className = 'clc-section-head';
+        kHead.textContent = 'Karten';
+        panel.appendChild(kHead);
+
+        const kList = document.createElement('div');
+        kList.className = 'clc-list';
+        Object.entries(baseLayers).forEach(function([name, layer]) {
+            const lbl = document.createElement('label');
+            lbl.className = 'clc-row';
+            const r = document.createElement('input');
+            r.type = 'radio';
+            r.name = 'clc-base-layer';
+            r.dataset.name = name;
+            r.checked = map.hasLayer(layer);
+            r.addEventListener('change', function() {
+                if (!r.checked) return;
+                Object.values(baseLayers).forEach(function(l) { if (map.hasLayer(l)) map.removeLayer(l); });
+                layer.addTo(map);
+                map.fire('baselayerchange', { name: name, layer: layer });
+            });
+            const s = document.createElement('span');
+            s.textContent = name;
+            lbl.appendChild(r);
+            lbl.appendChild(s);
+            kList.appendChild(lbl);
+        });
+        panel.appendChild(kList);
+
+        // ——— Divider ———
+        const divider = document.createElement('div');
+        divider.className = 'clc-divider';
+        panel.appendChild(divider);
+
+        // ——— Overlays ———
+        const oHead = document.createElement('div');
+        oHead.className = 'clc-section-head';
+        oHead.textContent = 'Overlays';
+        panel.appendChild(oHead);
+
+        // .leaflet-control-layers-overlays: DiPUL injects its section here
+        const oList = document.createElement('div');
+        oList.className = 'clc-list leaflet-control-layers-overlays';
+        Object.entries(overlayLayers).forEach(function([name, layer]) {
+            const lbl = document.createElement('label');
+            lbl.className = 'clc-row';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.dataset.name = name;
+            cb.checked = map.hasLayer(layer);
+            cb.addEventListener('change', function() {
+                if (cb.checked) {
+                    layer.addTo(map);
+                    map.fire('overlayadd', { name: name, layer: layer });
+                } else {
+                    map.removeLayer(layer);
+                    map.fire('overlayremove', { name: name, layer: layer });
+                }
+            });
+            const s = document.createElement('span');
+            s.textContent = name;
+            lbl.appendChild(cb);
+            lbl.appendChild(s);
+            oList.appendChild(lbl);
+        });
+        panel.appendChild(oList);
+
+        // ── Toggle & close-on-outside-click ────────────────────────────
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const opening = panel.style.display === 'none';
+            if (opening) {
+                // Sync radio/checkbox states with actual map layer state
+                Object.entries(baseLayers).forEach(function([name]) {
+                    const r = kList.querySelector(`input[data-name="${CSS.escape(name)}"]`);
+                    if (r) r.checked = map.hasLayer(baseLayers[name]);
+                });
+                Object.entries(overlayLayers).forEach(function([name]) {
+                    const cb = oList.querySelector(`input[data-name="${CSS.escape(name)}"]`);
+                    if (cb) cb.checked = map.hasLayer(overlayLayers[name]);
+                });
+            }
+            panel.style.display = opening ? '' : 'none';
+        });
+        document.addEventListener('click', function(e) {
+            if (!wrap.contains(e.target)) panel.style.display = 'none';
+        });
+
+        return wrap;
+    };
+
+    ctrl.addTo(map);
+    return ctrl;
+}
+
+// ─── Richtfunkstrecken ─────────────────────────────────────────────────────────────
+// Draws dashed polylines between all stations linked via their richtfunk[] arrays.
+// Each pair is drawn exactly once (both directions de-duplicated via sorted key).
+
+function drawRichtfunkLines(layerGroup) {
+    layerGroup.clearLayers();
+    if (!Array.isArray(standorte) || standorte.length === 0) return;
+    const seen = new Set();
+    standorte.forEach(function(s) {
+        if (!s.lat || !s.lon || !Array.isArray(s.richtfunk) || s.richtfunk.length === 0) return;
+        s.richtfunk.forEach(function(targetId) {
+            const pair = [String(s.nummer), String(targetId)].sort().join('\u2194');
+            if (seen.has(pair)) return;
+            seen.add(pair);
+            const t = standorte.find(function(st) { return String(st.nummer) === String(targetId); });
+            if (!t || !t.lat || !t.lon) return;
+            L.polyline([[s.lat, s.lon], [t.lat, t.lon]], {
+                color: '#f59e0b',
+                weight: 2.5,
+                opacity: 0.85,
+                dashArray: '8, 5',
+                className: 'no-filter'
+            })
+            .bindTooltip(
+                s.nummer + ' \u2013 ' + s.name + '<br>' + t.nummer + ' \u2013 ' + t.name,
+                { sticky: true }
+            )
+            .addTo(layerGroup);
+        });
+    });
 }
 
 function initLeafletMap() {
@@ -119,7 +276,7 @@ function initLeafletMap() {
         format: 'image/png',
         transparent: true,
         opacity: 0.65,
-        attribution: '© Deutscher Wetterdienst (DWD)',
+        attribution: '\u00a9 Deutscher Wetterdienst (DWD)',
         className: 'no-filter dwd-warn-tile',
         zIndex: 150
     });
@@ -127,36 +284,24 @@ function initLeafletMap() {
     // Rain radar overlay group (lazy-populated via loadRadarFrames)
     radarOverlayGroup = L.layerGroup();
 
-    // Lightning overlay (Blitzortung community tiles, no API key)
-    const lightningLayer = L.tileLayer(
-        BLITZORTUNG_TILE_URL,
-        {
-            attribution: '© <a href="https://www.blitzortung.org" target="_blank">Blitzortung.org</a>',
-            opacity: 0.85,
-            className: 'no-filter',
-            zIndex: 250,
-            maxNativeZoom: 8,
-            maxZoom: 22
-        }
-    );
+    // Richtfunkstrecken: lazy-drawn polylines between linked stations
+    const richtfunkLayer = L.layerGroup();
 
     const overlayLayers = {
-        'DWD Warnzonen': dwdWarningsLayer,
+        'DWD Warnzonen':         dwdWarningsLayer,
         [RAINVIEWER_LAYER_NAME]: radarOverlayGroup,
-        'Blitzortung ⚡': lightningLayer
+        'Richtfunkstrecken':     richtfunkLayer
     };
 
-    L.control.layers(baseLayers, overlayLayers, { position: 'topright' }).addTo(leafletMap);
+    _buildCustomLayerControl(leafletMap, baseLayers, overlayLayers);
     restoreActiveOverlayLayers(overlayLayers);
 
-    // Inject MDI icons, then init DiPUL control inside the same overlay panel
+    // Inject MDI icons into zoom buttons; init DiPUL after DOM settles
     requestAnimationFrame(function() {
-        const defs = [
-            { sel: '.leaflet-control-layers-toggle', icon: 'layers-outline' },
-            { sel: '.leaflet-control-zoom-in',       icon: 'plus'   },
-            { sel: '.leaflet-control-zoom-out',      icon: 'minus'  }
-        ];
-        defs.forEach(function(d) {
+        [
+            { sel: '.leaflet-control-zoom-in',  icon: 'plus'  },
+            { sel: '.leaflet-control-zoom-out', icon: 'minus' }
+        ].forEach(function(d) {
             const el = document.querySelector(d.sel);
             if (!el) return;
             el.innerHTML = '';
@@ -176,18 +321,24 @@ function initLeafletMap() {
         localStorage.setItem('selectedMapLayer', e.name);
     });
 
-    // Overlay state + radar timeline
+    // Overlay state + radar timeline + richtfunk lines
     leafletMap.on('overlayadd', function(e) {
         saveActiveOverlayLayerNames(overlayLayers);
         if (e.name === RAINVIEWER_LAYER_NAME) {
             loadRadarFrames();
             showRadarTimeline();
         }
+        if (e.name === 'Richtfunkstrecken') {
+            drawRichtfunkLines(richtfunkLayer);
+        }
     });
     leafletMap.on('overlayremove', function(e) {
         saveActiveOverlayLayerNames(overlayLayers);
         if (e.name === RAINVIEWER_LAYER_NAME) {
             hideRadarTimeline();
+        }
+        if (e.name === 'Richtfunkstrecken') {
+            richtfunkLayer.clearLayers();
         }
     });
 

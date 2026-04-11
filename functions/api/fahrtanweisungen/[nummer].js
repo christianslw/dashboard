@@ -12,7 +12,7 @@ export async function onRequestGet({ params, env }) {
     const record = await env.STANDORTE_KV.get(`standort:${nummer}`, { type: 'json' });
     if (!record) return Response.json({ error: 'Not found' }, { status: 404 });
     return Response.json(
-        { text: record.fahrtanweisung ?? null, updatedAt: record.fahrtanweisungUpdatedAt ?? null },
+        { text: record.fahrtanweisung ?? null, updatedAt: record.fahrtanweisungUpdatedAt ?? null, edited_by: record.fahrtanweisungUpdatedBy ?? null },
         { headers: { 'Cache-Control': 'no-store' } }
     );
 }
@@ -47,7 +47,9 @@ export async function onRequestPut({ params, env, request }) {
 
     record.fahrtanweisung          = typeof body.text === 'string' ? body.text : '';
     record.fahrtanweisungUpdatedAt = now;
-    record.fahrtanweisungUpdatedBy = 'user';
+    record.fahrtanweisungUpdatedBy = (typeof body.edited_by === 'string' && body.edited_by.trim())
+        ? body.edited_by.trim()
+        : (record.fahrtanweisungUpdatedBy ?? 'user');
     record.fahrtanweisungHistory   = history;
 
     await env.STANDORTE_KV.put(`standort:${nummer}`, JSON.stringify(record));

@@ -15,7 +15,7 @@ export async function onRequestGet({ env }) {
         index.map(async (nummer) => {
             const record = await env.STANDORTE_KV.get(`standort:${nummer}`, { type: 'json' });
             if (!record?.fahrtanweisung) return null;
-            return [nummer, { text: record.fahrtanweisung, updatedAt: record.fahrtanweisungUpdatedAt ?? null }];
+            return [nummer, { text: record.fahrtanweisung, updatedAt: record.fahrtanweisungUpdatedAt ?? null, edited_by: record.fahrtanweisungUpdatedBy ?? null }];
         })
     );
 

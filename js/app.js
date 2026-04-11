@@ -216,6 +216,9 @@ function updateAppSettingsUI() {
     });
     // Sync route suggestions toggle (lives in planner.js)
     if (typeof _updateSuggestToggleUI === 'function') _updateSuggestToggleUI();
+    // Show current nickname
+    const nicknameDisplay = document.getElementById('settingsNicknameDisplay');
+    if (nicknameDisplay) nicknameDisplay.textContent = localStorage.getItem('nickname') || '(kein Benutzername gesetzt)';
 }
 
 function openAppSettingsModal() {

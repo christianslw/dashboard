@@ -238,7 +238,8 @@ function getFilteredStandorte() {
         seen.add(key);
 
         const matchesSearch = key.includes(query) ||
-            normalizeSearchQuery(s.name).includes(query);
+            normalizeSearchQuery(s.name).includes(query) ||
+            (s.standortkuerzel && normalizeSearchQuery(s.standortkuerzel).includes(query));
 
         const areaCode = getStandortAreaCode(s.nummer);
         const matchesIncludedAreas = includedAreaCodes.size === 0 || (areaCode && includedAreaCodes.has(areaCode));

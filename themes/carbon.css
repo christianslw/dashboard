@@ -705,6 +705,24 @@ html.carbon.dark .leaflet-control-layers-toggle:hover {
 html.carbon.dark .leaflet-control-layers label       { color: #c6c6c6 !important; }
 html.carbon.dark .leaflet-control-layers-separator   { border-color: #1a1a1a !important; }
 html.carbon.dark .leaflet-control-layers-group-name  { color: #8d8d8d !important; }
+/* Custom layer control */
+html.carbon.dark .clc-toggle {
+    background: #141414 !important;
+    border-color: #1a1a1a !important;
+    border-radius: 0 !important;
+    color: #c6c6c6 !important;
+}
+html.carbon.dark .clc-toggle:hover { background: #1e1e1e !important; color: #f4f4f4 !important; }
+html.carbon.dark .clc-panel {
+    background: #0d0d0d !important;
+    border-color: #1a1a1a !important;
+    border-radius: 0 !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,.80) !important;
+}
+html.carbon.dark .clc-section-head { color: #8d8d8d !important; }
+html.carbon.dark .clc-divider      { background: #1a1a1a !important; }
+html.carbon.dark .clc-row          { color: #c6c6c6 !important; }
+html.carbon.dark .clc-row:hover    { background: #1e1e1e !important; }
 
 /* Cancel the invert() filter from styles.css dark fallback */
 html.carbon.dark .leaflet-control-zoom-in,
@@ -784,6 +802,21 @@ html.carbon:not(.dark) .leaflet-control-layers-toggle:hover {
 html.carbon:not(.dark) .leaflet-bar a,
 html.carbon:not(.dark) .leaflet-control-zoom-in,
 html.carbon:not(.dark) .leaflet-control-zoom-out { border-radius: 0 !important; }
+/* Custom layer control — light */
+html.carbon:not(.dark) .clc-toggle {
+    border-radius: 0 !important;
+    border-color: #e0e0e0 !important;
+}
+html.carbon:not(.dark) .clc-toggle:hover {
+    background-color: #f4f4f4 !important;
+    border-color: #c6c6c6 !important;
+}
+html.carbon:not(.dark) .clc-panel {
+    background: #ffffff !important;
+    border-color: #e0e0e0 !important;
+    border-radius: 0 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,.12) !important;
+}
 
 /* ─── Radar timeline ─────────────────────────────────────────────────────────────── */
 html.carbon.dark #radarSlider { background: #1a1a1a !important; }

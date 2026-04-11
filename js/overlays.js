@@ -632,8 +632,8 @@ function buildPayloadFromEditLayerGroup() {
         const f = updateFeatureFromLayer(layer);
         if (f) features.push(f);
     });
-    // Use the sync user-ID when available so overlay changes are attributable
-    const userId = window.__cfSync?.getUserId?.() ?? 'gui';
+    // Use nickname for attribution; fall back to sync user-ID so changes are still attributable
+    const userId = localStorage.getItem('nickname') || window.__cfSync?.getUserId?.() || 'gui';
     return { features, updatedAt: new Date().toISOString(), updatedBy: userId };
 }
 
@@ -644,6 +644,7 @@ function renderDisplayOverlaysForStandort(nummer) {
     overlayDisplayGroup.clearLayers();
     if (!nummer) return;
     const payload = getOverlayPayloadForStandort(nummer);
+    const editedBy = payload.updatedBy || null;
     payload.features.forEach(feature => {
         const layer = createLayerFromFeature(feature);
         if (!layer) return;
@@ -658,6 +659,12 @@ function renderDisplayOverlaysForStandort(nummer) {
                 className: 'overlay-hinweis-permanent'
             });
             layer.on('click', () => beginEditExistingHinweis(layer, nummer));
+        } else if (editedBy) {
+            // All other overlay elements: show editor attribution on hover
+            layer.bindTooltip(
+                `<span class="overlay-edited-by-tip">von: ${editedBy}</span>`,
+                { sticky: true, className: 'overlay-edited-by-tooltip' }
+            );
         }
 
         overlayDisplayGroup.addLayer(layer);

@@ -1,5 +1,37 @@
 // ─── Initialization (runs after all modules loaded) ──────────────────────────────────
 
+// ─── Nickname (edited_by attribution) ────────────────────────────────────────
+
+function getNickname() {
+    return localStorage.getItem('nickname') || '';
+}
+
+function promptNicknameIfMissing() {
+    if (getNickname()) return;
+    const modal = document.getElementById('nicknameModal');
+    if (modal) modal.classList.remove('hidden');
+}
+
+function saveNickname() {
+    const input = document.getElementById('nicknameInput');
+    const val   = input ? input.value.trim() : '';
+    if (!val) { input && input.focus(); return; }
+    localStorage.setItem('nickname', val);
+    const modal = document.getElementById('nicknameModal');
+    if (modal) modal.classList.add('hidden');
+    // Update display in Settings modal if open
+    const display = document.getElementById('settingsNicknameDisplay');
+    if (display) display.textContent = val;
+}
+
+function changeNickname() {
+    const modal = document.getElementById('nicknameModal');
+    const input = document.getElementById('nicknameInput');
+    if (input) input.value = getNickname();
+    if (modal) modal.classList.remove('hidden');
+    requestAnimationFrame(() => input && input.focus());
+}
+
 // ── Split-pane resizer ────────────────────────────────────────────────────────
 function initSplitPane() {
     const list     = document.getElementById('resultList');
@@ -84,6 +116,9 @@ function initSplitPane() {
 window.onload = async () => {
     // 1. Apply locally cached theme immediately (no flash)
     applyThemeAndAppearance();
+
+    // Prompt for nickname first time (needed for edited_by attribution)
+    promptNicknameIfMissing();
 
     // ── 2. Cloudflare backend sync ─────────────────────────────────────────────
     let backendHasStandorte = false;
