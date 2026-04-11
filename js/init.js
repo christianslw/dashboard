@@ -81,9 +81,42 @@ function initSplitPane() {
     });
 }
 
+function initDraculaButtonOptIn() {
+    function mark(root) {
+        if (!root || !root.querySelectorAll) return;
+        root.querySelectorAll('button, a[id*="btn"]').forEach(el => {
+            if (el.dataset.draculaBtn === 'off') return;
+            el.classList.add('dracula-ui-btn');
+        });
+    }
+
+    mark(document);
+
+    const observer = new MutationObserver(mutations => {
+        mutations.forEach(m => {
+            m.addedNodes.forEach(node => {
+                if (!(node instanceof Element)) return;
+                if (node.matches('button, a[id*="btn"]')) {
+                    if (node.dataset.draculaBtn !== 'off') {
+                        node.classList.add('dracula-ui-btn');
+                    }
+                }
+                mark(node);
+            });
+        });
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+}
+
 window.onload = async () => {
+    initDraculaButtonOptIn();
+
     // 1. Apply locally cached theme immediately (no flash)
     applyThemeAndAppearance();
+
+    // 1b. Username prompt (shows modal on first visit, updates badge otherwise)
+    if (typeof initUsernamePrompt === 'function') initUsernamePrompt();
 
     // ── 2. Cloudflare backend sync ─────────────────────────────────────────────
     let backendHasStandorte = false;
@@ -121,6 +154,8 @@ window.onload = async () => {
     if (typeof initStandortOverlays === 'function') {
         initStandortOverlays();
     }
+    // Build Richtfunkstrecken layer from loaded standorte data
+    if (typeof buildRichtfunkLayer === 'function') buildRichtfunkLayer();
 
     // ── 6. List rendering ──────────────────────────────────────────────────────
     if (standorte.length > 0) {

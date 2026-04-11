@@ -1,10 +1,12 @@
 // ─── Leaflet Map & Clustering ────────────────────────────────────────────────────────────
 
 let osmLayer, cartoDBPositronLayer;
-const RADAR_MAX_NATIVE_ZOOM = 10;
-const RAINVIEWER_COLOR_SCHEME = 8;
+let richtfunkLayer = null; // module-level so buildRichtfunkLayer() can access it
+const RADAR_MAX_NATIVE_ZOOM      = 10;
+const RAINVIEWER_COLOR_SCHEME    = 8;
 const ACTIVE_OVERLAYS_STORAGE_KEY = 'activeOverlayLayers';
-const RAINVIEWER_LAYER_NAME = 'Regenradar';
+const RAINVIEWER_LAYER_NAME      = 'Regenradar';
+const RICHTFUNK_LAYER_NAME       = 'Richtfunkstrecken';
 
 function loadActiveOverlayLayerNames() {
     try {
@@ -25,7 +27,11 @@ function saveActiveOverlayLayerNames(overlayLayers) {
 function restoreActiveOverlayLayers(overlayLayers) {
     const names = loadActiveOverlayLayerNames();
     names.forEach(name => {
-        const normalizedName = name === 'Regenradar + Vorhersage' ? RAINVIEWER_LAYER_NAME : name;
+        // Migrate legacy names
+        const normalizedName = (name === 'Regenradar + Vorhersage') ? RAINVIEWER_LAYER_NAME
+                             : (name === 'Blitzortung ⚡')           ? null
+                             : name;
+        if (!normalizedName) return; // removed layer — skip silently
         const layer = overlayLayers[normalizedName];
         if (!layer || leafletMap.hasLayer(layer)) return;
         layer.addTo(leafletMap);
@@ -35,10 +41,6 @@ function restoreActiveOverlayLayers(overlayLayers) {
         }
     });
     saveActiveOverlayLayerNames(overlayLayers);
-}
-
-function getThemeAwareOsmUrl() {
-    return OSM_TILE_URL;
 }
 
 function getThemeAwareCartoUrl(isDarkMode) {
@@ -51,7 +53,7 @@ function initLeafletMap() {
     const isDarkMode = document.documentElement.classList.contains('dark');
     const useDarkMap = isDarkMode;
 
-    osmLayer = L.tileLayer(getThemeAwareOsmUrl(), {
+    osmLayer = L.tileLayer(OSM_TILE_URL, {
         attribution: '© OpenStreetMap contributors',
         maxZoom: 19,
         className: 'osm-tiles'
@@ -127,23 +129,13 @@ function initLeafletMap() {
     // Rain radar overlay group (lazy-populated via loadRadarFrames)
     radarOverlayGroup = L.layerGroup();
 
-    // Lightning overlay (Blitzortung community tiles, no API key)
-    const lightningLayer = L.tileLayer(
-        BLITZORTUNG_TILE_URL,
-        {
-            attribution: '© <a href="https://www.blitzortung.org" target="_blank">Blitzortung.org</a>',
-            opacity: 0.85,
-            className: 'no-filter',
-            zIndex: 250,
-            maxNativeZoom: 8,
-            maxZoom: 22
-        }
-    );
+    // Richtfunkstrecken — inter-station radio link lines (populated by buildRichtfunkLayer)
+    richtfunkLayer = L.layerGroup();
 
     const overlayLayers = {
         'DWD Warnzonen': dwdWarningsLayer,
         [RAINVIEWER_LAYER_NAME]: radarOverlayGroup,
-        'Blitzortung ⚡': lightningLayer
+        [RICHTFUNK_LAYER_NAME]: richtfunkLayer
     };
 
     L.control.layers(baseLayers, overlayLayers, { position: 'topright' }).addTo(leafletMap);
@@ -203,21 +195,57 @@ function updateLeafletMapTheme() {
     // OSM dark mode is handled via CSS inversion on .osm-tiles — no URL swap needed
 }
 
+// ─── Richtfunkstrecken Layer ─────────────────────────────────────────────────
+
+/**
+ * (Re-)builds the Richtfunkstrecken polyline layer from the global `standorte`
+ * array.  Call this after standorte data loads or changes.
+ */
+function buildRichtfunkLayer() {
+    if (!richtfunkLayer) return;
+    richtfunkLayer.clearLayers();
+
+    if (!Array.isArray(standorte)) return;
+
+    // Collect deduplicated pairs [A, B] where A.nummer < B.nummer (string compare)
+    const seen = new Set();
+    standorte.forEach(s => {
+        if (!Array.isArray(s.richtfunkverbindungen)) return;
+        s.richtfunkverbindungen.forEach(linkedNummer => {
+            const linked = standorte.find(t => String(t.nummer) === String(linkedNummer));
+            if (!linked || !linked.lat || !linked.lon || !s.lat || !s.lon) return;
+
+            // Build a canonical key so we only draw each line once
+            const key = [String(s.nummer), String(linked.nummer)].sort().join(':');
+            if (seen.has(key)) return;
+            seen.add(key);
+
+            const line = L.polyline(
+                [[s.lat, s.lon], [linked.lat, linked.lon]],
+                {
+                    color:    '#818cf8', // indigo-400
+                    weight:   2,
+                    opacity:  0.8,
+                    dashArray: '6, 6',
+                    className: 'no-filter',
+                    zIndex:   300
+                }
+            );
+
+            line.bindTooltip(
+                `<b>Richtfunkstrecke</b><br/>${s.nummer} ${s.name} ↔ ${linked.nummer} ${linked.name}`,
+                { sticky: true, direction: 'top' }
+            );
+
+            richtfunkLayer.addLayer(line);
+        });
+    });
+}
+
 function updateMapMarkers(liste) {
     if (markerClusterGroup) {
         leafletMap.removeLayer(markerClusterGroup);
     }
-
-    const colors = {
-        1: '#8b5cf6',
-        2: '#10b981',
-        3: '#f59e0b',
-        4: '#ef4444',
-        5: '#ec4899',
-        6: '#06b6d4',
-        8: '#6366f1',
-        9: '#eab308'
-    };
 
     markerClusterGroup = L.markerClusterGroup({
         maxClusterRadius: 40,
@@ -235,7 +263,7 @@ function updateMapMarkers(liste) {
             const dominantPrefix = Object.keys(prefixCounts).reduce((a, b) =>
                 prefixCounts[a] > prefixCounts[b] ? a : b
             );
-            const clusterColor = colors[dominantPrefix] || '#3b82f6';
+            const clusterColor = STATION_PREFIX_COLORS[dominantPrefix] || '#3b82f6';
 
             return L.divIcon({
                 html: `<div style="background-color: ${clusterColor}; color: white; font-weight: bold; font-size: 12px; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">${count}</div>`,
@@ -250,7 +278,7 @@ function updateMapMarkers(liste) {
     liste.forEach(s => {
         if (!s.lat || !s.lon) return;
         const prefix = Math.floor(s.nummer / 1000);
-        const markerColor = colors[prefix] || '#3b82f6';
+        const markerColor = STATION_PREFIX_COLORS[prefix] || '#3b82f6';
         const isFav = isFavorite(s.nummer);
 
         const isMainStation = parseInt(s.nummer) % 1000 === 0;
@@ -299,28 +327,7 @@ function updateMapMarkers(liste) {
 
             if (typeof getOverlayPayloadForStandort === 'function') {
                 const payload = getOverlayPayloadForStandort(s.nummer);
-                if (payload && payload.features) {
-                    payload.features.forEach(f => {
-                        if (f.geometry && f.geometry.coordinates) {
-                            if (f.geometry.type === 'Point') {
-                                const lat = f.geometry.coordinates[1];
-                                const lng = f.geometry.coordinates[0];
-                                bounds.extend([lat, lng]);
-                                if (f.properties && f.properties.overlayType === 'kreis') {
-                                    const radius = f.properties.radius || 100;
-                                    const rLat = radius / 111320;
-                                    const rLng = radius / (40075 * Math.cos(lat * Math.PI / 180));
-                                    bounds.extend([lat + rLat, lng + rLng]);
-                                    bounds.extend([lat - rLat, lng - rLng]);
-                                }
-                            } else if (f.geometry.type === 'LineString') {
-                                f.geometry.coordinates.forEach(c => bounds.extend([c[1], c[0]]));
-                            } else if (f.geometry.type === 'Polygon' && f.geometry.coordinates[0]) {
-                                f.geometry.coordinates[0].forEach(c => bounds.extend([c[1], c[0]]));
-                            }
-                        }
-                    });
-                }
+                extendBoundsWithOverlayFeatures(bounds, payload);
             }
 
             if (bounds.isValid() && !bounds.getNorthEast().equals(bounds.getSouthWest())) {
@@ -352,28 +359,7 @@ function focusMapOnStandort(nummer) {
     // Extend bounds with overlay elements
     if (typeof getOverlayPayloadForStandort === 'function') {
         const payload = getOverlayPayloadForStandort(standort.nummer);
-        if (payload && payload.features) {
-            payload.features.forEach(f => {
-                if (f.geometry && f.geometry.coordinates) {
-                    if (f.geometry.type === 'Point') {
-                        const lat = f.geometry.coordinates[1];
-                        const lng = f.geometry.coordinates[0];
-                        bounds.extend([lat, lng]);
-                        if (f.properties && f.properties.overlayType === 'kreis') {
-                            const radius = f.properties.radius || 100;
-                            const rLat = radius / 111320;
-                            const rLng = radius / (40075 * Math.cos(lat * Math.PI / 180));
-                            bounds.extend([lat + rLat, lng + rLng]);
-                            bounds.extend([lat - rLat, lng - rLng]);
-                        }
-                    } else if (f.geometry.type === 'LineString') {
-                        f.geometry.coordinates.forEach(c => bounds.extend([c[1], c[0]]));
-                    } else if (f.geometry.type === 'Polygon' && f.geometry.coordinates[0]) {
-                        f.geometry.coordinates[0].forEach(c => bounds.extend([c[1], c[0]]));
-                    }
-                }
-            });
-        }
+        extendBoundsWithOverlayFeatures(bounds, payload);
     }
 
     if (bounds.isValid() && !bounds.getNorthEast().equals(bounds.getSouthWest())) {

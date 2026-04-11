@@ -30,6 +30,7 @@ function saveFilterState() {
         favoriteFilterMode
     };
     localStorage.setItem('stationFilterState', JSON.stringify(payload));
+    window.__cfSync?.notifyLocalSettingsChanged?.();
 }
 
 function getStandortAreaCode(nummer) {
@@ -209,20 +210,16 @@ function initFilterMenu() {
     updateSortButtonLabel();
 
     document.addEventListener('click', (event) => {
-        const panel = document.getElementById('filterMenuPanel');
-        const wrapper = document.getElementById('filterMenuWrapper');
-        if (!panel || !wrapper) return;
-        if (!panel.classList.contains('hidden') && !wrapper.contains(event.target)) {
-            _animateClosePanel(panel);
+        const filterPanel = document.getElementById('filterMenuPanel');
+        const filterWrapper = document.getElementById('filterMenuWrapper');
+        if (filterPanel && filterWrapper && !filterPanel.classList.contains('hidden') && !filterWrapper.contains(event.target)) {
+            _animateClosePanel(filterPanel);
         }
-    });
 
-    document.addEventListener('click', (event) => {
-        const panel = document.getElementById('sortMenuPanel');
-        const wrapper = document.getElementById('sortMenuWrapper');
-        if (!panel || !wrapper) return;
-        if (!panel.classList.contains('hidden') && !wrapper.contains(event.target)) {
-            _animateClosePanel(panel);
+        const sortPanel = document.getElementById('sortMenuPanel');
+        const sortWrapper = document.getElementById('sortMenuWrapper');
+        if (sortPanel && sortWrapper && !sortPanel.classList.contains('hidden') && !sortWrapper.contains(event.target)) {
+            _animateClosePanel(sortPanel);
         }
     });
 }
@@ -327,6 +324,7 @@ function renderSortOptions() {
         btn.onclick = () => {
             sortField = opt.field;
             localStorage.setItem('sortField', opt.field);
+            window.__cfSync?.notifyLocalSettingsChanged?.();
             updateSortButtonLabel();
             filterStandorte();
             // Close immediately for 'default'; re-render direction row for others
@@ -364,6 +362,7 @@ function renderSortOptions() {
             btn.onclick = () => {
                 sortDir = d.dir;
                 localStorage.setItem('sortDir', d.dir);
+                window.__cfSync?.notifyLocalSettingsChanged?.();
                 updateSortButtonLabel();
                 filterStandorte();
                 closeSortMenu();

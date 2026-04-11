@@ -41,6 +41,17 @@ function openDashboard(nummer) {
     document.getElementById("windyIframe").src = `${WINDY_EMBED_URL}?type=map&location=coordinates&lat=${standort.lat}&lon=${standort.lon}&zoom=11&overlay=wind&marker=true&metricWind=m/s`;
 
     document.getElementById("btnTagebuch").href = getTagebuchLink(standort);
+    const kennblattLink = getStationskennblattLink(standort);
+    const btnKennblatt = document.getElementById("btnKennblatt");
+    if (btnKennblatt) {
+        if (kennblattLink) {
+            btnKennblatt.href = kennblattLink;
+            btnKennblatt.classList.remove('hidden');
+        } else {
+            btnKennblatt.href = '#';
+            btnKennblatt.classList.add('hidden');
+        }
+    }
     const ordnerLink = standort.link.includes("/_standortinfo") ? standort.link.split("/_standortinfo")[0] : standort.link;
     document.getElementById("btnOrdner").href = ordnerLink;
 
@@ -77,6 +88,7 @@ function openDashboard(nummer) {
 
     displayWayInstructions();
     updateDashboardPrintButton();
+    renderStationInfo(standort);
 }
 
 function setupMobileMap(standort) {
@@ -92,7 +104,7 @@ function setupMobileMap(standort) {
     if (dashMobileTileLayer) {
         dashMobileMapInstance.removeLayer(dashMobileTileLayer);
     }
-    dashMobileTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    dashMobileTileLayer = L.tileLayer(OSM_TILE_URL, {
         maxZoom: 19,
         className: 'osm-tiles'
     }).addTo(dashMobileMapInstance);
@@ -113,12 +125,8 @@ function setupMobileMap(standort) {
     dashMobileOverlayGroup = L.layerGroup().addTo(dashMobileMapInstance);
 
     // Marker color by station prefix (matches updateMapMarkers)
-    const markerColors = {
-        1: '#8b5cf6', 2: '#10b981', 3: '#f59e0b', 4: '#ef4444',
-        5: '#ec4899', 6: '#06b6d4', 8: '#6366f1', 9: '#eab308'
-    };
     const prefix = Math.floor(Number(standort.nummer) / 1000);
-    const markerColor = markerColors[prefix] || '#3b82f6';
+    const markerColor = STATION_PREFIX_COLORS[prefix] || '#3b82f6';
 
     const mobileIcon = L.divIcon({
         html: `<div style="width: 16px; height: 16px; background-color: ${markerColor}; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.4);"></div>`,
@@ -145,28 +153,7 @@ function setupMobileMap(standort) {
     // Extend bounds with overlay elements
     if (typeof getOverlayPayloadForStandort === 'function') {
         const payload = getOverlayPayloadForStandort(standort.nummer);
-        if (payload && payload.features) {
-            payload.features.forEach(f => {
-                if (f.geometry && f.geometry.coordinates) {
-                    if (f.geometry.type === 'Point') {
-                        const lat = f.geometry.coordinates[1];
-                        const lng = f.geometry.coordinates[0];
-                        bounds.extend([lat, lng]);
-                        if (f.properties && f.properties.overlayType === 'kreis') {
-                            const radius = f.properties.radius || 100;
-                            const rLat = radius / 111320;
-                            const rLng = radius / (40075 * Math.cos(lat * Math.PI / 180));
-                            bounds.extend([lat + rLat, lng + rLng]);
-                            bounds.extend([lat - rLat, lng - rLng]);
-                        }
-                    } else if (f.geometry.type === 'LineString') {
-                        f.geometry.coordinates.forEach(c => bounds.extend([c[1], c[0]]));
-                    } else if (f.geometry.type === 'Polygon' && f.geometry.coordinates[0]) {
-                        f.geometry.coordinates[0].forEach(c => bounds.extend([c[1], c[0]]));
-                    }
-                }
-            });
-        }
+        extendBoundsWithOverlayFeatures(bounds, payload);
     }
 
     const hasBounds = bounds.isValid() && !bounds.getNorthEast().equals(bounds.getSouthWest());
@@ -262,6 +249,60 @@ function copyCoords() {
     const oldText = btnText.innerText;
     btnText.innerText = "Kopiert!";
     setTimeout(() => btnText.innerText = oldText, 2000);
+}
+
+// ─── Station Metadata Display ────────────────────────────────────────────────
+
+function renderStationInfo(standort) {
+    const section = document.getElementById('stationInfoSection');
+    const body    = document.getElementById('stationInfoBody');
+    if (!section || !body) return;
+
+    const rows = [];
+
+    if (standort.standortkuerzel) {
+        rows.push(`<div class="flex gap-2"><span class="text-slate-400 dark:text-zinc-500 w-36 shrink-0">Kürzel</span><span>${escHtml(standort.standortkuerzel)}</span></div>`);
+    }
+    if (standort.betreiber) {
+        let betreiberText = escHtml(standort.betreiber);
+        if (standort.betreiber === 'DFMG' && standort.dfmgId) {
+            betreiberText += ` <span class="ml-1 px-1.5 py-0.5 rounded text-[10px] bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 font-mono">DFMG-ID: ${escHtml(standort.dfmgId)}</span>`;
+        }
+        rows.push(`<div class="flex gap-2 items-center"><span class="text-slate-400 dark:text-zinc-500 w-36 shrink-0">Betreiber</span><span>${betreiberText}</span></div>`);
+    }
+    if (standort.pvStandortpate) {
+        rows.push(`<div class="flex gap-2"><span class="text-slate-400 dark:text-zinc-500 w-36 shrink-0">PV Standortpate</span><span>${escHtml(standort.pvStandortpate)}</span></div>`);
+    }
+    if (standort.pvVertretung) {
+        rows.push(`<div class="flex gap-2"><span class="text-slate-400 dark:text-zinc-500 w-36 shrink-0">PV Vertretung</span><span>${escHtml(standort.pvVertretung)}</span></div>`);
+    }
+    if (standort.ifsStandortpate) {
+        rows.push(`<div class="flex gap-2"><span class="text-slate-400 dark:text-zinc-500 w-36 shrink-0">IFS Standortpate</span><span>${escHtml(standort.ifsStandortpate)}</span></div>`);
+    }
+
+    // Richtfunkverbindungen — show linked station names
+    const rfLinks = Array.isArray(standort.richtfunkverbindungen) ? standort.richtfunkverbindungen.filter(Boolean) : [];
+    if (rfLinks.length > 0) {
+        const linkedNames = rfLinks.map(n => {
+            const s = standorte.find(st => String(st.nummer) === String(n));
+            const label = s ? `${s.nummer} – ${s.name}` : String(n);
+            return `<button onclick="selectFromList('${escHtml(String(n))}')" class="inline text-blue-600 dark:text-blue-400 hover:underline">${escHtml(label)}</button>`;
+        }).join(', ');
+        rows.push(`<div class="flex gap-2"><span class="text-slate-400 dark:text-zinc-500 w-36 shrink-0">Richtfunkverbindung</span><span>${linkedNames}</span></div>`);
+    }
+
+    if (rows.length === 0) {
+        section.classList.add('hidden');
+    } else {
+        body.innerHTML = rows.join('');
+        section.classList.remove('hidden');
+    }
+}
+
+function escHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = String(str ?? '');
+    return d.innerHTML;
 }
 
 // ─── Way Instructions ──────────────────────────────────────────────────────────────

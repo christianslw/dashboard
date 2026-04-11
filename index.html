@@ -43,8 +43,7 @@
             }
         }
         // Early theme application to avoid flash of unstyled content
-        // Early theme application to avoid flash of unstyled content
-        const cTheme = localStorage.getItem('colorTheme') || 'carbon';
+        const cTheme = localStorage.getItem('colorTheme') || 'standard';
         const cAppm = localStorage.getItem('appearance') || 'system';
         const _em = { 'dracula': 'themes/dracula.css', 'dracula-laser': 'themes/dracula-laser.css', 'kirschbluete': 'themes/kirschbluete.css', 'swr-ms': 'themes/swr-ms.css', 'carbon': 'themes/carbon.css' };
         
@@ -105,7 +104,7 @@
             <div class="relative group">
                 <input type="text" id="searchInput" placeholder="Suchen..." 
                        class="w-full p-2.5 pl-10 pr-10 rounded-md border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-900 dark:text-zinc-100 shadow-sm focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 transition-colors"
-                       onkeyup="filterStandorte()">
+                      onkeyup="scheduleFilterStandorte()">
                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 pointer-events-none transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 <button id="clearSearchBtn" type="button" onclick="clearSearch()" class="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 active:text-blue-700 dark:active:text-blue-300 transition-colors opacity-0 pointer-events-none" title="Suche löschen">
                     <i class="mdi mdi-close text-xl leading-none block"></i>
@@ -279,7 +278,10 @@
                 </div>
             </div>
             <div class="p-4 border-t border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/50 flex justify-between items-center">
-                <button id="btn-install-pwa" onclick="installPWA()" class="hidden px-4 py-2 bg-zinc-800 dark:bg-zinc-700 text-white text-sm font-medium rounded hover:bg-zinc-700 dark:hover:bg-zinc-600 transition-colors flex items-center gap-2"><i class="mdi mdi-download"></i> App installieren</button>
+                <div class="flex items-center gap-2">
+                    <button id="btn-install-pwa" onclick="installPWA()" class="hidden px-4 py-2 bg-zinc-800 dark:bg-zinc-700 text-white text-sm font-medium rounded hover:bg-zinc-700 dark:hover:bg-zinc-600 transition-colors flex items-center gap-2"><i class="mdi mdi-download"></i> App installieren</button>
+                    <button onclick="openUsernameModal()" class="px-4 py-2 border border-slate-300 dark:border-zinc-600 text-slate-700 dark:text-zinc-300 text-sm font-medium rounded hover:bg-slate-100 dark:hover:bg-zinc-700 transition-colors flex items-center gap-1.5"><i class="mdi mdi-account-edit-outline"></i> <span id="usernameDisplay">Name ändern</span></button>
+                </div>
                 <div class="ml-auto">
                     <button onclick="closeSettingsModal()" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition-colors">Fertig</button>
                 </div>
@@ -403,6 +405,12 @@
                                 </div>
                                 <p id="wayInstructionsDisplay" class="text-xs text-slate-700 dark:text-zinc-300 whitespace-pre-wrap max-h-24 overflow-y-auto">Keine Anweisungen</p>
                             </div>
+
+                            <!-- Station metadata -->
+                            <div id="stationInfoSection" class="hidden mt-4 p-3 border border-slate-200 dark:border-zinc-800 rounded-md bg-slate-50 dark:bg-zinc-900">
+                                <h4 class="text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide mb-2">Stationsinformationen</h4>
+                                <div id="stationInfoBody" class="space-y-1 text-xs text-slate-700 dark:text-zinc-300"></div>
+                            </div>
                         </div>
 
                         <!-- Actions -->
@@ -410,6 +418,10 @@
                             <a id="btnTagebuch" href="#" target="_blank" class="flex items-center justify-center gap-2 p-3 border border-slate-300 dark:border-zinc-700 bg-transparent hover:bg-blue-100 dark:hover:bg-blue-900/50 active:bg-blue-500 active:text-white text-slate-700 dark:text-zinc-200 rounded-md text-sm font-medium transition-colors">
                                 <i class="mdi mdi-notebook-edit-outline text-base"></i>
                                 Tagebuch
+                            </a>
+                            <a id="btnKennblatt" href="#" target="_blank" class="flex items-center justify-center gap-2 p-3 border border-slate-300 dark:border-zinc-700 bg-transparent hover:bg-blue-100 dark:hover:bg-blue-900/50 active:bg-blue-500 active:text-white text-slate-700 dark:text-zinc-200 rounded-md text-sm font-medium transition-colors">
+                                <i class="mdi mdi-file-document-outline text-base"></i>
+                                Stationskennblatt
                             </a>
                             <a id="btnOrdner" href="#" target="_blank" class="flex items-center justify-center gap-2 p-3 border border-slate-300 dark:border-zinc-700 bg-transparent hover:bg-blue-100 dark:hover:bg-blue-900/50 active:bg-blue-500 active:text-white text-slate-700 dark:text-zinc-200 rounded-md text-sm font-medium transition-colors">
                                 <i class="mdi mdi-folder-open-outline text-base"></i>
@@ -946,6 +958,9 @@
     <!-- Backend sync module (must load before app modules) -->
     <script defer src="js/sync.js"></script>
 
+    <!-- Username / display-name module -->
+    <script defer src="js/username.js"></script>
+
     <!-- Application modules -->
     <script defer src="js/app.js"></script>
     <script defer src="js/utils.js"></script>
@@ -964,6 +979,29 @@
     <script defer src="js/changelog.js"></script>
     <!-- theme-effects.js is lazy-loaded by app.js only when the kirschbluete theme is active -->
     <script defer src="js/init.js"></script>
+
+    <!-- USERNAME PROMPT MODAL -->
+    <div id="usernameModal" class="fixed inset-0 bg-black/70 backdrop-blur z-[90] hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-2xl p-7 w-full max-w-sm">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
+                    <i class="mdi mdi-account-outline text-blue-600 dark:text-blue-400 text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-base font-bold text-slate-900 dark:text-zinc-100">Willkommen!</h2>
+                    <p class="text-xs text-slate-500 dark:text-zinc-400">Wie heißt du?</p>
+                </div>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-zinc-400 mb-4">Dein Name wird bei Änderungen (Fahrtanweisungen, Overlays) als Autor hinterlegt und ist für alle Nutzer sichtbar.</p>
+            <input id="usernameInput" type="text" maxlength="40" placeholder="z.B. Max Mustermann"
+                class="w-full border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 rounded-lg px-3 py-2 text-sm mb-1 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-zinc-100" />
+            <p id="usernameError" class="text-xs text-red-500 mb-3 hidden"></p>
+            <button onclick="saveUsernameFromModal()"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 text-sm font-semibold transition-colors">
+                Bestätigen
+            </button>
+        </div>
+    </div>
 
     <!-- CHANGELOG MODAL -->
     <div id="changelogModal" class="fixed inset-0 bg-slate-900/50 dark:bg-black/80 z-[65] hidden flex items-center justify-center p-4" onclick="if(event.target===this)closeChangelogModal()">

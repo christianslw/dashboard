@@ -90,7 +90,6 @@ self.addEventListener('fetch', (event) => {
         'api.rainviewer.com', 'tilecache.rainviewer.com',
         'embed.windy.com',
         'maps.dwd.de',
-        'map.blitzortung.org',
         'server.arcgisonline.com',
         'tile.opentopomap.org',
         'basemaps.cartocdn.com',

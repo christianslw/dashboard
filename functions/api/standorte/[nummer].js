@@ -51,26 +51,65 @@ export async function onRequestPut({ params, env, request }) {
         return Response.json({ error: 'Missing required fields: nummer, lat, lon' }, { status: 400 });
     }
 
-        // Preserve existing fahrtanweisung (not admin-managed)
+    // Preserve existing fahrtanweisung (not admin-managed via this endpoint)
     const existing = await env.STANDORTE_KV.get(`standort:${nummer}`, { type: 'json' });
 
+    // Determine previous richtfunkverbindungen for diff
+    const prevRf = Array.isArray(existing?.richtfunkverbindungen) ? existing.richtfunkverbindungen.map(String) : [];
+    const newRf  = Array.isArray(body.richtfunkverbindungen)      ? body.richtfunkverbindungen.map(String).filter(n => n && n !== String(body.nummer)) : [];
+
     const record = {
-        nummer: String(body.nummer),
-        name:    body.name   ?? '',
-        lat:     Number(body.lat),
-        lon:     Number(body.lon),
-        link:    body.link   ?? '',
-        ...(body.extra ? { extra: body.extra } : {}),
+        nummer:    String(body.nummer),
+        name:      body.name   ?? '',
+        lat:       Number(body.lat),
+        lon:       Number(body.lon),
+        link:      body.link   ?? '',
+        // New metadata fields
+        ...(body.standortkuerzel  ? { standortkuerzel:  String(body.standortkuerzel)  } : {}),
+        ...(body.pvStandortpate   ? { pvStandortpate:   String(body.pvStandortpate)   } : {}),
+        ...(body.pvVertretung     ? { pvVertretung:     String(body.pvVertretung)     } : {}),
+        ...(body.ifsStandortpate  ? { ifsStandortpate:  String(body.ifsStandortpate)  } : {}),
+        ...(body.betreiber        ? { betreiber:        String(body.betreiber)        } : {}),
+        ...(body.dfmgId           ? { dfmgId:           String(body.dfmgId)           } : {}),
+        ...(newRf.length          ? { richtfunkverbindungen: newRf }                    : {}),
+        ...(body.extra            ? { extra: body.extra }                               : {}),
         updatedAt: new Date().toISOString(),
+        updatedBy: body.updatedBy ?? 'admin',
     };
 
+    // Preserve fahrtanweisung fields
     if (existing?.fahrtanweisung) {
         record.fahrtanweisung = existing.fahrtanweisung;
         if (existing.fahrtanweisungUpdatedAt) record.fahrtanweisungUpdatedAt = existing.fahrtanweisungUpdatedAt;
+        if (existing.fahrtanweisungUpdatedBy) record.fahrtanweisungUpdatedBy = existing.fahrtanweisungUpdatedBy;
+        if (existing.fahrtanweisungHistory)   record.fahrtanweisungHistory   = existing.fahrtanweisungHistory;
     }
 
     await env.STANDORTE_KV.put(`standort:${nummer}`, JSON.stringify(record));
     await rebuildIndex(env);
+
+    // ─── Bidirectional Richtfunkverbindungen sync ─────────────────────────────
+    // Stations added in newRf: add `nummer` to their richtfunkverbindungen
+    // Stations removed (in prevRf but not newRf): remove `nummer` from theirs
+    const thisNummer = String(body.nummer);
+    const added   = newRf.filter(n  => !prevRf.includes(n));
+    const removed = prevRf.filter(n => !newRf.includes(n));
+
+    for (const linkedNummer of [...added, ...removed]) {
+        const linkedRecord = await env.STANDORTE_KV.get(`standort:${linkedNummer}`, { type: 'json' });
+        if (!linkedRecord) continue;
+        let linkedRf = Array.isArray(linkedRecord.richtfunkverbindungen)
+            ? linkedRecord.richtfunkverbindungen.map(String)
+            : [];
+        if (added.includes(linkedNummer) && !linkedRf.includes(thisNummer)) {
+            linkedRf.push(thisNummer);
+        } else if (removed.includes(linkedNummer)) {
+            linkedRf = linkedRf.filter(n => n !== thisNummer);
+        }
+        linkedRecord.richtfunkverbindungen = linkedRf;
+        linkedRecord.updatedAt = new Date().toISOString();
+        await env.STANDORTE_KV.put(`standort:${linkedNummer}`, JSON.stringify(linkedRecord));
+    }
 
     return Response.json({ ok: true, record });
 }

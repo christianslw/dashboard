@@ -40,20 +40,6 @@ function getCssVariableValue(name, fallback) {
     return value || fallback;
 }
 
-function hexToRgba(hexColor, alpha) {
-    if (typeof hexColor !== 'string') return `rgba(234,179,8,${alpha})`;
-    let hex = hexColor.trim().replace('#', '');
-    if (hex.length === 3) {
-        hex = hex.split('').map(c => c + c).join('');
-    }
-    if (hex.length !== 6) return `rgba(234,179,8,${alpha})`;
-
-    const r = parseInt(hex.slice(0, 2), 16);
-    const g = parseInt(hex.slice(2, 4), 16);
-    const b = parseInt(hex.slice(4, 6), 16);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
 function getDwdEventIconPath(eventDe, eventEn) {
     const ed = typeof eventDe === 'string' ? eventDe.toLowerCase() : '';
     const ee = typeof eventEn === 'string' ? eventEn.toLowerCase() : '';
@@ -145,8 +131,8 @@ async function updateDWDDetailBox(lat, lon) {
     box.className = "p-3 border-t";
     box.style.backgroundColor = '';
     box.style.borderColor = '';
-    title.innerText = "Prüfe DWD...";
-    text.innerText = "";
+    title.textContent = "Prüfe DWD...";
+    text.textContent = "";
     title.className = "text-sm font-semibold";
     title.style.color = '';
     text.style.color = '';
@@ -156,7 +142,7 @@ async function updateDWDDetailBox(lat, lon) {
     const mainAlert = getHighestDwdAlert(alerts);
 
     if (!mainAlert) {
-        title.innerText = "Keine amtlichen Warnungen";
+        title.textContent = "Keine amtlichen Warnungen";
         title.className = "text-sm font-semibold";
         title.style.color = '';
         box.style.backgroundColor = '';
@@ -172,11 +158,11 @@ async function updateDWDDetailBox(lat, lon) {
         box.style.backgroundColor = hexToRgba(severityColor, bgAlpha);
         box.style.borderColor = hexToRgba(severityColor, borderAlpha);
 
-        title.innerText = mainAlert.headline_de || "Wetterwarnung";
+        title.textContent = mainAlert.headline_de || "Wetterwarnung";
         title.className = "text-sm font-bold";
         title.style.color = severityColor;
 
-        text.innerText = mainAlert.description_de || "";
+        text.textContent = mainAlert.description_de || "";
         text.className = "text-xs mt-1";
         text.style.color = severityColor;
 
@@ -236,40 +222,30 @@ async function fetchWeather(lat, lon) {
     const descEl = document.getElementById("weatherDesc");
     const windEl = document.getElementById("weatherWind");
 
-    if (tempEl) tempEl.innerText = "-- °C";
-    if (descEl) descEl.innerText = "";
-    if (windEl) windEl.innerText = "-- km/h";
+    if (tempEl) tempEl.textContent = "-- °C";
+    if (descEl) descEl.textContent = "";
+    if (windEl) windEl.textContent = "-- km/h";
 
-    // ── Current conditions — original working format ─────────────────────────
     try {
         const res = await fetch(
-            `${OPEN_METEO_BASE_URL}?latitude=${lat}&longitude=${lon}&current_weather=true`
-        );
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        const cw   = data.current_weather ?? {};
-        const code = cw.weathercode ?? cw.weather_code ?? 0;
-        const meta = getWmoMeta(code);
-
-        if (tempEl) tempEl.innerText = `${cw.temperature ?? '--'} °C`;
-        if (iconEl) iconEl.innerHTML = `<i class="mdi ${meta.icon}" style="font-size:2rem;color:${meta.color};line-height:1"></i>`;
-        if (descEl) descEl.innerText = meta.label;
-        if (windEl) windEl.innerText = `${cw.windspeed ?? '--'} km/h`;
-    } catch (e) {
-        if (iconEl) iconEl.innerHTML = `<svg class="w-8 h-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>`;
-    }
-
-    // 24h hourly forecast (isolated — failure must not affect current weather)
-    try {
-        const res2 = await fetch(
             `${OPEN_METEO_BASE_URL}?latitude=${lat}&longitude=${lon}` +
+            `&current_weather=true` +
             `&hourly=temperature_2m,weathercode,windspeed_10m,precipitation` +
             `&forecast_days=2&timezone=auto`
         );
-        if (!res2.ok) throw new Error(`HTTP ${res2.status}`);
-        const data2 = await res2.json();
-        renderForecastStrip(data2.hourly);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const cw = data.current_weather ?? {};
+        const code = cw.weathercode ?? cw.weather_code ?? 0;
+        const meta = getWmoMeta(code);
+
+        if (tempEl) tempEl.textContent = `${cw.temperature ?? '--'} °C`;
+        if (iconEl) iconEl.innerHTML = `<i class="mdi ${meta.icon}" style="font-size:2rem;color:${meta.color};line-height:1"></i>`;
+        if (descEl) descEl.textContent = meta.label;
+        if (windEl) windEl.textContent = `${cw.windspeed ?? '--'} km/h`;
+
+        renderForecastStrip(data.hourly);
     } catch (e) {
-        // Forecast failure is non-critical — current weather already shown
+        if (iconEl) iconEl.innerHTML = `<svg class="w-8 h-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>`;
     }
 }

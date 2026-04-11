@@ -118,17 +118,6 @@ function isPlannerQueued(nummer) {
     return plannerQueue.some(q => String(q.nummer) === String(nummer));
 }
 
-function togglePlannerForCurrent() {
-    if (!currentStandort) return;
-    isPlannerQueued(currentStandort.nummer)
-        ? removeFromPlannerQueue(currentStandort.nummer)
-        : addToPlannerQueue(currentStandort.nummer);
-}
-
-function togglePlannerFromList(nummer) {
-    isPlannerQueued(nummer) ? removeFromPlannerQueue(nummer) : addToPlannerQueue(nummer);
-}
-
 function updateStopComment(nummer, value) {
     const stop = plannerQueue.find(q => String(q.nummer) === String(nummer));
     if (stop) { stop.comment = value.trim(); _saveActiveTour(); }
@@ -193,7 +182,7 @@ function _loadActiveTour() {
     renderPlannerList();
     refreshPlannerAddBtns();
     _syncPlannerBadge();
-    if (Notification.permission === 'granted' && plannerQueue.some(s => s.comment)) {
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted' && plannerQueue.some(s => s.comment)) {
         startTourGeofence();
     }
 }

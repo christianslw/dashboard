@@ -73,6 +73,21 @@
     </div>
 </div>
 
+<!-- ───────────────────────────── ADMIN USERNAME GATE ──────────────────────── -->
+<div id="adminUserGate" class="fixed inset-0 bg-black/60 backdrop-blur flex items-center justify-center z-50 hidden">
+    <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-2xl p-8 w-full max-w-sm">
+        <h2 class="text-lg font-bold mb-1">Admin-Name</h2>
+        <p class="text-xs text-slate-500 dark:text-zinc-400 mb-5">Dein Name wird bei Änderungen als Autor hinterlegt.</p>
+        <input id="adminUserInput" type="text" maxlength="40" placeholder="z.B. Admin Max"
+            class="w-full border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-zinc-100" />
+        <button onclick="submitAdminUser()"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 text-sm font-medium transition-colors">
+            Weiter
+        </button>
+        <p id="adminUserError" class="text-xs text-red-500 mt-2 hidden">Bitte gib einen Namen ein.</p>
+    </div>
+</div>
+
 <!-- ───────────────────────────── MAIN ────────────────────────────────────── -->
 <div id="adminMain" class="hidden max-w-7xl mx-auto px-4 py-6">
 
@@ -115,7 +130,7 @@
     <!-- Tabs -->
     <div class="flex gap-1 mb-4 border-b border-slate-200 dark:border-zinc-800">
         <button onclick="switchTab('standorte')" id="tab-standorte" class="tab-btn px-4 py-2 text-sm font-medium border-b-2 border-blue-500 text-blue-600 dark:text-blue-400">Standorte</button>
-        <button onclick="switchTab('fahrtanweisungen')" id="tab-fahrtanweisungen" class="tab-btn px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100">Fahrtanweisungen</button>
+        <button onclick="switchTab('bearbeitungen')" id="tab-bearbeitungen" class="tab-btn px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100">Bearbeitungen</button>
     </div>
 
     <!-- ─── TAB: Standorte ─────────────────────────────────────────────────── -->
@@ -152,17 +167,32 @@
 
 
 
-    <!-- ─── TAB: Fahrtanweisungen ──────────────────────────────────────────── -->
-    <div id="pane-fahrtanweisungen" class="hidden">
+    <!-- ─── TAB: Bearbeitungen ──────────────────────────────────────────── -->
+    <div id="pane-bearbeitungen" class="hidden">
         <div class="flex items-center justify-between mb-3">
-            <p class="text-xs text-slate-500 dark:text-zinc-400">Alle von Nutzern gespeicherten Fahrtanweisungen. Änderungen gelten sofort für alle Nutzer.</p>
-            <button onclick="loadFahrtanweisungen()"
+            <p class="text-xs text-slate-500 dark:text-zinc-400">Alle Änderungen an Standorten, Fahrtanweisungen und Overlays — sortiert nach Datum.</p>
+            <button onclick="loadEdits()"
                 class="px-3 py-1.5 text-sm border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 rounded-md font-medium transition-colors flex items-center gap-1.5">
                 <i class="mdi mdi-refresh text-base leading-none"></i> Aktualisieren
             </button>
         </div>
-        <div id="fahrtListEmpty" class="hidden text-sm text-slate-400 dark:text-zinc-500 text-center py-12">Keine Fahrtanweisungen vorhanden.</div>
-        <div id="fahrtList" class="space-y-3"></div>
+        <div id="editsEmpty" class="hidden text-sm text-slate-400 dark:text-zinc-500 text-center py-12">Keine Bearbeitungen vorhanden.</div>
+        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
+            <table class="w-full text-sm" id="editsTable">
+                <thead>
+                    <tr class="border-b border-slate-200 dark:border-zinc-800 text-left text-xs text-slate-500 dark:text-zinc-400 uppercase tracking-wide">
+                        <th class="cell w-24">Nr.</th>
+                        <th class="cell">Name</th>
+                        <th class="cell w-36">Datentyp</th>
+                        <th class="cell w-44">Zeitpunkt</th>
+                        <th class="cell w-40">Editor</th>
+                    </tr>
+                </thead>
+                <tbody id="editsBody">
+                    <tr><td colspan="5" class="cell text-center text-slate-400 py-8">Lädt…</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
 </div>
@@ -232,6 +262,72 @@
                 <input id="fLink" type="url" class="form-input" placeholder="https://…" />
             </div>
 
+            <!-- ─── Erweiterte Felder ──────────────────────────────── -->
+            <hr class="border-slate-200 dark:border-zinc-700" />
+            <p class="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wide -mb-1">Standort-Details</p>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">Standortkürzel</label>
+                    <input id="fKuerzel" type="text" class="form-input" placeholder="z.B. AAL" />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">Betreiber</label>
+                    <select id="fBetreiber" onchange="onBetreiberChange()" class="form-input">
+                        <option value="">— bitte wählen —</option>
+                        <option value="SWR">SWR</option>
+                        <option value="SMS">SMS</option>
+                        <option value="DFMG">DFMG</option>
+                        <option value="BR">BR</option>
+                        <option value="SR">SR</option>
+                        <option value="ORF">ORF</option>
+                        <option value="Swisscom">Swisscom</option>
+                        <option value="__custom__">Sonstiges…</option>
+                    </select>
+                    <input id="fBetreiberCustom" type="text" class="form-input mt-1.5 hidden" placeholder="Eigener Betreiber" />
+                </div>
+            </div>
+
+            <div id="fDfmgIdRow" class="hidden">
+                <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">DFMG ID</label>
+                <input id="fDfmgId" type="text" class="form-input" placeholder="z.B. 12345" />
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">PV Standortpate</label>
+                    <input id="fPvPate" type="text" class="form-input" />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">PV Vertretung</label>
+                    <input id="fPvVertretung" type="text" class="form-input" />
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">IFS Standortpate</label>
+                <input id="fIfsPate" type="text" class="form-input" />
+            </div>
+
+            <!-- Richtfunkverbindungen -->
+            <div>
+                <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">Richtfunkverbindungen</label>
+                <div class="relative">
+                    <input id="fRfSearch" type="text" class="form-input" placeholder="Stationsnummer oder Name suchen…"
+                        oninput="onRfSearchInput()" onkeydown="onRfSearchKeydown(event)" autocomplete="off" />
+                    <div id="fRfDropdown" class="hidden absolute left-0 right-0 top-full mt-1 z-20 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-md shadow-lg max-h-44 overflow-y-auto"></div>
+                </div>
+                <div id="fRfChips" class="flex flex-wrap gap-1.5 mt-2"></div>
+            </div>
+
+            <!-- Fahrtanweisung -->
+            <hr class="border-slate-200 dark:border-zinc-700" />
+            <p class="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wide -mb-1">Fahrtanweisung</p>
+            <div>
+                <textarea id="fFahrtanweisung" rows="4" class="form-input resize-y" placeholder="Fahrtanweisungen für diesen Standort…" style="font-family:inherit"></textarea>
+            </div>
+            <div id="fFahrtHistory" class="hidden"></div>
+
             <div id="formError" class="hidden text-sm text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2"></div>
             <div class="flex justify-end gap-2 pt-2">
                 <button type="button" onclick="closeModal()"
@@ -251,11 +347,13 @@
 // ─── STATE ───────────────────────────────────────────────────────────────────
 
 let adminToken   = sessionStorage.getItem('adminToken') || '';
+let adminUser    = sessionStorage.getItem('adminUser')  || '';
 let standorte    = [];
 let overlayData  = {};
 let editMode     = 'add'; // 'add' | 'edit'
 let currentTab   = 'standorte';
 let standortSort = { col: 'nummer', dir: 'asc' };
+let rfSelected   = []; // Richtfunkverbindungen for the edit form
 
 function sortedStandorte(data) {
     return [...data].sort((a, b) => {
@@ -320,12 +418,37 @@ async function submitToken() {
     adminToken = token;
     sessionStorage.setItem('adminToken', token);
     document.getElementById('authGate').classList.add('hidden');
+    // Check if we already have an admin user name
+    if (adminUser) {
+        document.getElementById('adminMain').classList.remove('hidden');
+        loadAll();
+    } else {
+        document.getElementById('adminUserGate').classList.remove('hidden');
+        setTimeout(() => document.getElementById('adminUserInput').focus(), 100);
+    }
+}
+
+function submitAdminUser() {
+    const name = document.getElementById('adminUserInput').value.trim();
+    if (!name) {
+        document.getElementById('adminUserError').classList.remove('hidden');
+        return;
+    }
+    adminUser = name;
+    sessionStorage.setItem('adminUser', name);
+    document.getElementById('adminUserGate').classList.add('hidden');
     document.getElementById('adminMain').classList.remove('hidden');
     loadAll();
 }
 
 document.getElementById('tokenInput').addEventListener('keydown', e => {
     if (e.key === 'Enter') submitToken();
+});
+document.addEventListener('keydown', e => {
+    const ugInput = document.getElementById('adminUserInput');
+    if (ugInput && !document.getElementById('adminUserGate').classList.contains('hidden')) {
+        if (e.key === 'Enter') submitAdminUser();
+    }
 });
 
 // Auto-login if token already in session
@@ -338,7 +461,9 @@ if (adminToken) {
 
 function logout() {
     sessionStorage.removeItem('adminToken');
+    sessionStorage.removeItem('adminUser');
     adminToken = '';
+    adminUser  = '';
     document.getElementById('authGate').classList.remove('hidden');
     document.getElementById('adminMain').classList.add('hidden');
 }
@@ -347,14 +472,14 @@ function logout() {
 
 function switchTab(tab) {
     currentTab = tab;
-    ['standorte', 'fahrtanweisungen'].forEach(t => {
+    ['standorte', 'bearbeitungen'].forEach(t => {
         document.getElementById(`tab-${t}`).className =
             t === tab
             ? 'tab-btn px-4 py-2 text-sm font-medium border-b-2 border-blue-500 text-blue-600 dark:text-blue-400'
             : 'tab-btn px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100';
         document.getElementById(`pane-${t}`).classList.toggle('hidden', t !== tab);
     });
-    if (tab === 'fahrtanweisungen') loadFahrtanweisungen();
+    if (tab === 'bearbeitungen') loadEdits();
 }
 
 // ─── DATA LOADING ─────────────────────────────────────────────────────────────
@@ -365,131 +490,46 @@ async function loadAll() {
     setStatus(`${standorte.length} Standorte · ${Object.keys(overlayData).length} Overlay-Einträge — ${new Date().toLocaleTimeString()}`);
 }
 
-// ─── FAHRTANWEISUNGEN ─────────────────────────────────────────────────────────
+// ─── EDITS (Bearbeitungen) ────────────────────────────────────────────────────
 
-let fahrtanweisungenData = [];
-
-async function loadFahrtanweisungen() {
-    const list  = document.getElementById('fahrtList');
-    const empty = document.getElementById('fahrtListEmpty');
-    if (!list) return;
-    list.innerHTML = '<div class="text-sm text-slate-400 dark:text-zinc-500 py-8 text-center">Lade…</div>';
-    empty.classList.add('hidden');
+async function loadEdits() {
+    const tbody = document.getElementById('editsBody');
+    const empty = document.getElementById('editsEmpty');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="5" class="cell text-center text-slate-400 py-8">Lade…</td></tr>';
+    if (empty) empty.classList.add('hidden');
     try {
-        const res = await fetch('/api/admin/fahrtanweisungen', {
+        const res = await fetch('/api/admin/edits', {
             headers: { 'Authorization': `Bearer ${adminToken}` }
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        fahrtanweisungenData = await res.json();
-        if (!fahrtanweisungenData.length) {
-            list.innerHTML = '';
-            empty.classList.remove('hidden');
+        const edits = await res.json();
+        if (!edits.length) {
+            tbody.innerHTML = '';
+            if (empty) empty.classList.remove('hidden');
             return;
         }
-        list.innerHTML = fahrtanweisungenData.map(renderFahrtCard).join('');
+        // Enrich name from loaded standorte where possible
+        tbody.innerHTML = edits.map(e => {
+            const s = standorte.find(x => String(x.nummer) === String(e.nummer));
+            const name = s?.name || e.name || '—';
+            const ts   = e.updatedAt ? new Date(e.updatedAt).toLocaleString('de-DE') : '—';
+            const typeColors = {
+                'Standort':       'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+                'Fahrtanweisung': 'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400',
+                'Overlay':        'bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400',
+            };
+            const badgeCls = typeColors[e.dataType] || 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400';
+            return `<tr class="border-b border-slate-100 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
+                <td class="cell font-mono font-semibold">${esc(e.nummer)}</td>
+                <td class="cell">${esc(name)}</td>
+                <td class="cell"><span class="px-1.5 py-0.5 rounded text-xs font-medium ${badgeCls}">${esc(e.dataType)}</span></td>
+                <td class="cell text-xs text-slate-500 dark:text-zinc-400 whitespace-nowrap">${esc(ts)}</td>
+                <td class="cell text-xs text-slate-500 dark:text-zinc-400">${esc(e.updatedBy)}</td>
+            </tr>`;
+        }).join('');
     } catch (err) {
-        list.innerHTML = `<div class="text-sm text-red-500 py-4 text-center">Fehler: ${esc(err.message)}</div>`;
-    }
-}
-
-function renderFahrtCard(entry) {
-    const updatedAt = entry.fahrtanweisungUpdatedAt
-        ? new Date(entry.fahrtanweisungUpdatedAt).toLocaleString('de-DE')
-        : '—';
-    const updatedBy = entry.fahrtanweisungUpdatedBy ?? '—';
-
-    const historyItems = (entry.fahrtanweisungHistory ?? []).map((h, i) => {
-        const ts = h.savedAt ? new Date(h.savedAt).toLocaleString('de-DE') : '—';
-        return `<div class="flex items-start gap-2 border-l-2 border-slate-200 dark:border-zinc-700 pl-3 py-1.5 group/h">
-            <div class="flex-1 min-w-0">
-                <div class="text-xs text-slate-400 dark:text-zinc-500 mb-0.5">${esc(ts)} · ${esc(h.savedBy ?? '—')}</div>
-                <div class="text-xs text-slate-600 dark:text-zinc-300 whitespace-pre-wrap break-words">${esc(h.text)}</div>
-            </div>
-            <button onclick="revertFahrtanweisung('${esc(String(entry.nummer))}', ${i})"
-                class="flex-shrink-0 opacity-0 group-hover/h:opacity-100 focus:opacity-100 text-xs px-2 py-1 rounded border border-slate-300 dark:border-zinc-600 text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-700 transition-all">
-                <i class="mdi mdi-restore"></i> Wiederherstellen
-            </button>
-        </div>`;
-    }).join('');
-
-    const historySection = (entry.fahrtanweisungHistory ?? []).length
-        ? `<details class="mt-2">
-               <summary class="text-xs text-slate-400 dark:text-zinc-500 cursor-pointer select-none hover:text-slate-600 dark:hover:text-zinc-300 transition-colors">${entry.fahrtanweisungHistory.length} frühere Version(en)</summary>
-               <div class="mt-2 space-y-2">${historyItems}</div>
-           </details>`
-        : '';
-
-    return `<div class="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4" id="fahrtCard-${esc(String(entry.nummer))}">
-        <div class="flex items-center gap-2 mb-3">
-            <span class="font-mono font-bold text-sm text-blue-600 dark:text-blue-400">${esc(String(entry.nummer))}</span>
-            <span class="text-sm text-slate-700 dark:text-zinc-200 flex-1">${esc(entry.name)}</span>
-            <span class="text-xs text-slate-400 dark:text-zinc-500">${esc(updatedAt)} · ${esc(updatedBy)}</span>
-            <button onclick="deleteFahrtanweisung('${esc(String(entry.nummer))}')"
-                class="inline-flex items-center justify-center w-7 h-7 rounded text-slate-400 dark:text-zinc-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors" title="Löschen">
-                <i class="mdi mdi-delete-outline text-base leading-none"></i>
-            </button>
-        </div>
-        <textarea id="fahrtText-${esc(String(entry.nummer))}" rows="3"
-            class="w-full border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 rounded-lg px-3 py-2 text-sm font-sans resize-y focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-zinc-100">${esc(entry.fahrtanweisung)}</textarea>
-        <div class="flex items-center justify-between mt-2">
-            <button onclick="saveFahrtanweisung('${esc(String(entry.nummer))}')"
-                class="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center gap-1.5">
-                <i class="mdi mdi-content-save-outline text-base leading-none"></i> Speichern
-            </button>
-            ${historySection}
-        </div>
-    </div>`;
-}
-
-async function saveFahrtanweisung(nummer) {
-    const textarea = document.getElementById(`fahrtText-${nummer}`);
-    if (!textarea) return;
-    try {
-        const res = await fetch(`/api/admin/fahrtanweisungen/${encodeURIComponent(nummer)}`, {
-            method:  'PUT',
-            headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ text: textarea.value }),
-        });
-        if (!res.ok) throw new Error(await res.text());
-        setStatus(`Fahrtanweisung ${nummer} gespeichert — ${new Date().toLocaleTimeString()}`);
-        await loadFahrtanweisungen();
-    } catch (err) {
-        alert(`Fehler: ${err.message}`);
-    }
-}
-
-async function deleteFahrtanweisung(nummer) {
-    if (!confirm(`Fahrtanweisung für Standort ${nummer} wirklich löschen?`)) return;
-    try {
-        const res = await fetch(`/api/admin/fahrtanweisungen/${encodeURIComponent(nummer)}`, {
-            method:  'DELETE',
-            headers: { 'Authorization': `Bearer ${adminToken}` },
-        });
-        if (!res.ok) throw new Error(await res.text());
-        setStatus(`Fahrtanweisung ${nummer} gelöscht — ${new Date().toLocaleTimeString()}`);
-        await loadFahrtanweisungen();
-    } catch (err) {
-        alert(`Fehler: ${err.message}`);
-    }
-}
-
-async function revertFahrtanweisung(nummer, historyIndex) {
-    const entry = fahrtanweisungenData.find(e => String(e.nummer) === String(nummer));
-    if (!entry) return;
-    const histEntry = (entry.fahrtanweisungHistory ?? [])[historyIndex];
-    if (!histEntry) return;
-    if (!confirm(`Version vom ${histEntry.savedAt ? new Date(histEntry.savedAt).toLocaleString('de-DE') : '?'} wiederherstellen?`)) return;
-    try {
-        const res = await fetch(`/api/admin/fahrtanweisungen/${encodeURIComponent(nummer)}`, {
-            method:  'PUT',
-            headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ text: histEntry.text }),
-        });
-        if (!res.ok) throw new Error(await res.text());
-        setStatus(`Fahrtanweisung ${nummer} wiederhergestellt — ${new Date().toLocaleTimeString()}`);
-        await loadFahrtanweisungen();
-    } catch (err) {
-        alert(`Fehler: ${err.message}`);
+        tbody.innerHTML = `<tr><td colspan="5" class="cell text-center text-red-500 py-4">Fehler: ${esc(err.message)}</td></tr>`;
     }
 }
 
@@ -581,6 +621,20 @@ function openAddForm() {
     document.getElementById('fLat').value = '';
     document.getElementById('fLon').value = '';
     document.getElementById('fLink').value = '';
+    document.getElementById('fKuerzel').value = '';
+    document.getElementById('fBetreiber').value = '';
+    document.getElementById('fBetreiberCustom').value = '';
+    document.getElementById('fBetreiberCustom').classList.add('hidden');
+    document.getElementById('fDfmgId').value = '';
+    document.getElementById('fDfmgIdRow').classList.add('hidden');
+    document.getElementById('fPvPate').value = '';
+    document.getElementById('fPvVertretung').value = '';
+    document.getElementById('fIfsPate').value = '';
+    document.getElementById('fFahrtanweisung').value = '';
+    document.getElementById('fFahrtHistory').classList.add('hidden');
+    document.getElementById('fFahrtHistory').innerHTML = '';
+    rfSelected = [];
+    renderRfChips();
 
     hideFormError();
     document.getElementById('editModal').classList.remove('hidden');
@@ -598,10 +652,67 @@ function editStandort(nummer) {
     document.getElementById('fLat').value = s.lat ?? '';
     document.getElementById('fLon').value = s.lon ?? '';
     document.getElementById('fLink').value = s.link || '';
+    document.getElementById('fKuerzel').value = s.standortkuerzel || '';
+    document.getElementById('fPvPate').value = s.pvStandortpate || '';
+    document.getElementById('fPvVertretung').value = s.pvVertretung || '';
+    document.getElementById('fIfsPate').value = s.ifsStandortpate || '';
+    document.getElementById('fFahrtanweisung').value = s.fahrtanweisung || '';
+
+    // Betreiber
+    const knownBetreiber = ['SWR','SMS','DFMG','BR','SR','ORF','Swisscom',''];
+    if (s.betreiber && !knownBetreiber.includes(s.betreiber)) {
+        document.getElementById('fBetreiber').value = '__custom__';
+        document.getElementById('fBetreiberCustom').value = s.betreiber;
+        document.getElementById('fBetreiberCustom').classList.remove('hidden');
+    } else {
+        document.getElementById('fBetreiber').value = s.betreiber || '';
+        document.getElementById('fBetreiberCustom').value = '';
+        document.getElementById('fBetreiberCustom').classList.add('hidden');
+    }
+    const isDfmg = (s.betreiber === 'DFMG');
+    document.getElementById('fDfmgId').value = s.dfmgId || '';
+    document.getElementById('fDfmgIdRow').classList.toggle('hidden', !isDfmg);
+
+    // Fahrtanweisung history
+    const historyEl = document.getElementById('fFahrtHistory');
+    if (Array.isArray(s.fahrtanweisungHistory) && s.fahrtanweisungHistory.length) {
+        historyEl.innerHTML = renderFahrtHistorySection(s);
+        historyEl.classList.remove('hidden');
+    } else {
+        historyEl.innerHTML = '';
+        historyEl.classList.add('hidden');
+    }
+
+    // Richtfunkverbindungen
+    rfSelected = Array.isArray(s.richtfunkverbindungen) ? [...s.richtfunkverbindungen.map(String)] : [];
+    renderRfChips();
 
     hideFormError();
     document.getElementById('editModal').classList.remove('hidden');
     setTimeout(() => document.getElementById('fNummer').focus(), 50);
+}
+
+function renderFahrtHistorySection(s) {
+    const items = (s.fahrtanweisungHistory || []).map((h, i) => {
+        const ts = h.savedAt ? new Date(h.savedAt).toLocaleString('de-DE') : '—';
+        return `<div class="flex items-start gap-2 border-l-2 border-slate-200 dark:border-zinc-700 pl-3 py-1.5">
+            <div class="flex-1 min-w-0">
+                <div class="text-xs text-slate-400 dark:text-zinc-500 mb-0.5">${esc(ts)} · ${esc(h.savedBy ?? '—')}</div>
+                <div class="text-xs text-slate-600 dark:text-zinc-300 whitespace-pre-wrap">${esc(h.text)}</div>
+            </div>
+            <button onclick="revertFahrtFromHistory(${i})" class="flex-shrink-0 text-xs px-2 py-1 rounded border border-slate-300 dark:border-zinc-600 text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-700 transition-all">
+                <i class="mdi mdi-restore"></i>
+            </button>
+        </div>`;
+    }).join('');
+    return `<details class="mt-1"><summary class="text-xs text-slate-400 cursor-pointer select-none hover:text-slate-600 transition-colors">${s.fahrtanweisungHistory.length} frühere Versionen</summary><div class="mt-2 space-y-2">${items}</div></details>`;
+}
+
+function revertFahrtFromHistory(i) {
+    const s = standorte.find(x => String(x.nummer) === document.getElementById('fOriginalNummer').value);
+    if (!s) return;
+    const h = (s.fahrtanweisungHistory || [])[i];
+    if (h) document.getElementById('fFahrtanweisung').value = h.text;
 }
 
 async function submitForm(event) {
@@ -614,12 +725,26 @@ async function submitForm(event) {
     const nummer = document.getElementById('fNummer').value.trim();
     const originalNummer = document.getElementById('fOriginalNummer').value.trim();
 
+    // Resolve betreiber (custom input or select)
+    let betreiber = document.getElementById('fBetreiber').value;
+    if (betreiber === '__custom__') {
+        betreiber = document.getElementById('fBetreiberCustom').value.trim();
+    }
+
     const body = {
         nummer,
-        name:    document.getElementById('fName').value.trim(),
-        lat:     parseFloat(document.getElementById('fLat').value),
-        lon:     parseFloat(document.getElementById('fLon').value),
-        link:    document.getElementById('fLink').value.trim(),
+        name:                  document.getElementById('fName').value.trim(),
+        lat:                   parseFloat(document.getElementById('fLat').value),
+        lon:                   parseFloat(document.getElementById('fLon').value),
+        link:                  document.getElementById('fLink').value.trim(),
+        standortkuerzel:       document.getElementById('fKuerzel').value.trim() || undefined,
+        betreiber:             betreiber || undefined,
+        dfmgId:                document.getElementById('fDfmgId').value.trim() || undefined,
+        pvStandortpate:        document.getElementById('fPvPate').value.trim() || undefined,
+        pvVertretung:          document.getElementById('fPvVertretung').value.trim() || undefined,
+        ifsStandortpate:       document.getElementById('fIfsPate').value.trim() || undefined,
+        richtfunkverbindungen: rfSelected.length ? rfSelected : undefined,
+        updatedBy:             adminUser || 'admin',
     };
 
     // If nummer changed in edit mode, delete the old record first
@@ -641,6 +766,16 @@ async function submitForm(event) {
 
     if (res.status === 401) { showFormError('Nicht autorisiert — Token falsch?'); return; }
     if (!res.ok) { const err = await res.json().catch(() => ({})); showFormError(err.error || 'Fehler beim Speichern.'); return; }
+
+    // Save Fahrtanweisung if present
+    const fahrtText = document.getElementById('fFahrtanweisung').value.trim();
+    if (fahrtText) {
+        await fetch(`/api/admin/fahrtanweisungen/${encodeURIComponent(nummer)}`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: fahrtText, savedBy: adminUser || 'admin' }),
+        }).catch(() => {});
+    }
 
     closeModal();
     await loadStandorte();
@@ -750,7 +885,89 @@ async function exportStandorteJs() {
 
 function closeModal() {
     document.getElementById('editModal').classList.add('hidden');
+    rfSelected = [];
+    document.getElementById('fRfChips').innerHTML = '';
+    document.getElementById('fRfSearch').value = '';
+    document.getElementById('fRfDropdown').classList.add('hidden');
 }
+
+// ─── BETREIBER ────────────────────────────────────────────────────────────────
+
+function onBetreiberChange() {
+    const val = document.getElementById('fBetreiber').value;
+    document.getElementById('fBetreiberCustom').classList.toggle('hidden', val !== '__custom__');
+    document.getElementById('fDfmgIdRow').classList.toggle('hidden', val !== 'DFMG');
+}
+
+// ─── RICHTFUNK WIDGET ─────────────────────────────────────────────────────────
+
+function renderRfChips() {
+    const container = document.getElementById('fRfChips');
+    if (!container) return;
+    container.innerHTML = rfSelected.map(n => {
+        const s = standorte.find(x => String(x.nummer) === String(n));
+        const label = s ? `${s.nummer} – ${s.name}` : String(n);
+        return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+            ${esc(label)}
+            <button type="button" onclick="removeRf('${esc(String(n))}')" class="hover:text-red-500 transition-colors">
+                <i class="mdi mdi-close text-xs leading-none"></i>
+            </button>
+        </span>`;
+    }).join('');
+}
+
+function removeRf(nummer) {
+    rfSelected = rfSelected.filter(n => n !== String(nummer));
+    renderRfChips();
+}
+
+function onRfSearchInput() {
+    const q = document.getElementById('fRfSearch').value.toLowerCase().trim();
+    const dropdown = document.getElementById('fRfDropdown');
+    if (!q) { dropdown.classList.add('hidden'); return; }
+
+    const currentNummer = document.getElementById('fNummer').value.trim();
+    const results = standorte.filter(s =>
+        String(s.nummer) !== currentNummer &&
+        !rfSelected.includes(String(s.nummer)) &&
+        (s.nummer.toLowerCase().includes(q) || (s.name || '').toLowerCase().includes(q))
+    ).slice(0, 10);
+
+    if (!results.length) { dropdown.classList.add('hidden'); return; }
+
+    dropdown.innerHTML = results.map(s =>
+        `<div onclick="addRf('${esc(String(s.nummer))}')"
+            class="px-3 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer transition-colors">
+            <span class="font-mono font-semibold text-blue-600 dark:text-blue-400">${esc(s.nummer)}</span>
+            <span class="ml-2 text-slate-700 dark:text-zinc-300">${esc(s.name || '')}</span>
+        </div>`
+    ).join('');
+    dropdown.classList.remove('hidden');
+}
+
+function addRf(nummer) {
+    if (!rfSelected.includes(String(nummer))) {
+        rfSelected.push(String(nummer));
+    }
+    renderRfChips();
+    document.getElementById('fRfSearch').value = '';
+    document.getElementById('fRfDropdown').classList.add('hidden');
+}
+
+function onRfSearchKeydown(e) {
+    if (e.key === 'Escape') {
+        document.getElementById('fRfDropdown').classList.add('hidden');
+    }
+}
+
+// Close RF dropdown on outside click
+document.addEventListener('click', e => {
+    const search   = document.getElementById('fRfSearch');
+    const dropdown = document.getElementById('fRfDropdown');
+    if (dropdown && !dropdown.contains(e.target) && e.target !== search) {
+        dropdown.classList.add('hidden');
+    }
+});
 
 function showFormError(msg) {
     const el = document.getElementById('formError');
@@ -911,7 +1128,7 @@ async function deleteOverlayFeature(idx) {
         ...overlayDetailPayload,
         features,
         updatedAt: new Date().toISOString(),
-        updatedBy: 'admin'
+        updatedBy: adminUser || 'admin'
     };
 
     const res = await fetch(`/api/overlays/${encodeURIComponent(overlayDetailNummer)}`, {

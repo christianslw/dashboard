@@ -110,6 +110,7 @@
     }
 
     async function _pushSettings() {
+        _settingsPushTimer = null;
         const uid = getUserId();
         const snapshot = _collectSettings(); // capture before any concurrent change
         _localSettingsDirty = false;         // optimistically clear; restore on failure
@@ -130,17 +131,20 @@
         _settingsPushTimer = setTimeout(_pushSettings, SETTINGS_DEBOUNCE_MS);
     }
 
-    /** Watch localStorage for setting changes and auto-push. */
-    function _startSettingsChangeWatcher() {
+    function notifyLocalSettingsChanged() {
         _lastSettingsHash = _settingsHash();
-        setInterval(() => {
-            const current = _settingsHash();
-            if (current !== _lastSettingsHash) {
-                _lastSettingsHash = current;
-                _localSettingsDirty = true;
-                _schedulePush();
-            }
-        }, 2_000);
+        _localSettingsDirty = true;
+        _schedulePush();
+    }
+
+    /** Watch cross-tab setting changes and apply remote updates locally. */
+    function _startSettingsChangeWatcher() {
+        window.addEventListener('storage', (event) => {
+            if (!SETTINGS_KEYS.includes(event.key)) return;
+            _applySettings(_collectSettings());
+            _lastSettingsHash = _settingsHash();
+        });
+        _lastSettingsHash = _settingsHash();
     }
 
     // ─── STANDORTE ───────────────────────────────────────────────────────────────
@@ -153,6 +157,8 @@
             const data = await res.json();
             if (Array.isArray(data) && data.length > 0) {
                 window.standorte = data;
+                // Rebuild Richtfunkstrecken layer if the map is already initialised
+                if (typeof buildRichtfunkLayer === 'function') buildRichtfunkLayer();
                 return true;
             }
             return false;
@@ -231,11 +237,12 @@
         if (_fahrtanweisungenPushTimers[key]) clearTimeout(_fahrtanweisungenPushTimers[key]);
         _fahrtanweisungenPushTimers[key] = setTimeout(async () => {
             delete _fahrtanweisungenPushTimers[key];
+            const savedBy = window.getUserDisplayName?.() ?? 'Unbekannt';
             try {
                 await fetch(`/api/fahrtanweisungen/${encodeURIComponent(key)}`, {
                     method:  'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body:    JSON.stringify({ text, updatedAt: new Date().toISOString() }),
+                    body:    JSON.stringify({ text, updatedAt: new Date().toISOString(), savedBy }),
                 });
             } catch { /* silent */ }
         }, 500);
@@ -275,6 +282,7 @@
         // Settings
         loadSettingsFromBackend,
         pushSettingsNow: _pushSettings,
+        notifyLocalSettingsChanged,
         // Load on boot (called by init.js) + push on change covers all sync needs.
         startSettingsSync() {
             _startSettingsChangeWatcher();

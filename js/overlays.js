@@ -250,16 +250,6 @@ function formatDistance(meters) {
 
 // ─── TOOLTIP COLOR HELPERS ─────────────────────────────
 
-/** Convert #rrggbb / #rgb to rgba() string */
-function hexToRgba(hex, alpha) {
-    let h = hex.replace('#', '');
-    if (h.length === 3) h = h.split('').map(c => c + c).join('');
-    const r = parseInt(h.slice(0, 2), 16);
-    const g = parseInt(h.slice(2, 4), 16);
-    const b = parseInt(h.slice(4, 6), 16);
-    return `rgba(${r},${g},${b},${alpha})`;
-}
-
 /**
  * Bind a Leaflet tooltip and inject the element's color as CSS variables
  * (--ov-tt-border, --ov-tt-glow) on the tooltip DOM element when it opens.
@@ -632,8 +622,8 @@ function buildPayloadFromEditLayerGroup() {
         const f = updateFeatureFromLayer(layer);
         if (f) features.push(f);
     });
-    // Use the sync user-ID when available so overlay changes are attributable
-    const userId = window.__cfSync?.getUserId?.() ?? 'gui';
+    // Use the display name when available so overlay changes are attributable by name
+    const userId = window.getUserDisplayName?.() ?? window.__cfSync?.getUserId?.() ?? 'Unbekannt';
     return { features, updatedAt: new Date().toISOString(), updatedBy: userId };
 }
 
@@ -2602,7 +2592,7 @@ async function confirmOverlayInput() {
         if (idx >= 0) {
             payload.features[idx].properties.note = text;
             payload.updatedAt = new Date().toISOString();
-            payload.updatedBy = 'gui';
+            payload.updatedBy = window.getUserDisplayName?.() ?? 'Unbekannt';
             await saveOverlayPayload(nummer, payload);
         }
         ovModalEditLayer = null;

@@ -43,7 +43,7 @@ export async function onRequestPut({ params, env, request }) {
 
     record.fahrtanweisung          = typeof body.text === 'string' ? body.text : '';
     record.fahrtanweisungUpdatedAt = now;
-    record.fahrtanweisungUpdatedBy = 'admin';
+    record.fahrtanweisungUpdatedBy = body.savedBy ?? 'admin';
     record.fahrtanweisungHistory   = history;
 
     await env.STANDORTE_KV.put(key, JSON.stringify(record));

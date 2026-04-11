@@ -9,7 +9,6 @@ const OPEN_METEO_BASE_URL           = 'https://api.open-meteo.com/v1/forecast';
 const BRIGHTSKY_BASE_URL            = 'https://api.brightsky.dev';
 const RAINVIEWER_API_URL            = 'https://api.rainviewer.com/public/weather-maps.json';
 const RAINVIEWER_TILE_HOST_FALLBACK = 'https://tilecache.rainviewer.com';
-const BLITZORTUNG_TILE_URL          = 'https://map.blitzortung.org/L/{z}/{x}/{y}.png';
 const DWD_WMS_URL                   = 'https://maps.dwd.de/geoserver/dwd/wms';
 const ESRI_IMAGERY_URL              = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
 const ESRI_TRANSPORT_URL            = 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}';
@@ -17,6 +16,16 @@ const ESRI_BOUNDARIES_URL           = 'https://server.arcgisonline.com/ArcGIS/re
 const OSM_TILE_URL                  = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 const CARTODB_TILE_BASE_URL         = 'https://{s}.basemaps.cartocdn.com';
 const OPENTOPOMAP_TILE_URL          = 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
+const STATION_PREFIX_COLORS         = Object.freeze({
+    1: '#8b5cf6',
+    2: '#10b981',
+    3: '#f59e0b',
+    4: '#ef4444',
+    5: '#ec4899',
+    6: '#06b6d4',
+    8: '#6366f1',
+    9: '#eab308'
+});
 
 // ─── Global State & Configuration ────────────────────────────────────────────
 
@@ -61,6 +70,17 @@ const customThemes = [
 let currentAppearance = localStorage.getItem('appearance') || 'system';
 let currentColorTheme = localStorage.getItem('colorTheme') || 'standard';
 
+function _setActiveBtnState(btn, isActive) {
+    if (!btn) return;
+    if (isActive) {
+        btn.classList.add('bg-blue-100', 'text-blue-700', 'border-blue-500', 'dark:bg-blue-900/50', 'dark:text-blue-300');
+        btn.classList.remove('bg-white', 'text-slate-700', 'border-slate-300', 'dark:bg-zinc-900', 'dark:text-zinc-300');
+    } else {
+        btn.classList.remove('bg-blue-100', 'text-blue-700', 'border-blue-500', 'dark:bg-blue-900/50', 'dark:text-blue-300');
+        btn.classList.add('bg-white', 'text-slate-700', 'border-slate-300', 'dark:bg-zinc-900', 'dark:text-zinc-300');
+    }
+}
+
 /* Lazy-loads js/theme-effects.js on first use (kirschbluete only) then fires callback */
 function _ensureThemeEffects(callback) {
     if (typeof ThemeEffects !== 'undefined') { callback(); return; }
@@ -76,12 +96,14 @@ function _ensureThemeEffects(callback) {
 function changeAppearance(mode) {
     currentAppearance = mode;
     localStorage.setItem('appearance', mode);
+    window.__cfSync?.notifyLocalSettingsChanged?.();
     applyThemeAndAppearance();
 }
 
 function changeColorTheme(themeId) {
     currentColorTheme = themeId;
     localStorage.setItem('colorTheme', themeId);
+    window.__cfSync?.notifyLocalSettingsChanged?.();
     applyThemeAndAppearance();
 }
 
@@ -129,28 +151,12 @@ function applyThemeAndAppearance() {
 function updateSettingsUI() {
     ['light', 'dark', 'system'].forEach(mode => {
         const btn = document.getElementById(`btn-appearance-${mode}`);
-        if(btn) {
-            if (mode === currentAppearance) {
-                btn.classList.add('bg-blue-100', 'text-blue-700', 'border-blue-500', 'dark:bg-blue-900/50', 'dark:text-blue-300');
-                btn.classList.remove('bg-white', 'text-slate-700', 'border-slate-300', 'dark:bg-zinc-900', 'dark:text-zinc-300');
-            } else {
-                btn.classList.remove('bg-blue-100', 'text-blue-700', 'border-blue-500', 'dark:bg-blue-900/50', 'dark:text-blue-300');
-                btn.classList.add('bg-white', 'text-slate-700', 'border-slate-300', 'dark:bg-zinc-900', 'dark:text-zinc-300');
-            }
-        }
+        _setActiveBtnState(btn, mode === currentAppearance);
     });
 
     customThemes.forEach(t => {
         const btn = document.getElementById(`btn-theme-${t.id}`);
-        if(btn) {
-            if (t.id === currentColorTheme) {
-                btn.classList.add('bg-blue-100', 'text-blue-700', 'border-blue-500', 'dark:bg-blue-900/50', 'dark:text-blue-300');
-                btn.classList.remove('bg-white', 'text-slate-700', 'border-slate-300', 'dark:bg-zinc-900', 'dark:text-zinc-300');
-            } else {
-                btn.classList.remove('bg-blue-100', 'text-blue-700', 'border-blue-500', 'dark:bg-blue-900/50', 'dark:text-blue-300');
-                btn.classList.add('bg-white', 'text-slate-700', 'border-slate-300', 'dark:bg-zinc-900', 'dark:text-zinc-300');
-            }
-        }
+        _setActiveBtnState(btn, t.id === currentColorTheme);
     });
 }
 
@@ -173,6 +179,21 @@ function getTagebuchLink(standort) {
         : `${standort.link}?web=1`;
 }
 
+/**
+ * Returns the Stationskennblatt SharePoint link for a standort.
+ * Derived by replacing the filename token 'Tagebuch' with 'Stationskennblatt'
+ * in the existing link field.  Returns null if the pattern is not found.
+ */
+function getStationskennblattLink(standort) {
+    if (!standort?.link) return null;
+    // Replace the last occurrence of 'Tagebuch' (case-sensitive) in the filename
+    const replaced = standort.link.replace(/Tagebuch(?=[^/]*$)/, 'Stationskennblatt');
+    if (replaced === standort.link) return null; // pattern not found
+    return tagebuchMode === 'excel'
+        ? `ms-excel:ofv|u|${replaced}`
+        : `${replaced}?web=1`;
+}
+
 function getNavLink(lat, lon) {
     return navMode === 'apple'
         ? `https://maps.apple.com/?daddr=${lat},${lon}`
@@ -182,37 +203,25 @@ function getNavLink(lat, lon) {
 function changeTagebuchMode(mode) {
     tagebuchMode = mode;
     localStorage.setItem('tagebuchMode', mode);
+    window.__cfSync?.notifyLocalSettingsChanged?.();
     updateAppSettingsUI();
 }
 
 function changeNavMode(mode) {
     navMode = mode;
     localStorage.setItem('navMode', mode);
+    window.__cfSync?.notifyLocalSettingsChanged?.();
     updateAppSettingsUI();
 }
 
 function updateAppSettingsUI() {
     ['web', 'excel'].forEach(m => {
         const btn = document.getElementById(`btn-tagebuch-${m}`);
-        if (!btn) return;
-        if (m === tagebuchMode) {
-            btn.classList.add('bg-blue-100', 'text-blue-700', 'border-blue-500', 'dark:bg-blue-900/50', 'dark:text-blue-300');
-            btn.classList.remove('bg-white', 'text-slate-700', 'border-slate-300', 'dark:bg-zinc-900', 'dark:text-zinc-300');
-        } else {
-            btn.classList.remove('bg-blue-100', 'text-blue-700', 'border-blue-500', 'dark:bg-blue-900/50', 'dark:text-blue-300');
-            btn.classList.add('bg-white', 'text-slate-700', 'border-slate-300', 'dark:bg-zinc-900', 'dark:text-zinc-300');
-        }
+        _setActiveBtnState(btn, m === tagebuchMode);
     });
     ['google', 'apple'].forEach(m => {
         const btn = document.getElementById(`btn-nav-${m}`);
-        if (!btn) return;
-        if (m === navMode) {
-            btn.classList.add('bg-blue-100', 'text-blue-700', 'border-blue-500', 'dark:bg-blue-900/50', 'dark:text-blue-300');
-            btn.classList.remove('bg-white', 'text-slate-700', 'border-slate-300', 'dark:bg-zinc-900', 'dark:text-zinc-300');
-        } else {
-            btn.classList.remove('bg-blue-100', 'text-blue-700', 'border-blue-500', 'dark:bg-blue-900/50', 'dark:text-blue-300');
-            btn.classList.add('bg-white', 'text-slate-700', 'border-slate-300', 'dark:bg-zinc-900', 'dark:text-zinc-300');
-        }
+        _setActiveBtnState(btn, m === navMode);
     });
     // Sync route suggestions toggle (lives in planner.js)
     if (typeof _updateSuggestToggleUI === 'function') _updateSuggestToggleUI();

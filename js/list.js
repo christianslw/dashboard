@@ -1,5 +1,20 @@
 // ─── List View ───────────────────────────────────────────────────────────────────────
 
+const LIST_MAX_RESULTS = 100;
+const DWD_WARNING_STAGGER_MS = 75;
+const SEARCH_DEBOUNCE_MS = 180;
+
+let _filterDebounceTimer = null;
+let _pendingDwdTimers = [];
+
+function scheduleFilterStandorte() {
+    if (_filterDebounceTimer) clearTimeout(_filterDebounceTimer);
+    _filterDebounceTimer = setTimeout(() => {
+        _filterDebounceTimer = null;
+        filterStandorte();
+    }, SEARCH_DEBOUNCE_MS);
+}
+
 function filterStandorte() {
     const searchInput = document.getElementById("searchInput");
     const clearBtn = document.getElementById("clearSearchBtn");
@@ -29,6 +44,10 @@ function clearSearch() {
     document.getElementById("searchInput").value = "";
     const clearBtn = document.getElementById("clearSearchBtn");
     clearBtn.classList.add('opacity-0', 'pointer-events-none');
+    if (_filterDebounceTimer) {
+        clearTimeout(_filterDebounceTimer);
+        _filterDebounceTimer = null;
+    }
     filterStandorte();
 }
 
@@ -36,13 +55,16 @@ function renderList(liste) {
     const container = document.getElementById("resultList");
     container.innerHTML = "";
 
+    _pendingDwdTimers.forEach(timerId => clearTimeout(timerId));
+    _pendingDwdTimers = [];
+
     if (liste.length === 0 && standorte.length > 0) {
         container.innerHTML = `<div class="p-8 text-center text-slate-500">Keine Ergebnisse.</div>`;
         updateMapMarkers([]);
         return;
     }
 
-    const displayList = liste.slice(0, 100);
+    const displayList = liste.slice(0, LIST_MAX_RESULTS);
 
     // 1. create list items
     displayList.forEach((s, index) => {
@@ -52,9 +74,12 @@ function renderList(liste) {
         let distHtml = "";
         const safeNum = String(s.nummer).replace(/[^a-zA-Z0-9]/g, '');
         const warningBoxId = `warn-box-${safeNum}`;
+        const escapedNum = escapeHtml(s.nummer);
+        const escapedName = escapeHtml(s.name);
+        const escapedLat = escapeHtml(s.lat);
+        const escapedLon = escapeHtml(s.lon);
 
         if (userLat && userLon) {
-            s.distance = calcDistance(userLat, userLon, s.lat, s.lon);
             const calcTime = calcDriveTimeFallback(s.distance);
             distHtml = `
                 <div class="flex items-center gap-3 text-xs text-slate-500 dark:text-zinc-400 mt-1">
@@ -73,28 +98,28 @@ function renderList(liste) {
 
 
         item.innerHTML = `
-            <div class="flex items-center gap-3 flex-1" onclick="handleListItemClick(event, '${s.nummer}')">
+            <div class="flex items-center gap-3 flex-1" onclick="handleListItemClick(event, '${escapedNum}')">
                 <div class="flex-1">
                     <h3 class="text-slate-900 dark:text-zinc-100 text-sm md:text-base flex items-center gap-2 flex-wrap">
-                        <span class="font-bold">${s.nummer}</span> 
-                        <span class="font-normal text-slate-600 dark:text-zinc-300">${s.name}</span>
-                        <button type="button" onclick="toggleFavorite('${s.nummer}', event)" title="Favorit umschalten" class="transition-colors ${isFavorite(s.nummer) ? 'text-amber-500 opacity-100' : 'text-slate-300 dark:text-zinc-600 opacity-0 group-hover:opacity-100 hover:opacity-100'}"><i class="mdi mdi-star"></i></button>
+                        <span class="font-bold">${escapedNum}</span> 
+                        <span class="font-normal text-slate-600 dark:text-zinc-300">${escapedName}</span>
+                        <button type="button" onclick="toggleFavorite('${escapedNum}', event)" title="Favorit umschalten" class="transition-colors ${isFavorite(s.nummer) ? 'text-amber-500 opacity-100' : 'text-slate-300 dark:text-zinc-600 opacity-0 group-hover:opacity-100 hover:opacity-100'}"><i class="mdi mdi-star"></i></button>
                         <span id="${warningBoxId}" class="ml-1 inline-flex empty:hidden"></span>
                     </h3>
-                    ${distHtml || `<div class="text-slate-400 text-xs font-mono mt-0.5">${s.lat}, ${s.lon}</div>`}
+                    ${distHtml || `<div class="text-slate-400 text-xs font-mono mt-0.5">${escapedLat}, ${escapedLon}</div>`}
                 </div>
             </div>
             <div class="flex items-center gap-0.5">
                 <button type="button"
-                    data-planner-btn="${s.nummer}"
-                    onclick="togglePlannerFromList('${s.nummer}'); event.stopPropagation();"
+                    data-planner-btn="${escapedNum}"
+                    onclick="togglePlannerFromList('${escapedNum}'); event.stopPropagation();"
                     class="planner-add-btn p-2 shrink-0 transition-all rounded-md"
                     title="Zur Tour hinzufügen / entfernen">
                     <i class="mdi mdi-map-marker-plus planner-add-icon text-xl"></i>
                 </button>
                 <span class="nav-share-wrap">
                     <button type="button"
-                        onclick="shareStandort('${s.nummer}', event)"
+                        onclick="shareStandort('${escapedNum}', event)"
                         class="nav-share-btn"
                         title="Standort-Link teilen">
                         <i class="mdi mdi-share-variant"></i>
@@ -112,13 +137,16 @@ function renderList(liste) {
         `;
         container.appendChild(item);
 
-        setTimeout(() => checkDWDWarningForList(s.lat, s.lon, warningBoxId), index * 150);
+        const timerId = setTimeout(() => {
+            checkDWDWarningForList(s.lat, s.lon, warningBoxId);
+        }, index * DWD_WARNING_STAGGER_MS);
+        _pendingDwdTimers.push(timerId);
     });
 
-    if (liste.length > 100) {
+    if (liste.length > LIST_MAX_RESULTS) {
         const more = document.createElement("div");
         more.className = "p-3 text-center text-xs text-slate-400";
-        more.innerText = `...und ${liste.length - 100} weitere (Bitte Suche nutzen)`;
+        more.textContent = `...und ${liste.length - LIST_MAX_RESULTS} weitere (Bitte Suche nutzen)`;
         container.appendChild(more);
     }
 
@@ -135,7 +163,7 @@ function renderList(liste) {
 function openRouteNavigation(nummer) {
     const standort = standorte.find(s => String(s.nummer) === String(nummer));
     if (standort) {
-        window.open(`https://www.google.com/maps/dir/?api=1&destination=${standort.lat},${standort.lon}`, '_blank');
+        window.open(getNavLink(standort.lat, standort.lon), '_blank');
     }
 }
 

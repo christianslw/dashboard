@@ -17,6 +17,62 @@ function calcDriveTimeFallback(distanceKm) {
         : `~${Math.floor(timeInMinutes / 60)}h ${timeInMinutes % 60}m`;
 }
 
+function hexToRgba(hexColor, alpha) {
+    if (typeof hexColor !== 'string') return `rgba(234,179,8,${alpha})`;
+    let hex = hexColor.trim().replace('#', '');
+    if (hex.length === 3) {
+        hex = hex.split('').map(c => c + c).join('');
+    }
+    if (hex.length !== 6) return `rgba(234,179,8,${alpha})`;
+
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function extendBoundsWithOverlayFeatures(bounds, payload) {
+    if (!bounds || !payload || !Array.isArray(payload.features)) return;
+
+    payload.features.forEach(feature => {
+        const geometry = feature?.geometry;
+        const coordinates = geometry?.coordinates;
+        if (!geometry || !coordinates) return;
+
+        if (geometry.type === 'Point') {
+            const lat = coordinates[1];
+            const lng = coordinates[0];
+            bounds.extend([lat, lng]);
+
+            if (feature?.properties?.overlayType === 'kreis') {
+                const radius = feature.properties.radius || 100;
+                const rLat = radius / 111320;
+                const rLng = radius / (40075 * Math.cos(lat * Math.PI / 180));
+                bounds.extend([lat + rLat, lng + rLng]);
+                bounds.extend([lat - rLat, lng - rLng]);
+            }
+            return;
+        }
+
+        if (geometry.type === 'LineString') {
+            coordinates.forEach(c => bounds.extend([c[1], c[0]]));
+            return;
+        }
+
+        if (geometry.type === 'Polygon' && coordinates[0]) {
+            coordinates[0].forEach(c => bounds.extend([c[1], c[0]]));
+        }
+    });
+}
+
 // ─── Toast notification ───────────────────────────────────────────────────────
 function showToast(msg, duration = 2500) {
     let el = document.getElementById('_toast');

@@ -16,6 +16,7 @@ function loadFavorites() {
 
 function saveFavorites() {
     localStorage.setItem('favoriteStations', JSON.stringify(Array.from(favoriteStationNumbers)));
+    window.__cfSync?.notifyLocalSettingsChanged?.();
 }
 
 function isFavorite(nummer) {
