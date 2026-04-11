@@ -188,10 +188,10 @@ function drawRichtfunkLines(layerGroup) {
             if (!t || !t.lat || !t.lon) return;
             L.polyline([[s.lat, s.lon], [t.lat, t.lon]], {
                 color: '#f59e0b',
-                weight: 2.5,
-                opacity: 0.85,
-                dashArray: '8, 5',
-                className: 'no-filter'
+                weight: 4,
+                opacity: 0.95,
+                dashArray: '6, 6',
+                className: 'no-filter richtfunk-line'
             })
             .bindTooltip(
                 s.nummer + ' \u2013 ' + s.name + '<br>' + t.nummer + ' \u2013 ' + t.name,

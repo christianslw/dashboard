@@ -2229,6 +2229,16 @@ body.planner-mode .planner-add-btn.is-queued .planner-add-icon {
 /* ─── Custom Layer Control (clc) ─────────────────────────────────────────── */
 /* Replaces the stock Leaflet layer switcher with a larger, grouped panel.    */
 
+.richtfunk-line {
+    filter: drop-shadow(0 0 10px rgba(245, 159, 11, 0.65));
+}
+
+.richtfunk-line path {
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+
 .clc-wrap {
     position: relative;
     font-size: 13px;

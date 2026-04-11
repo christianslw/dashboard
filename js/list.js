@@ -77,7 +77,7 @@ function renderList(liste) {
                 <div class="flex-1">
                     <h3 class="text-slate-900 dark:text-zinc-100 text-sm md:text-base flex items-center gap-2 flex-wrap">
                         <span class="font-bold">${s.nummer}</span> 
-                        <span class="font-normal text-slate-600 dark:text-zinc-300">${s.name}</span>${s.standortkuerzel ? `<span class="text-[10px] font-mono px-1 py-px rounded bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 leading-none self-center select-none">[${s.standortkuerzel}]</span>` : ''}
+                        <span class="font-normal text-slate-600 dark:text-zinc-300">${s.name}</span>${s.standortkuerzel ? `<span class="text-sm md:text-base font-mono font-normal px-1 py-px rounded bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 leading-none self-center select-none" style="font-family: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;">[${s.standortkuerzel}]</span>` : ''}
                         <button type="button" onclick="toggleFavorite('${s.nummer}', event)" title="Favorit umschalten" class="transition-colors ${isFavorite(s.nummer) ? 'text-amber-500 opacity-100' : 'text-slate-300 dark:text-zinc-600 opacity-0 group-hover:opacity-100 hover:opacity-100'}"><i class="mdi mdi-star"></i></button>
                         <span id="${warningBoxId}" class="ml-1 inline-flex empty:hidden"></span>
                     </h3>

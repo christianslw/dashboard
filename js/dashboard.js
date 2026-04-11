@@ -276,7 +276,7 @@ function updateDashKuerzel(standort) {
     const el = document.getElementById('dashTitleKuerzel');
     if (!el) return;
     const k = (standort.standortkuerzel || '').trim();
-    if (k) { el.textContent = '(' + k + ')'; el.classList.remove('hidden'); }
+    if (k) { el.textContent = '[' + k + ']'; el.classList.remove('hidden'); }
     else    { el.classList.add('hidden'); }
 }
 
