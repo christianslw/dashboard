@@ -1,0 +1,78 @@
+[
+  {
+    "line": 1,
+    "content": "/* ==================================================================="
+  },
+  {
+    "line": 5,
+    "content": "/*  Theme Token Contract "
+  },
+  {
+    "line": 52,
+    "content": "/*  Theme Bridge "
+  },
+  {
+    "line": 319,
+    "content": "/* ===== SECTION 1: BASE STYLES ===== */"
+  },
+  {
+    "line": 355,
+    "content": "/*  UI Panel Animations (all themes; override animation-name per-theme if needed) */"
+  },
+  {
+    "line": 600,
+    "content": "/*  Overlay Sidebar v3 (ov-*) "
+  },
+  {
+    "line": 656,
+    "content": "/*  Overlay Panel  CSS Custom Properties (retheme sidebar + tooltips here) */"
+  },
+  {
+    "line": 968,
+    "content": "/* ========== DARK MODE  Overlay Sidebar ========== */"
+  },
+  {
+    "line": 1017,
+    "content": "/* ===== SECTION 2: LEAFLET CONTROLS  LIGHT / DARK ===== */"
+  },
+  {
+    "line": 1220,
+    "content": "/* ===== DWD Warning Zones  diagonal hatching via CSS mask ===== */"
+  },
+  {
+    "line": 1252,
+    "content": "/* ===== Rain Radar Timeline Slider ===== */"
+  },
+  {
+    "line": 1284,
+    "content": "/* ===== SECTION 3: GLOBAL POLISH & MICRO-INTERACTIONS ===== */"
+  },
+  {
+    "line": 1513,
+    "content": "/* ===== SECTION 4: SPLIT PANE RESIZER ===== */"
+  },
+  {
+    "line": 1547,
+    "content": "/* ===== SECTION 5: SWR LOGO ENTRANCE ANIMATION ===== */"
+  },
+  {
+    "line": 1603,
+    "content": "/* ===== DWD Warning Label  hover badge sliding from icon ===== */"
+  },
+  {
+    "line": 1785,
+    "content": "/*  Changelog Modal Content  */"
+  },
+  {
+    "line": 1929,
+    "content": "/*  Custom Layer Control (clc)  */"
+  },
+  {
+    "line": 2088,
+    "content": "/*  Print: Anfahrt PDF  */"
+  },
+  {
+    "line": 2396,
+    "content": "/*  Frontend station edit modal (se-*)  */"
+  }
+]

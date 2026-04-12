@@ -1,0 +1,181 @@
+/* ─── Changelog Modal Content ──────────────────────────────────────────────── */
+
+.changelog-content { color: var(--theme-text-primary); }
+
+.cl-h2 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--theme-accent-text);
+    margin: 1.1rem 0 0.4rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid var(--theme-border);
+}
+.cl-h2:first-child { margin-top: 0; }
+
+.cl-h3 {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--theme-text-secondary);
+    margin: 0.85rem 0 0.3rem;
+}
+
+.cl-h4 {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--theme-text-secondary);
+    margin: 0.6rem 0 0.2rem;
+}
+
+.cl-p {
+    font-size: 0.8rem;
+    line-height: 1.55;
+    color: var(--theme-text-secondary);
+    margin: 0.25rem 0;
+}
+
+.cl-ul {
+    list-style: none;
+    padding: 0;
+    margin: 0.3rem 0 0.5rem;
+}
+
+.cl-li {
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--theme-text-secondary);
+    padding: 0.15rem 0 0.15rem 1.1rem;
+    position: relative;
+}
+.cl-li::before {
+    content: '–';
+    position: absolute;
+    left: 0;
+    color: var(--theme-text-muted);
+}
+
+.cl-hr {
+    border: none;
+    border-top: 1px solid var(--theme-border);
+    margin: 0.75rem 0;
+}
+
+.cl-code {
+    font-family: 'Consolas', 'Menlo', monospace;
+    font-size: 0.75rem;
+    background: var(--theme-surface-alt);
+    border: 1px solid var(--theme-border);
+    border-radius: 3px;
+    padding: 0.05em 0.35em;
+    color: var(--theme-accent-text);
+}
+
+.cl-a {
+    color: var(--theme-accent-text);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.cl-a:hover { opacity: 0.75; }
+
+/* ── DiPUL Flugzonen – master + sub-layer rows inside the layer panel ── */
+
+.dipul-master-label {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    cursor: pointer;
+    padding: 2px 0 2px 2px;
+    border-radius: 4px;
+    user-select: none;
+}
+
+.dipul-master-label:hover {
+    background: rgba(59,130,246,0.07);
+}
+
+.dark .dipul-master-label:hover {
+    background: rgba(96,165,250,0.09);
+}
+
+.dipul-sublayers {
+    overflow: hidden;
+    margin-top: 1px;
+}
+
+.dipul-sub-label {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 2px 2px 2px 14px !important;
+    cursor: pointer;
+    border-radius: 4px;
+    user-select: none;
+}
+
+.dipul-sub-label:hover {
+    background: rgba(59,130,246,0.07);
+}
+
+.dark .dipul-sub-label:hover {
+    background: rgba(96,165,250,0.09);
+}
+
+/* DiPUL per-layer tile tinting via CSS hue-rotate.
+   The DiPUL WMS server renders all zones in a base red (~0deg).
+   We shift each layer to its assigned colour.
+   fbg = Flugbeschränkungsgebiete  (red,    0deg - no change)
+   kz  = Kontrollzonen             (purple, 274deg)
+   tmp = Temp. Betriebseinschr.    (orange,  25deg)
+   fp  = Flugplätze                (blue,   217deg)
+   fh  = Flughäfen                 (cyan,   190deg)
+   mfp = Modellflugplätze          (green,  142deg) */
+/* Filter applied to the layer container div (Leaflet's className target).
+   One GPU compositing layer per zone type — far cheaper than per-tile filters.
+   will-change: transform promotes each container to its own GPU layer so the
+   browser doesn't have to CPU-repaint on every pan/zoom frame.              */
+.dipul-tile-fbg { filter: saturate(1.2) brightness(1.05);              will-change: transform; }
+.dipul-tile-kz  { filter: hue-rotate(274deg) saturate(1.2);            will-change: transform; }
+.dipul-tile-tmp { filter: hue-rotate(58deg)  saturate(1.4) brightness(1.05); will-change: transform; }
+.dipul-tile-fp  { filter: hue-rotate(217deg) saturate(1.1);            will-change: transform; }
+.dipul-tile-fh  { filter: hue-rotate(190deg) saturate(1.2);            will-change: transform; }
+.dipul-tile-mfp { filter: hue-rotate(142deg) saturate(1.1);            will-change: transform; }
+
+
+/* ─── Frontend station edit modal (se-*) ─────────────────────────────────────────── */
+.se-label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.25rem;
+    color: #64748b;
+}
+.dark .se-label { color: #a1a1aa; }
+
+.se-input {
+    display: block;
+    width: 100%;
+    padding: 0.375rem 0.625rem;
+    border-radius: 0.375rem;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.se-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+.dark .se-input {
+    border-color: #3f3f46;
+    background: #09090b;
+    color: #f4f4f5;
+}
+.dark .se-input:focus { border-color: #3b82f6; }
+.se-input::placeholder { color: #94a3b8; }
+.dark .se-input::placeholder { color: #52525b; }

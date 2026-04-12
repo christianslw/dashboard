@@ -1,0 +1,417 @@
+/* ─── Overlay Sidebar v3 (ov-*) ───────────────────────────────────────────────
+   Panel is appended to <body> (position: fixed) to escape overflow:hidden. */
+
+.ov-control { overflow: visible !important; }
+.ov-hidden  { display: none !important; }
+
+/* ── Trigger bar wrapper ── */
+.ov-wrap { display: block; }
+
+/* ── Trigger button (inherits leaflet-bar border/bg/radius) ── */
+.ov-trigger-btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+	padding: 0;
+	text-indent: 0;
+	background: #fff;
+	border: none;
+	outline: none;
+	color: #444;
+	cursor: pointer;
+	transition: background 0.12s, color 0.12s;
+	position: relative;
+}
+.dark .ov-trigger-btn {
+	background: #09090b;
+	color: #d4d4d8;
+}
+.ov-trigger-btn:hover { background: #f4f4f4; color: #333; }
+.dark .ov-trigger-btn:hover { background: #3f3f46; color: #f4f4f5; }
+.ov-trigger-btn.active { background: #dbeafe; color: #1d4ed8; }
+.dark .ov-trigger-btn.active { background: #1e3a8a; color: #93c5fd; }
+
+/* Hover tooltip via CSS — shows station number + name */
+.ov-trigger-btn::after {
+	content: attr(data-tooltip);
+	position: absolute;
+	right: calc(100% + 8px);
+	top: 50%;
+	transform: translateY(-50%);
+	background: #1e293b;
+	color: #fff;
+	font-size: 11px;
+	font-weight: 500;
+	white-space: nowrap;
+	padding: 4px 8px;
+	border-radius: 4px;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.15s 0.3s;
+	z-index: 10001;
+}
+.ov-trigger-btn:hover::after { opacity: 1; }
+
+/* ─── Overlay Panel — CSS Custom Properties (retheme sidebar + tooltips here) */
+:root {
+    /* Panel chrome */
+    --ov-bg:            #ffffff;
+    --ov-border:        #e2e8f0;
+    --ov-section-bg:    #f8fafc;
+    --ov-body-text:     #334155;
+    --ov-muted:         #64748b;
+    --ov-divider:       #e5e7eb;
+    /* Active / accent */
+    --ov-accent-bg:     #dbeafe;
+    --ov-accent-text:   #1d4ed8;
+    /* Map tooltips — --ov-tt-border and --ov-tt-glow are
+       overridden per-element at runtime by bindColoredTooltip() */
+    --ov-tt-bg:         rgba(13, 17, 27, 0.92);
+    --ov-tt-border:     rgba(100, 116, 139, 0.5);
+    --ov-tt-glow:       rgba(100, 116, 139, 0.15);
+    --ov-tt-text:       #f1f5f9;
+    --ov-tt-radius:     5px;
+    --ov-tt-font-size:  11px;
+}
+
+/* ── Panel (position: fixed, appended to body) ── */
+.ov-panel {
+	position: fixed;
+	z-index: 10000;
+	width: min(240px, calc(100vw - 24px));
+	background: #ffffff;
+	border: 1px solid #e2e8f0;
+	border-radius: 0.75rem; /* rounded-xl */
+	box-shadow: 0 12px 36px rgba(15,23,42,0.15);
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	max-height: calc(100vh - 24px);
+	/* top / right set dynamically by positionOvPanel() */
+}
+
+/* ── Header ── */
+.ov-header {
+	display: flex; align-items: center; gap: 7px;
+	padding: 8px 10px;
+	background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+	flex-shrink: 0;
+}
+.ov-header-info { display: flex; align-items: baseline; gap: 5px; flex: 1; min-width: 0; }
+.ov-header-station { font-size: 13px; font-weight: 800; color: #1e293b; flex-shrink: 0; }
+.ov-header-name { font-size: 11px; color: #64748b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ov-close-btn {
+	width: 22px; height: 22px;
+	display: flex; align-items: center; justify-content: center;
+	background: none; border: 1px solid transparent; color: #94a3b8;
+	cursor: pointer; border-radius: 0.375rem; transition: all 0.15s;
+	flex-shrink: 0;
+}
+.ov-close-btn:hover { background: #fee2e2; color: #dc2626; border-color: #fecaca; }
+
+/* ── Category toolbar ── */
+.ov-toolbar {
+	display: flex; align-items: center; gap: 1px;
+	padding: 5px 7px;
+	background: #fff; border-bottom: 1px solid #e5e7eb;
+	flex-shrink: 0;
+}
+.ov-tb-item { position: relative; flex-shrink: 0; }
+.ov-tb-cat {
+	width: 30px; height: 30px;
+	display: flex; align-items: center; justify-content: center;
+	border-radius: 0.375rem; border: none; background: transparent;
+	color: #64748b; cursor: pointer; transition: all 0.12s;
+	position: relative;
+}
+.ov-tb-cat:hover { background: #f1f5f9; color: #0f172a; }
+.ov-tb-cat.active { background: #dbeafe; color: #1d4ed8; }
+.ov-tb-cat .ov-badge {
+	position: absolute; top: 1px; right: 1px;
+	font-size: 7px; padding: 0 3px; min-width: 12px;
+	line-height: 1.6; text-align: center; pointer-events: none;
+}
+.ov-tb-sep { width: 1px; height: 18px; background: #e5e7eb; margin: 0 3px; flex-shrink: 0; }
+.ov-tb-act {
+	width: 28px; height: 28px; flex-shrink: 0;
+	display: flex; align-items: center; justify-content: center;
+	border-radius: 0.375rem; border: 1px solid #e2e8f0; background: transparent;
+	color: #64748b; cursor: pointer; transition: all 0.12s;
+}
+.ov-tb-act:hover { background: #f1f5f9; }
+.ov-tb-act:disabled { opacity: 0.35; cursor: not-allowed; }
+.ov-tb-act-danger { color: #dc2626; border-color: #fecaca; }
+.ov-tb-act-danger:hover { background: #fef2f2 !important; }
+.ov-color-preview {
+	width: 13px; height: 13px; border-radius: 50%; display: block;
+	box-shadow: 0 0 0 1.5px rgba(0,0,0,0.15);
+	transition: background 0.15s;
+}
+
+/* ── Sub-toolbars (category panels) ── */
+.ov-subtoolbar {
+	display: flex; flex-wrap: nowrap; align-items: center; gap: 2px;
+	padding: 5px 7px; border-bottom: 1px solid #e5e7eb;
+	flex-shrink: 0; overflow-x: auto; background: #fafafa;
+}
+.ov-subtoolbar::-webkit-scrollbar { height: 0; }
+.ov-subtoolbar-wrap { flex-wrap: wrap; }
+.ov-subtoolbar-color { flex-direction: column; align-items: stretch; gap: 7px; }
+.ov-sub-btn {
+	display: flex; align-items: center; gap: 4px;
+	padding: 4px 7px; border-radius: 0.375rem;
+	border: 1px solid transparent; background: transparent;
+	font-size: 11px; font-weight: 500; color: #334155;
+	cursor: pointer; transition: all 0.12s;
+	flex-shrink: 0; white-space: nowrap;
+}
+.ov-sub-btn:hover { background: #f1f5f9; color: #0f172a; }
+.ov-sub-btn.active { background: #dbeafe; border-color: #bfdbfe; color: #1d4ed8; }
+.ov-color-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.ov-sub-emoji { font-size: 13px; line-height: 1; flex-shrink: 0; }
+
+/* ── Anfahrt subtoolbar: two-row column layout ── */
+.ov-subtoolbar-anfahrt {
+	flex-direction: column !important; align-items: stretch !important;
+	gap: 0 !important; padding: 0 !important; overflow: visible !important;
+}
+.ov-sub-row {
+	display: flex; flex-wrap: nowrap; gap: 2px;
+	padding: 5px 7px; overflow-x: auto;
+}
+.ov-sub-row::-webkit-scrollbar { height: 0; }
+.ov-drawmode-divider {
+	height: 1px; background: #e5e7eb; flex-shrink: 0;
+}
+.ov-draw-mode-row {
+	display: flex; gap: 2px; padding: 4px 7px 5px;
+	background: #f0f9ff; flex-shrink: 0;
+}
+.ov-draw-mode-btn {
+	flex: 1; display: flex; align-items: center; justify-content: center; gap: 3px;
+	padding: 3px 4px; border-radius: 0.3rem;
+	border: 1px solid transparent; background: transparent;
+	font-size: 10px; font-weight: 500; color: #64748b;
+	cursor: pointer; transition: all 0.12s; white-space: nowrap;
+}
+.ov-draw-mode-btn:hover { background: #e0f2fe; color: #0369a1; }
+.ov-draw-mode-btn.active { background: #bae6fd; border-color: #7dd3fc; color: #0369a1; font-weight: 700; }
+
+/* ── Snap-to-road / draw / eraser / shift-select hint bar ── */
+.ov-snap-hint {
+	position: fixed; bottom: 56px; left: 50%; transform: translateX(-50%);
+	background: rgba(15,23,42,0.88); color: #e2e8f0;
+	font-size: 11px; padding: 5px 10px 5px 14px; border-radius: 99px;
+	pointer-events: auto; z-index: 9999; white-space: nowrap;
+	box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+	display: flex; align-items: center; gap: 6px;
+}
+.ov-hint-finish {
+	background: #22c55e; color: #fff; border: none; border-radius: 99px;
+	padding: 3px 11px; font-size: 11px; font-weight: 600; cursor: pointer;
+	transition: background 0.12s;
+}
+.ov-hint-finish:hover { background: #16a34a; }
+.ov-hint-cancel {
+	background: rgba(255,255,255,0.12); color: #e2e8f0;
+	border: 1px solid rgba(255,255,255,0.18); border-radius: 99px;
+	padding: 3px 9px; font-size: 11px; cursor: pointer;
+	transition: background 0.12s;
+}
+.ov-hint-cancel:hover { background: rgba(255,255,255,0.22); }
+
+/* ── Vertex-edit confirm bar ── */
+.ov-vertex-edit-bar {
+	position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+	background: rgba(15,23,42,0.88); color: #e2e8f0;
+	font-size: 11px; padding: 5px 10px 5px 14px; border-radius: 99px;
+	pointer-events: auto; z-index: 9999; white-space: nowrap;
+	box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+	display: flex; align-items: center; gap: 6px;
+}
+.ov-veb-label { display: flex; align-items: center; gap: 4px; }
+
+/* ── Element list edit button ── */
+.ov-element-edit {
+	width: 18px; height: 18px; flex-shrink: 0;
+	display: flex; align-items: center; justify-content: center;
+	background: transparent; border: none; border-radius: 0.25rem;
+	cursor: pointer; color: #cbd5e1; padding: 0; transition: all 0.12s;
+}
+.ov-element-edit:hover { background: #dbeafe; color: #2563eb; }
+.ov-panel.dark .ov-element-edit { color: #52525b; }
+.ov-panel.dark .ov-element-edit:hover { background: #1e3a5f; color: #60a5fa; }
+
+/* ── Dark mode additions ── */
+.ov-panel.dark .ov-sub-row { background: #1c1c1f; border-color: #27272a; }
+.ov-panel.dark .ov-drawmode-divider { background: #27272a; }
+.ov-panel.dark .ov-draw-mode-row { background: #0c1a2b; }
+.ov-panel.dark .ov-draw-mode-btn { color: #71717a; }
+.ov-panel.dark .ov-draw-mode-btn:hover { background: #172a41; color: #7dd3fc; }
+.ov-panel.dark .ov-draw-mode-btn.active { background: #1e3a5f; border-color: #3b82f6; color: #60a5fa; }
+
+/* ── Color Palette ── */
+.ov-palette { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.ov-swatch {
+	width: 24px; height: 24px; justify-self: center;
+	border-radius: 50%; border: 2px solid transparent;
+	cursor: pointer; transition: all 0.12s;
+	box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
+}
+.ov-swatch:hover { transform: scale(1.15); box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+.ov-swatch.active {
+	border-color: #1e293b;
+	box-shadow: 0 0 0 2px #fff, 0 0 0 4px #3b82f6;
+	transform: scale(1.1);
+}
+.ov-custom-row { display: flex; align-items: center; gap: 8px; }
+.ov-custom-input {
+	width: 28px; height: 24px;
+	border: 1px solid #e2e8f0; border-radius: 0.375rem;
+	padding: 1px; cursor: pointer; background: #fff;
+}
+.ov-custom-label { font-size: 10px; color: #64748b; }
+.ov-custom-label.active { color: #2563eb; font-weight: 600; }
+
+/* ── Badges ── */
+.ov-badge {
+	font-size: 9px; padding: 1px 5px;
+	border-radius: 9999px; background: #dbeafe;
+	color: #2563eb; font-weight: 700; line-height: 1.4;
+}
+
+/* ── Scrollable body (element list) ── */
+.ov-body {
+	flex: 1; overflow-y: auto; padding: 7px;
+	max-height: calc(100vh - 200px);
+}
+
+/* ── Element List ── */
+.ov-element-list { display: flex; flex-direction: column; gap: 4px; }
+.ov-element-row {
+    display: flex; align-items: flex-start; gap: 5px;
+	padding: 5px 7px; border-radius: 0.5rem;
+	font-size: 10px; color: #334155;
+	background: #f8fafc; transition: background 0.12s;
+}
+.ov-element-row:hover { background: #f1f5f9; }
+.ov-element-icon { font-size: 12px; flex-shrink: 0; }
+.ov-element-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.ov-element-label { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ov-element-meta {
+    font-size: 9px;
+    line-height: 1.25;
+    color: #64748b;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ov-rename {
+	cursor: text;
+	border-radius: 0.25rem;
+	outline: none;
+	padding: 0 2px;
+	margin: 0 -2px;
+	transition: background 0.12s, box-shadow 0.12s;
+}
+.ov-rename:hover { background: rgba(59,130,246,0.07); }
+.ov-rename:focus {
+	background: #eff6ff;
+	box-shadow: 0 0 0 1.5px #3b82f6;
+	text-overflow: clip;
+	white-space: nowrap;
+	color: #1e40af;
+}
+.ov-panel.dark .ov-rename:hover { background: rgba(96,165,250,0.1); }
+.ov-panel.dark .ov-rename:focus { background: #1e3a5f; box-shadow: 0 0 0 1.5px #3b82f6; color: #93c5fd; }
+.ov-element-delete {
+	width: 18px; height: 18px;
+	display: flex; align-items: center; justify-content: center;
+	border: none; background: none; color: #cbd5e1;
+	cursor: pointer; border-radius: 0.25rem; transition: all 0.12s; flex-shrink: 0;
+}
+.ov-element-delete:hover { background: #fee2e2; color: #dc2626; }
+.ov-empty { font-size: 10px; color: #94a3b8; text-align: center; padding: 8px; }
+
+/* ── Footer ── */
+.ov-footer {
+	padding: 7px 10px; background: #f8fafc; border-top: 1px solid #e2e8f0;
+	display: flex; align-items: center; justify-content: space-between;
+	flex-shrink: 0;
+}
+.ov-sync-status { font-size: 10px; color: #94a3b8; }
+
+/* MDI icon sizing – overlay panel contexts */
+.ov-element-icon .mdi,
+.ov-element-icon > i.mdi { font-size: 13px; line-height: 1; }
+.ov-sub-btn .mdi         { font-size: 14px; line-height: 1; flex-shrink: 0; }
+/* Background, border and glow are set per-element via JS (bindColoredTooltip).
+   CSS variables defined in :root above. */
+.overlay-route-tooltip,
+.overlay-zone-tooltip {
+	background: var(--ov-tt-bg) !important;
+	border: 1.5px solid var(--ov-tt-border) !important;
+	color: var(--ov-tt-text) !important;
+	font-size: var(--ov-tt-font-size) !important;
+	font-weight: 600 !important;
+	padding: 4px 9px !important;
+	border-radius: var(--ov-tt-radius) !important;
+	box-shadow: 0 2px 14px var(--ov-tt-glow) !important;
+	white-space: nowrap !important;
+	text-shadow: none !important;
+}
+/* Hide the pointer arrow — these tooltips follow the cursor (sticky) */
+.overlay-route-tooltip::before,
+.overlay-zone-tooltip::before { display: none !important; }
+
+/* ========== DARK MODE — Overlay Sidebar ========== */
+
+.dark .ov-trigger-btn { background: #27272a; color: #d4d4d8; }
+.dark .ov-trigger-btn:hover { background: #3f3f46; color: #fff; }
+.dark .ov-trigger-btn.active { background: #1e3a5f; color: #60a5fa; }
+.dark .ov-trigger-btn::after { background: #e4e4e7; color: #18181b; }
+
+/* Panel is on body; dark class mirrored by JS */
+.ov-panel.dark { background: #18181b; border-color: #27272a; box-shadow: 0 8px 32px rgba(0,0,0,0.6); }
+.ov-panel.dark .ov-header { background: #121214; border-color: #27272a; }
+.ov-panel.dark .ov-header-station { color: #e4e4e7; }
+.ov-panel.dark .ov-header-name { color: #a1a1aa; }
+.ov-panel.dark .ov-close-btn { color: #71717a; }
+.ov-panel.dark .ov-close-btn:hover { background: #450a0a; color: #fca5a5; border-color: #7f1d1d; }
+.ov-panel.dark .ov-toolbar { background: #18181b; border-color: #27272a; }
+.ov-panel.dark .ov-tb-cat { color: #71717a; }
+.ov-panel.dark .ov-tb-cat:hover { background: #27272a; color: #e4e4e7; }
+.ov-panel.dark .ov-tb-cat.active { background: #1e3a5f; color: #60a5fa; }
+.ov-panel.dark .ov-tb-sep { background: #3f3f46; }
+.ov-panel.dark .ov-tb-act { color: #71717a; border-color: #3f3f46; }
+.ov-panel.dark .ov-tb-act:hover { background: #27272a; color: #e4e4e7; }
+.ov-panel.dark .ov-tb-act-danger { color: #fca5a5; border-color: #7f1d1d; }
+.ov-panel.dark .ov-tb-act-danger:hover { background: #450a0a !important; }
+.ov-panel.dark .ov-subtoolbar { background: #1c1c1f; border-color: #27272a; }
+.ov-panel.dark .ov-sub-btn { color: #a1a1aa; }
+.ov-panel.dark .ov-sub-btn:hover { background: #27272a; color: #e4e4e7; }
+.ov-panel.dark .ov-sub-btn.active { background: #1e3a5f; border-color: #1d4ed8; color: #60a5fa; }
+.ov-panel.dark .ov-swatch { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08); }
+.ov-panel.dark .ov-swatch.active { border-color: #e4e4e7; box-shadow: 0 0 0 2px #18181b, 0 0 0 4px #3b82f6; }
+.ov-panel.dark .ov-custom-input { background: #27272a; border-color: #3f3f46; }
+.ov-panel.dark .ov-custom-label { color: #a1a1aa; }
+.ov-panel.dark .ov-custom-label.active { color: #60a5fa; }
+.ov-panel.dark .ov-badge { background: #27272a; color: #a1a1aa; }
+.ov-panel.dark .ov-body { background: #18181b; }
+.ov-panel.dark .ov-element-row { background: #1f1f23; color: #d4d4d8; }
+.ov-panel.dark .ov-element-row:hover { background: #27272a; }
+.ov-panel.dark .ov-element-meta { color: #71717a; }
+.ov-panel.dark .ov-element-delete { color: #52525b; }
+.ov-panel.dark .ov-element-delete:hover { background: #450a0a; color: #fca5a5; }
+.ov-panel.dark .ov-empty { color: #52525b; }
+.ov-panel.dark .ov-footer { background: #1c1c1f; border-color: #3f3f46; }
+.ov-panel.dark .ov-sync-status { color: #52525b; }
+
+@media (max-width: 640px) {
+	.ov-panel { width: calc(100vw - 20px); border-radius: 12px; }
+	.ov-palette { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+

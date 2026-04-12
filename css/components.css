@@ -1,0 +1,524 @@
+/* ===== SECTION 4: SPLIT PANE RESIZER ===== */
+
+/* CSS variable so both light and dark modes can be handled cleanly */
+:root { --divider-color: #e2e8f0; }
+html.dark { --divider-color: #27272a; }
+
+#splitDivider {
+	/* Expand the interactive hit area without affecting layout */
+	margin: 0 -3px;
+	padding: 0 3px;
+	box-sizing: content-box;
+}
+
+/* Wider, coloured bar while hovering or dragging */
+#splitDivider:hover #splitDividerBar,
+body.split-dragging #splitDividerBar {
+	width: 3px !important;
+	background: #3b82f6 !important;
+}
+
+/* While dragging: prevent any text-selection cursor leaking */
+body.split-dragging {
+	cursor: col-resize !important;
+	user-select: none !important;
+	-webkit-user-select: none !important;
+}
+body.split-dragging * {
+	pointer-events: none !important;
+}
+body.split-dragging #splitDivider {
+	pointer-events: all !important;
+}
+
+
+/* ===== DWD Warning Label — hover badge sliding from icon ===== */
+.dwd-warn-label {
+	display: inline-flex;
+	align-items: center;
+	white-space: nowrap;
+	font-size: 0.7rem;
+	font-weight: 600;
+	line-height: 1;
+	padding: 2px 7px;
+	border-radius: 4px;
+	border: 1px solid var(--dwl-color, currentColor);
+	background: var(--dwl-bg, transparent);
+	color: var(--dwl-color, currentColor);
+	/* Start fully clipped from the right (origin = icon side = left) */
+	clip-path: inset(0 100% 0 0 round 4px);
+	opacity: 0;
+	transition:
+		clip-path 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+		opacity   0.18s ease;
+	will-change: clip-path, opacity;
+}
+.group:hover .dwd-warn-label {
+	clip-path: inset(0 0% 0 0 round 4px);
+	opacity: 1;
+}
+
+/* ── Tourenplaner: list-item quick-add buttons ───────────────────────────── */
+
+/* Hidden by default — only visible when planner drawer is open */
+.planner-add-btn {
+	display: none;
+}
+
+body.planner-mode .planner-add-btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 0.375rem;
+}
+
+/* Pulsating violet icon for un-queued items */
+body.planner-mode .planner-add-btn:not(.is-queued) .planner-add-icon {
+	color: #8b5cf6;
+	animation: plannerAddPulse 1.8s ease-in-out infinite;
+}
+
+/* Solid green icon for items already in the queue */
+body.planner-mode .planner-add-btn.is-queued .planner-add-icon {
+	color: #10b981;
+	animation: none;
+}
+
+@keyframes plannerAddPulse {
+	0%,  100% { opacity: 1;   filter: drop-shadow(0 0 0px  #8b5cf6); transform: scale(1); }
+	50%       { opacity: 0.6; filter: drop-shadow(0 0 5px  #8b5cf6); transform: scale(0.88); }
+}
+
+/* ── Tourenplaner v2: expanded drawer ───────────────────────────────────── */
+#plannerInner.planner-expanded {
+    max-height: 85vh !important;
+}
+
+/* ── Route results: two-column side-by-side ─────────────────────────────── */
+.planner-route-col {
+    min-width: 0;
+    overflow: hidden;
+}
+.planner-route-stops {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    overflow: hidden;
+    font-size: 11px;
+}
+.dark .planner-route-stops {
+    border-color: #3f3f46;
+}
+
+/* ── Per-stop comment box ────────────────────────────────────────────────── */
+.planner-comment-input {
+    font-size: 11px;
+    line-height: 1.4;
+    resize: none;
+}
+.planner-stop-row {
+    border-bottom: 1px solid #f1f5f9;
+}
+.planner-stop-row:last-child {
+    border-bottom: none;
+}
+.dark .planner-stop-row {
+    border-color: #27272a;
+}
+
+/* ── Planner route dimming ───────────────────────────────────────────────── */
+.planner-dim-mode .custom-small-marker  { opacity: 0.15 !important; transition: opacity 0.3s; }
+.planner-dim-mode .custom-cluster-icon  { opacity: 0.15 !important; transition: opacity 0.3s; }
+/* Tour-stop markers are pulled out of the cluster and exempted from dimming.
+   Both classes sit on the same element (m._icon), so use compound selector (no space). */
+.planner-dim-mode .planner-active-stop.custom-small-marker  { opacity: 1 !important; }
+
+/* ── Suggested stop pulse ────────────────────────────────────────────────── */
+@keyframes plannerSuggestPulse {
+    0%, 100% { filter: drop-shadow(0 0 0px currentColor); transform: scale(1); }
+    50%       { filter: drop-shadow(0 0 6px currentColor); transform: scale(1.22); }
+}
+.planner-suggest-pulse { animation: plannerSuggestPulse 2s ease-in-out infinite; will-change: transform; }
+
+@keyframes plannerSuggestIconPulse {
+    0%, 100% {
+        filter: drop-shadow(0 0 0px var(--suggest-color, #8b5cf6));
+        transform: scale(0.5);
+    }
+    50% {
+        filter: drop-shadow(0 0 5px var(--suggest-color, #8b5cf6));
+        transform: scale(0.8);
+    }
+}
+.planner-suggest-icon {
+    animation: plannerSuggestIconPulse 1.8s ease-in-out infinite;
+    will-change: transform, filter;
+    transform-origin: center;
+}
+
+/* ── Endpoint picker (inline search inside planner) ─────────────────────── */
+.planner-ep-result {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 5px 8px;
+    font-size: 11px;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    cursor: pointer;
+    background: #fff;
+    color: #374151;
+}
+.planner-ep-result + .planner-ep-result { margin-top: 3px; }
+.planner-ep-result:hover { background: #f8fafc; }
+.dark .planner-ep-result { border-color: #3f3f46; background: #18181b; color: #d4d4d8; }
+.dark .planner-ep-result:hover { background: #27272a; }
+
+/* ── Route suggestions list ──────────────────────────────────────────────── */
+.planner-suggest-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 0;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 11px;
+}
+.planner-suggest-row:last-child { border-bottom: none; }
+.dark .planner-suggest-row { border-color: #27272a; }
+
+/* ── Bug Report Modal ────────────────────────────────────────────────────── */
+.bug-type-btn {
+    background: #fff;
+    color: #475569;
+}
+.dark .bug-type-btn {
+    background: #18181b;
+    color: #a1a1aa;
+}
+.bug-type-btn:hover {
+    background: #f8fafc;
+    color: #1e293b;
+}
+.dark .bug-type-btn:hover {
+    background: #27272a;
+    color: #f4f4f5;
+}
+.bug-type-btn.active {
+    border-color: #3b82f6;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-weight: 600;
+}
+.dark .bug-type-btn.active {
+    border-color: #3b82f6;
+    background: rgba(59,130,246,0.12);
+    color: #60a5fa;
+}
+
+/* ─── Print: Anfahrt PDF ─────────────────────────────────────────────────── */
+
+#printAnfahrt {
+    display: none;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    color: #0f172a;
+    background: #ffffff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+#printPage {
+    padding: 1.2cm 1.4cm;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+#printHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 2px solid #1e40af;
+    padding-bottom: 0.5cm;
+    margin-bottom: 0.5cm;
+}
+
+#printTitle {
+    font-size: 20pt;
+    font-weight: 700;
+    color: #1e3a8a;
+    margin: 0 0 4px 0;
+    line-height: 1.2;
+}
+
+#printMeta {
+    font-size: 9pt;
+    color: #64748b;
+    margin: 0;
+}
+
+.print-brand {
+    font-size: 8pt;
+    font-weight: 600;
+    color: #94a3b8;
+    text-align: right;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-top: 2px;
+}
+
+#printMapWrap {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.4cm;
+    background: #f1f5f9;
+}
+
+#printMap {
+    width: 100%;
+    height: 11cm;
+    display: block;
+}
+
+/* Print map: always light OSM — suppress all dark-mode tile filters */
+html.dark #printAnfahrt .leaflet-layer,
+html.dark #printAnfahrt .osm-tiles,
+html.dark #printAnfahrt .leaflet-tile,
+html.dark #printAnfahrt .leaflet-tile-container {
+    filter: none !important;
+}
+
+/* Print map: marker icons only (no chip background), smaller and theme-contrast */
+html.dark #printAnfahrt .overlay-poi-marker,
+html.dark #printAnfahrt .overlay-poi-marker-hinweis,
+#printAnfahrt .overlay-poi-marker,
+#printAnfahrt .overlay-poi-marker-hinweis {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    width: 16px !important;
+    height: 16px !important;
+    border-radius: 0 !important;
+}
+
+#printAnfahrt .overlay-poi-marker .mdi,
+#printAnfahrt .overlay-poi-marker-hinweis .mdi {
+    font-size: 13px !important;
+    line-height: 1 !important;
+    color: #0f172a !important;
+}
+
+html.dark #printAnfahrt .overlay-poi-marker .mdi,
+html.dark #printAnfahrt .overlay-poi-marker-hinweis .mdi {
+    color: #f8fafc !important;
+}
+
+#printOverlayLegendSection {
+    border-top: 1px solid #dbeafe;
+    background: #f8fafc;
+    padding: 0.14cm 0.25cm;
+    display: flex;
+    align-items: center;
+    gap: 0.2cm;
+    min-height: 0.66cm;
+    font-size: 8.5pt;
+}
+
+.print-legend-title {
+    font-weight: 700;
+    color: #1e3a8a;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    flex: 0 0 auto;
+}
+html.dark #printAnfahrt .overlay-hinweis-permanent {
+    background: #fefce8 !important;
+    border-color: #ca8a04 !important;
+    color: #78350f !important;
+}
+html.dark #printAnfahrt .overlay-danger-tooltip {
+    background: rgba(239, 68, 68, 0.08) !important;
+    border-color: rgba(239, 68, 68, 0.4) !important;
+    color: #b91c1c !important;
+}
+/* Leaflet control chrome (zoom buttons, attribution) inside print map */
+html.dark #printAnfahrt .leaflet-bar a,
+html.dark #printAnfahrt .leaflet-control-attribution {
+    filter: none !important;
+    background: #fff !important;
+    color: #333 !important;
+    border-color: #ccc !important;
+}
+
+.print-section-title {
+    font-size: 10pt;
+    font-weight: 700;
+    color: #1e3a8a;
+    margin: 0 0 0.25cm 0;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.print-section-title .mdi {
+    margin-right: 4px;
+}
+
+#printText {
+    font-size: 10pt;
+    line-height: 1.65;
+    color: #1e293b;
+    white-space: pre-wrap;
+    margin: 0;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 0.3cm 0.4cm;
+}
+
+#printOverlayLegend {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.16cm;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+
+.print-legend-inline-item {
+    display: flex;
+    align-items: center;
+    gap: 0.12cm;
+    font-size: 8.5pt;
+    color: #1e293b;
+    line-height: 1;
+    flex: 0 0 auto;
+}
+
+.print-legend-swatch {
+    width: 0.24cm;
+    height: 0.24cm;
+    border-radius: 2px;
+    border: 1px solid rgba(15, 23, 42, 0.2);
+    flex: 0 0 auto;
+}
+
+#printFooter {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 0.5cm;
+    margin-top: 0.6cm;
+    padding-top: 0.3cm;
+    border-top: 1px solid #e2e8f0;
+    font-size: 8pt;
+    color: #94a3b8;
+}
+
+#printFooterMeta {
+    display: inline-flex;
+    gap: 1cm;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    align-items: center;
+}
+
+#printQRWrap {
+    flex: 0 0 auto;
+    align-self: center;
+}
+
+#printQRWrap img {
+    display: block;
+    max-width: 80px;
+    max-height: 80px;
+}
+
+@media print {
+    /* Reveal print container; hide everything else on the page */
+    body > *:not(#printAnfahrt) {
+        display: none !important;
+    }
+
+    #printAnfahrt {
+        display: block !important;
+        position: static !important;
+        left: auto !important;
+        top: auto !important;
+        transform: none !important;
+        width: 100% !important;
+        height: auto !important;
+        z-index: auto !important;
+    }
+
+    #printMap {
+        height: 11cm;
+    }
+
+    /* Prevent tiles from being cut across pages */
+    #printMapWrap {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    #printText {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    /* Print map: always light OSM — suppress dark-mode tile filters */
+    #printAnfahrt .leaflet-layer,
+    #printAnfahrt .osm-tiles,
+    #printAnfahrt .leaflet-tile,
+    #printAnfahrt .leaflet-tile-container {
+        filter: none !important;
+    }
+
+    /* Print map: marker icons only */
+    #printAnfahrt .overlay-poi-marker,
+    #printAnfahrt .overlay-poi-marker-hinweis {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        width: 16px !important;
+        height: 16px !important;
+        border-radius: 0 !important;
+    }
+    #printAnfahrt .overlay-poi-marker .mdi,
+    #printAnfahrt .overlay-poi-marker-hinweis .mdi {
+        font-size: 13px !important;
+        line-height: 1 !important;
+        color: #0f172a !important;
+    }
+    #printAnfahrt .overlay-hinweis-permanent {
+        background: #fefce8 !important;
+        border-color: #ca8a04 !important;
+        color: #78350f !important;
+    }
+    #printAnfahrt .overlay-danger-tooltip {
+        background: rgba(239, 68, 68, 0.08) !important;
+        border-color: rgba(239, 68, 68, 0.4) !important;
+        color: #b91c1c !important;
+    }
+    #printAnfahrt .leaflet-bar a,
+    #printAnfahrt .leaflet-control-attribution {
+        filter: none !important;
+        background: #fff !important;
+        color: #333 !important;
+        border-color: #ccc !important;
+    }
+
+    /* Ensure Leaflet tile images print */
+    .leaflet-tile {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .leaflet-overlay-pane svg {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
+
