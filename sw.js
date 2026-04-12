@@ -1,7 +1,7 @@
 // ─── SWR Standort Dashboard — Service Worker ─────────────────────────────────
 // App shell → cache-first | /api/* → network-first | CDN → network-only
 
-const CACHE_NAME = 'swr-standorte-v2';
+const CACHE_NAME = 'swr-standorte-v3';
 
 const APP_SHELL = [
     '/',
@@ -100,9 +100,11 @@ self.addEventListener('fetch', (event) => {
         return; // let browser handle these normally
     }
 
-    // ── Cache-first for app shell (same-origin HTML/CSS/JS/fonts) ────────────
+    // ── Network-first for app shell (same-origin HTML/CSS/JS/fonts) ────────────
+    // Always fetch latest code so deployments show immediately on normal refresh (F5).
+    // Falls back to cached versions if offline.
     if (url.origin === self.location.origin) {
-        event.respondWith(cacheFirstWithNetwork(request));
+        event.respondWith(networkFirstWithCache(request));
         return;
     }
 
@@ -141,6 +143,12 @@ async function networkFirstWithCache(request) {
     } catch {
         const cached = await cache.match(request);
         if (cached) return cached;
+        if (request.headers.get('accept')?.includes('text/html')) {
+            return new Response('<html><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#fff;background:#09090b;padding:2rem;"><h2>Sie sind offline</h2><p>Leider ist diese Seite nicht im Cache gespeichert. Bitte prüfen Sie Ihre Verbindung.</p></body></html>', {
+                status: 503,
+                headers: { 'Content-Type': 'text/html; charset=utf-8' }
+            });
+        }
         return new Response(JSON.stringify({ error: 'Offline', cached: false }), {
             status: 503,
             headers: { 'Content-Type': 'application/json' }
