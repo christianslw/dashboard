@@ -683,9 +683,9 @@ function printAnfahrt(nummer) {
             tap: false
         });
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '© Esri, DigitalGlobe, Earthstar Geographics',
             maxZoom: 19,
-            crossOrigin: true,
-            subdomains: []
+            className: 'no-filter'
         }).addTo(_printDetailMap);
     }
 
@@ -908,8 +908,22 @@ function printAnfahrt(nummer) {
     _printDetailMap.invalidateSize({ animate: false });
     _printDetailMap.fitBounds(detailBounds, { padding: [8, 8], maxZoom: 19, animate: false });
 
-    // Let tiles load (≈900 ms) then trigger print
-    setTimeout(() => {
+    function waitForPrintTiles(timeoutMs = 5000) {
+        const start = Date.now();
+        return new Promise(resolve => {
+            const check = () => {
+                const allTiles = Array.from(container.querySelectorAll('.leaflet-tile'));
+                const pending = allTiles.filter(tile => !tile.classList.contains('leaflet-tile-loaded'));
+                if (allTiles.length > 0 && pending.length === 0) return resolve();
+                if (Date.now() - start >= timeoutMs) return resolve();
+                setTimeout(check, 120);
+            };
+            check();
+        });
+    }
+
+    // Wait for tile images (especially cross-origin satellite tiles) before print
+    waitForPrintTiles(6000).then(() => {
         ensurePrintEisabfallPattern();
         enforcePrintHatchesForAllLayers();
         // Reset inline styles — @media print rules take over from here
@@ -923,5 +937,5 @@ function printAnfahrt(nummer) {
         };
         window.addEventListener('afterprint', cleanup);
         setTimeout(cleanup, 5000); // fallback if afterprint doesn’t fire
-    }, 900);
+    });
 }
