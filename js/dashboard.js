@@ -50,15 +50,15 @@ function openDashboard(nummer) {
     document.getElementById("btnRoute").href  = getNavLink(standort.lat, standort.lon);
     document.getElementById("btnRoute").title = '';
 
-    // Update Hauptzufahrt notice badge
-    const notice = document.getElementById('hauptzufahrtNotice');
+    // Update Hauptzufahrt info inside the Fahrtzeit card
+    const notice = document.getElementById('driveTimeNotice');
     if (notice) {
         if (hzEntry) {
-            notice.className = 'col-span-2 text-[11px] px-2 py-1.5 rounded-md flex items-center gap-1.5 justify-center bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50';
-            notice.innerHTML = '<i class="mdi mdi-map-check text-sm shrink-0"></i> Hauptzufahrt hinterlegt — Bei Navigation berücksichtigen oder vor Ort anpeilen';
+            notice.className = 'mt-3 text-[11px] px-2 py-1.5 rounded-md flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50';
+            notice.innerHTML = '<i class="mdi mdi-map-check text-xs shrink-0"></i> Hauptzufahrt hinterlegt — bei Navigation berücksichtigen.';
         } else {
-            notice.className = 'col-span-2 text-[11px] px-2 py-1.5 rounded-md flex items-center gap-1.5 justify-center bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50';
-            notice.innerHTML = '<i class="mdi mdi-map-marker-alert-outline text-sm shrink-0"></i> Keine Hauptzufahrt hinterlegt — Zufahrt vor Ort eigenständig recherchieren';
+            notice.className = 'mt-3 text-[11px] px-2 py-1.5 rounded-md flex items-center gap-1.5 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50';
+            notice.innerHTML = '<i class="mdi mdi-map-marker-alert-outline text-xs shrink-0"></i> Keine Hauptzufahrt hinterlegt — Zufahrt vor Ort eigenständig recherchieren.';
         }
     }
 

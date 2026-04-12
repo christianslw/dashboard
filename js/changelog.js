@@ -76,17 +76,13 @@
 
         // 2. Fallback: fetch the raw CHANGELOG.md file directly (local dev)
         try {
-            const res = await fetch('CHANGELOG.md');
+            const res = await fetch('/CHANGELOG.md');
             if (res.ok) {
                 const markdown = await res.text();
                 const versionMatch = markdown.match(/^##\s+\[?(v?[\d]+\.[\d]+(?:\.[\d]+)?)\]?/m);
                 return { markdown, version: versionMatch ? versionMatch[1] : null };
-            } else {
-                console.warn(`Changelog fetch failed: HTTP ${res.status} at ${res.url}`);
             }
-        } catch (e) {
-            console.warn('Changelog fetch failed (local fallback):', e);
-        }
+        } catch { /* fall through */ }
 
         return null;
     }

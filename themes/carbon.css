@@ -293,6 +293,11 @@ html.carbon .ov-badge,
 html.carbon .ov-trigger-btn,
 html.carbon .ov-sub-btn,
 html.carbon .ov-tb-cat { border-radius: 0 !important; }
+html.carbon .ov-color-preview,
+html.carbon .ov-swatch,
+html.carbon .ov-color-dot {
+    border-radius: 0 !important;
+}
 
 html.carbon ::-webkit-scrollbar-thumb { border-radius: 0 !important; }
 
@@ -594,7 +599,7 @@ html.carbon body.planner-mode .planner-add-btn {
 
 /* ─── Planner badge — pin to 16×16px circle ─────────────────────────────────────────
    Carbon's global button sizing and .rounded-full reset can inflate / square it. */
-html.carbon #plannerBadge:not(.hidden) {
+html.carbon #plannerBadge {
     position:      absolute !important;
     width:         16px !important;
     height:        16px !important;
@@ -602,13 +607,16 @@ html.carbon #plannerBadge:not(.hidden) {
     min-height:    0    !important;
     max-width:     16px !important;
     max-height:    16px !important;
-    border-radius: 9999px !important;
+    border-radius: 0 !important;
     padding:       0 !important;
     font-size:     10px !important;
     line-height:   16px !important;
     display:       flex !important;
     align-items:   center !important;
     justify-content: center !important;
+}
+html.carbon #plannerBadge.hidden {
+    display: none !important;
 }
 
 /* ─── Filter chips ──────────────────────────────────────────────────────────────── */
