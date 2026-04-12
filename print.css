@@ -1,0 +1,322 @@
+/* ─── Print: Anfahrt PDF ─────────────────────────────────────────────────── */
+
+#printAnfahrt {
+    display: none;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    color: #0f172a;
+    background: #ffffff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+#printPage {
+    padding: 1.2cm 1.4cm;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+#printHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 2px solid #1e40af;
+    padding-bottom: 0.5cm;
+    margin-bottom: 0.5cm;
+}
+
+#printTitle {
+    font-size: 20pt;
+    font-weight: 700;
+    color: #1e3a8a;
+    margin: 0 0 4px 0;
+    line-height: 1.2;
+}
+
+#printMeta {
+    font-size: 9pt;
+    color: #64748b;
+    margin: 0;
+}
+
+#printHeaderRight {
+    font-size: 9pt;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #1e3a8a;
+    align-self: flex-end;
+    text-align: right;
+    margin-bottom: 3px;
+}
+
+#printMapWrap {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.4cm;
+    background: #f1f5f9;
+}
+
+#printMap {
+    width: 100%;
+    height: 11cm;
+    display: block;
+}
+
+/* map: always light OSM */
+html.dark #printAnfahrt .leaflet-layer,
+html.dark #printAnfahrt .osm-tiles,
+html.dark #printAnfahrt .leaflet-tile,
+html.dark #printAnfahrt .leaflet-tile-container {
+    filter: none !important;
+}
+
+/* Print map: marker icons only (no chip background), smaller and theme-contrast */
+html.dark #printAnfahrt .overlay-poi-marker,
+html.dark #printAnfahrt .overlay-poi-marker-hinweis,
+#printAnfahrt .overlay-poi-marker,
+#printAnfahrt .overlay-poi-marker-hinweis {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    width: 16px !important;
+    height: 16px !important;
+    border-radius: 0 !important;
+}
+
+#printAnfahrt .overlay-poi-marker .mdi,
+#printAnfahrt .overlay-poi-marker-hinweis .mdi {
+    font-size: 13px !important;
+    line-height: 1 !important;
+    color: #0f172a !important;
+}
+
+/* Print fallback: never allow Eisabfall zones/circles to become transparent */
+#printAnfahrt .overlay-eisabfall-hatch {
+    fill: rgba(234, 179, 8, 0.28) !important;
+    fill-opacity: 1 !important;
+    stroke-dasharray: none !important;
+}
+
+html.dark #printAnfahrt .overlay-poi-marker .mdi,
+html.dark #printAnfahrt .overlay-poi-marker-hinweis .mdi {
+    color: #f8fafc !important;
+}
+
+html.dark #printAnfahrt .overlay-hinweis-permanent {
+    background: #fefce8 !important;
+    border-color: #ca8a04 !important;
+    color: #78350f !important;
+}
+
+html.dark #printAnfahrt .overlay-danger-tooltip {
+    background: rgba(239, 68, 68, 0.08) !important;
+    border-color: rgba(239, 68, 68, 0.4) !important;
+    color: #b91c1c !important;
+}
+
+html.dark #printAnfahrt .leaflet-bar a,
+html.dark #printAnfahrt .leaflet-control-attribution {
+    filter: none !important;
+    background: #fff !important;
+    color: #333 !important;
+    border-color: #ccc !important;
+}
+
+.print-section-title {
+    font-size: 10pt;
+    font-weight: 700;
+    color: #1e3a8a;
+    margin: 0 0 0.25cm 0;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.print-section-title .mdi {
+    margin-right: 4px;
+}
+
+#printText {
+    font-size: 10pt;
+    line-height: 1.65;
+    color: #1e293b;
+    white-space: pre-wrap;
+    margin: 0;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 0.3cm 0.4cm;
+}
+
+#printOverlayLegendSection {
+    border-top: 1px solid #dbeafe;
+    background: #f8fafc;
+    padding: 0.14cm 0.25cm;
+    display: flex;
+    align-items: center;
+    gap: 0.2cm;
+    min-height: 0.66cm;
+    font-size: 8.5pt;
+}
+
+.print-legend-title {
+    font-weight: 700;
+    color: #1e3a8a;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    flex: 0 0 auto;
+}
+
+#printOverlayLegend {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.16cm;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+
+.print-legend-inline-item {
+    display: flex;
+    align-items: center;
+    gap: 0.12cm;
+    font-size: 8.5pt;
+    color: #1e293b;
+    line-height: 1;
+    flex: 0 0 auto;
+}
+
+.print-legend-swatch {
+    width: 0.24cm;
+    height: 0.24cm;
+    border-radius: 2px;
+    border: 1px solid rgba(15, 23, 42, 0.2);
+    flex: 0 0 auto;
+}
+
+#printFooter {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 0.5cm;
+    margin-top: 0.6cm;
+    padding-top: 0.3cm;
+    border-top: 1px solid #e2e8f0;
+    font-size: 8pt;
+    color: #94a3b8;
+}
+
+#printFooterMeta {
+    display: inline-flex;
+    gap: 1cm;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    align-items: center;
+}
+
+#printQRWrap {
+    flex: 0 0 auto;
+    align-self: center;
+}
+
+#printQRWrap img {
+    display: block;
+    max-width: 80px;
+    max-height: 80px;
+}
+
+@media print {
+    body > *:not(#printAnfahrt) {
+        display: none !important;
+    }
+
+    #printAnfahrt {
+        display: block !important;
+        position: static !important;
+        left: auto !important;
+        top: auto !important;
+        transform: none !important;
+        width: 100% !important;
+        height: auto !important;
+        z-index: auto !important;
+    }
+
+    #printMap {
+        height: 11cm;
+    }
+
+    #printMapWrap {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    #printText {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    #printAnfahrt .leaflet-layer,
+    #printAnfahrt .osm-tiles,
+    #printAnfahrt .leaflet-tile,
+    #printAnfahrt .leaflet-tile-container {
+        filter: none !important;
+    }
+
+    #printAnfahrt .overlay-poi-marker,
+    #printAnfahrt .overlay-poi-marker-hinweis {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        width: 16px !important;
+        height: 16px !important;
+        border-radius: 0 !important;
+    }
+
+    #printAnfahrt .overlay-poi-marker .mdi,
+    #printAnfahrt .overlay-poi-marker-hinweis .mdi {
+        font-size: 13px !important;
+        line-height: 1 !important;
+        color: #0f172a !important;
+    }
+
+    #printAnfahrt .overlay-eisabfall-hatch {
+        fill: rgba(234, 179, 8, 0.28) !important;
+        fill-opacity: 1 !important;
+        stroke-dasharray: none !important;
+    }
+
+    #printAnfahrt .overlay-hinweis-permanent {
+        background: #fefce8 !important;
+        border-color: #ca8a04 !important;
+        color: #78350f !important;
+    }
+
+    #printAnfahrt .overlay-danger-tooltip {
+        background: rgba(239, 68, 68, 0.08) !important;
+        border-color: rgba(239, 68, 68, 0.4) !important;
+        color: #b91c1c !important;
+    }
+
+    #printAnfahrt .leaflet-bar a,
+    #printAnfahrt .leaflet-control-attribution {
+        filter: none !important;
+        background: #fff !important;
+        color: #333 !important;
+        border-color: #ccc !important;
+    }
+
+    .leaflet-tile {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .leaflet-overlay-pane svg {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}

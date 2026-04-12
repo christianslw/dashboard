@@ -6,6 +6,44 @@ const RAINVIEWER_COLOR_SCHEME = 8;
 const ACTIVE_OVERLAYS_STORAGE_KEY = 'activeOverlayLayers';
 const RAINVIEWER_LAYER_NAME = 'Regenradar';
 
+const STATION_PREFIX_COLORS = {
+    1: '#8b5cf6',
+    2: '#10b981',
+    3: '#f59e0b',
+    4: '#ef4444',
+    5: '#ec4899',
+    6: '#06b6d4',
+    8: '#6366f1',
+    9: '#eab308'
+};
+
+function getStationPrefixColor(nummer) {
+    const prefix = Math.floor(Number(nummer) / 1000);
+    return STATION_PREFIX_COLORS[prefix] || '#3b82f6';
+}
+
+function mixHexColors(colorA, colorB) {
+    function parse(hex) {
+        const clean = String(hex || '').replace('#', '');
+        const full = clean.length === 3
+            ? clean.split('').map(ch => ch + ch).join('')
+            : clean.padEnd(6, '0').slice(0, 6);
+        return {
+            r: parseInt(full.slice(0, 2), 16),
+            g: parseInt(full.slice(2, 4), 16),
+            b: parseInt(full.slice(4, 6), 16)
+        };
+    }
+
+    function toHex(value) {
+        return Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, '0');
+    }
+
+    const a = parse(colorA);
+    const b = parse(colorB);
+    return `#${toHex((a.r + b.r) / 2)}${toHex((a.g + b.g) / 2)}${toHex((a.b + b.b) / 2)}`;
+}
+
 function loadActiveOverlayLayerNames() {
     try {
         const raw = localStorage.getItem(ACTIVE_OVERLAYS_STORAGE_KEY);
@@ -186,8 +224,13 @@ function drawRichtfunkLines(layerGroup) {
             seen.add(pair);
             const t = standorte.find(function(st) { return String(st.nummer) === String(targetId); });
             if (!t || !t.lat || !t.lon) return;
+
+            const startColor = getStationPrefixColor(s.nummer);
+            const endColor = getStationPrefixColor(t.nummer);
+            const lineColor = mixHexColors(startColor, endColor);
+
             L.polyline([[s.lat, s.lon], [t.lat, t.lon]], {
-                color: '#f59e0b',
+                color: lineColor,
                 weight: 4,
                 opacity: 0.95,
                 dashArray: '6, 6',
@@ -359,16 +402,7 @@ function updateMapMarkers(liste) {
         leafletMap.removeLayer(markerClusterGroup);
     }
 
-    const colors = {
-        1: '#8b5cf6',
-        2: '#10b981',
-        3: '#f59e0b',
-        4: '#ef4444',
-        5: '#ec4899',
-        6: '#06b6d4',
-        8: '#6366f1',
-        9: '#eab308'
-    };
+    const colors = STATION_PREFIX_COLORS;
 
     markerClusterGroup = L.markerClusterGroup({
         maxClusterRadius: 40,

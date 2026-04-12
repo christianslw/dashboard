@@ -113,316 +113,6 @@ html.dark {
 :is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .text-slate-900,
 :is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .text-slate-800,
 :is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:text-zinc-100,
-:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:text-zinc-200 {
-    color: var(--theme-text-primary) !important;
-}
-:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .text-slate-700,
-:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .text-slate-600,
-:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:text-zinc-300,
-:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:text-zinc-400 {
-    color: var(--theme-text-secondary) !important;
-}
-:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .text-slate-500,
-:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .text-slate-400,
-:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:text-zinc-500,
-:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:text-zinc-600 {
-    color: var(--theme-text-muted) !important;
-}
-
-/* -- Accent text -- */
-:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .text-blue-500,
-:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .text-blue-600,
-:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .text-blue-700,
-:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:text-blue-400,
-:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:text-blue-300 {
-    color: var(--theme-accent-text) !important;
-}
-:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .hover\:text-blue-600:hover,
-:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:hover\:text-blue-400:hover {
-    color: var(--theme-accent-hover) !important;
-}
-
-/* -- Accent backgrounds -- */
-:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .bg-blue-100,
-:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:bg-blue-900\/50 {
-    background-color: var(--theme-accent-bg) !important;
-    color: var(--theme-accent-text) !important;
-}
-:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .hover\:bg-blue-100:hover,
-:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:hover\:bg-blue-100:hover,
-:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:hover\:bg-blue-900:hover,
-:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .dark\:hover\:bg-blue-900\/50:hover {
-    background-color: var(--theme-accent-bg-hover) !important;
-}
-:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .bg-blue-500,
-:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .bg-blue-600,
-:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .bg-blue-700 {
-    background-color: var(--theme-accent) !important;
-    border-color: var(--theme-accent) !important;
-    color: #ffffff !important;
-}
-
-/* -- Accent borders -- */
-:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .border-blue-500,
-:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .border-blue-600 {
-    border-color: var(--theme-accent) !important;
-}
-
-/* -- List item selected (base; themes can add on top) -- */
-:is(html.carbon, html.dracula, html.dracula-laser, html.kirschbluete, html.swr-ms) .list-item-selected {
-    background-color: var(--theme-accent-bg) !important;
-    border-left-color: var(--theme-accent) !important;
-}
-
-/* ─── Dracula Shared Structure ──────────────────────────────────────────────────────
-   dracula + dracula-laser share internal vars (—primary, —surface, etc.);
-   rules are written once with :is() — theme files supply different values. */
-
-/* Body */
-:is(html.dracula, html.dracula-laser) body { background: var(--background) !important; }
-
-/* Surfaces — dracula-specific extra effects on top of bridge */
-:is(html.dracula, html.dracula-laser) .bg-white {
-    background: var(--surface) !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
-    color: var(--text-primary) !important;
-}
-:is(html.dracula, html.dracula-laser) .dark\:bg-zinc-950,
-:is(html.dracula, html.dracula-laser) .dark\:bg-oled {
-    background: var(--background-alt) !important;
-}
-:is(html.dracula, html.dracula-laser) .bg-slate-50,
-:is(html.dracula, html.dracula-laser) .bg-slate-50\/50     { background: var(--background-alt) !important; }
-:is(html.dracula, html.dracula-laser) .bg-slate-100        { background: var(--background) !important; }
-:is(html.dracula, html.dracula-laser) .bg-slate-200        { background: var(--surface) !important; }
-:is(html.dracula, html.dracula-laser) .bg-slate-900        { background-color: var(--background) !important; color: var(--text-primary) !important; }
-:is(html.dracula, html.dracula-laser) .dark\:bg-zinc-900,
-:is(html.dracula, html.dracula-laser) .dark\:bg-zinc-900\/50 { background-color: var(--surface) !important; }
-:is(html.dracula, html.dracula-laser) .dark\:bg-zinc-800  { background: var(--surface) !important; filter: brightness(1.2); }
-
-/* Hover */
-:is(html.dracula, html.dracula-laser) .hover\:bg-slate-50:hover,
-:is(html.dracula, html.dracula-laser) .hover\:bg-slate-100:hover,
-:is(html.dracula, html.dracula-laser) .dark\:hover\:bg-zinc-800:hover,
-:is(html.dracula, html.dracula-laser) .dark\:hover\:bg-zinc-700:hover,
-:is(html.dracula, html.dracula-laser) .dark\:hover\:bg-zinc-900:hover { background: var(--highlight) !important; filter: none; }
-
-/* Borders */
-:is(html.dracula, html.dracula-laser) .border-slate-200,
-:is(html.dracula, html.dracula-laser) .border-slate-300,
-:is(html.dracula, html.dracula-laser) .dark\:border-zinc-700,
-:is(html.dracula, html.dracula-laser) .dark\:border-zinc-800 { border-color: var(--border) !important; }
-:is(html.dracula, html.dracula-laser) .border-b             { border-bottom-color: var(--border) !important; }
-:is(html.dracula, html.dracula-laser) .divide-slate-100 > * + *,
-:is(html.dracula, html.dracula-laser) .dark\:divide-zinc-800 > * + * { border-color: var(--border) !important; }
-
-/* Text */
-:is(html.dracula, html.dracula-laser) .text-slate-900,
-:is(html.dracula, html.dracula-laser) .dark\:text-zinc-100,
-:is(html.dracula, html.dracula-laser) .dark\:text-zinc-200,
-:is(html.dracula, html.dracula-laser) .hover\:text-slate-800,
-:is(html.dracula, html.dracula-laser) .dark\:hover\:text-zinc-200 { color: var(--text-primary) !important; }
-:is(html.dracula, html.dracula-laser) .text-slate-300,
-:is(html.dracula, html.dracula-laser) .text-slate-400,
-:is(html.dracula, html.dracula-laser) .text-slate-500,
-:is(html.dracula, html.dracula-laser) .text-slate-600,
-:is(html.dracula, html.dracula-laser) .text-slate-700,
-:is(html.dracula, html.dracula-laser) .dark\:text-zinc-300,
-:is(html.dracula, html.dracula-laser) .dark\:text-zinc-400,
-:is(html.dracula, html.dracula-laser) .dark\:text-zinc-600 { color: var(--text-secondary) !important; }
-:is(html.dracula, html.dracula-laser) .hover\:text-slate-700,
-:is(html.dracula, html.dracula-laser) .dark\:hover\:text-zinc-300 { color: var(--text-secondary) !important; }
-
-/* Accent */
-:is(html.dracula, html.dracula-laser) .text-green-500,
-:is(html.dracula, html.dracula-laser) .text-green-600,
-:is(html.dracula, html.dracula-laser) .dark\:text-green-500 { color: var(--accent) !important; }
-:is(html.dracula, html.dracula-laser) .text-yellow-500,
-:is(html.dracula, html.dracula-laser) .text-yellow-600,
-:is(html.dracula, html.dracula-laser) .dark\:text-yellow-300,
-:is(html.dracula, html.dracula-laser) .dark\:text-yellow-400,
-:is(html.dracula, html.dracula-laser) .text-orange-600,
-:is(html.dracula, html.dracula-laser) .dark\:text-orange-400,
-:is(html.dracula, html.dracula-laser) .text-orange-700 { color: var(--warning) !important; }
-:is(html.dracula, html.dracula-laser) .text-red-500,
-:is(html.dracula, html.dracula-laser) .text-red-600,
-:is(html.dracula, html.dracula-laser) .dark\:text-red-400,
-:is(html.dracula, html.dracula-laser) .text-red-700 { color: var(--error) !important; }
-:is(html.dracula, html.dracula-laser) .text-amber-500,
-:is(html.dracula, html.dracula-laser) .dark\:text-amber-500,
-:is(html.dracula, html.dracula-laser) .hover\:text-amber-500:hover { color: var(--pink) !important; }
-:is(html.dracula, html.dracula-laser) .bg-blue-500,
-:is(html.dracula, html.dracula-laser) .dark\:bg-blue-600,
-:is(html.dracula, html.dracula-laser) .dark\:bg-blue-500 { background: var(--primary) !important; color: var(--background) !important; font-weight: bold !important; border-color: var(--primary) !important; }
-:is(html.dracula, html.dracula-laser) .dark\:bg-blue-900\/50 { background: var(--border) !important; }
-:is(html.dracula, html.dracula-laser) .dark\:hover\:bg-blue-100:hover,
-:is(html.dracula, html.dracula-laser) .dark\:hover\:bg-blue-900:hover,
-:is(html.dracula, html.dracula-laser) .dark\:hover\:bg-blue-900\/50:hover,
-:is(html.dracula, html.dracula-laser) .hover\:bg-blue-100:hover { background: var(--highlight) !important; }
-:is(html.dracula, html.dracula-laser) .border-blue-500  { border-color: var(--primary) !important; }
-:is(html.dracula, html.dracula-laser) .bg-yellow-100    { background: rgba(255, 202, 133, 0.1) !important; }
-:is(html.dracula, html.dracula-laser) .bg-red-50\/50    { background-color: var(--error) !important; opacity: 0.1; }
-:is(html.dracula, html.dracula-laser) .bg-orange-50\/50 { background-color: var(--warning) !important; opacity: 0.1; }
-:is(html.dracula, html.dracula-laser) .dark\:bg-red-900\/20    { background-color: var(--error) !important; opacity: 0.15; }
-:is(html.dracula, html.dracula-laser) .dark\:bg-orange-900\/20 { background-color: var(--warning) !important; opacity: 0.15; }
-:is(html.dracula, html.dracula-laser) .border-red-200,
-:is(html.dracula, html.dracula-laser) .dark\:border-red-900\/50 { border-color: rgba(255, 103, 103, 0.3) !important; }
-:is(html.dracula, html.dracula-laser) .border-orange-200,
-:is(html.dracula, html.dracula-laser) .dark\:border-orange-900\/50 { border-color: rgba(255, 202, 133, 0.3) !important; }
-
-/* Font weight */
-:is(html.dracula, html.dracula-laser) [class*="font-semibold"],
-:is(html.dracula, html.dracula-laser) [class*="font-bold"] { color: var(--text-primary) !important; }
-:is(html.dracula, html.dracula-laser) [class*="font-normal"] { color: var(--text-secondary) !important; }
-
-/* Inputs & Forms */
-:is(html.dracula, html.dracula-laser) input[type="text"],
-:is(html.dracula, html.dracula-laser) textarea {
-    background: var(--surface) !important;
-    border: 2px solid var(--border) !important;
-    color: var(--text-primary) !important;
-    transition: all 0.2s ease !important;
-}
-:is(html.dracula, html.dracula-laser) input[type="text"]:focus,
-:is(html.dracula, html.dracula-laser) textarea:focus {
-    border-color: var(--primary) !important;
-    outline: none !important;
-    box-shadow: 0 0 0 3px var(--theme-focus-ring) !important;
-}
-:is(html.dracula, html.dracula-laser) input[type="text"]::placeholder,
-:is(html.dracula, html.dracula-laser) textarea::placeholder { color: var(--text-muted) !important; opacity: 0.6; }
-:is(html.dracula, html.dracula-laser) input[type="radio"],
-:is(html.dracula, html.dracula-laser) input[type="checkbox"] {
-    accent-color: var(--primary) !important;
-    background: transparent !important;
-    border: 1px solid var(--border) !important;
-}
-:is(html.dracula, html.dracula-laser) input[type="radio"]:checked,
-:is(html.dracula, html.dracula-laser) input[type="checkbox"]:checked {
-    background: var(--primary) !important;
-    border-color: var(--primary) !important;
-}
-:is(html.dracula, html.dracula-laser) select {
-    background: var(--surface) !important;
-    border: 1px solid var(--border) !important;
-    color: var(--text-primary) !important;
-}
-:is(html.dracula, html.dracula-laser) select:hover { border-color: var(--primary) !important; }
-:is(html.dracula, html.dracula-laser) select:focus {
-    outline: none !important;
-    border-color: var(--primary) !important;
-    box-shadow: 0 0 0 3px var(--theme-focus-ring) !important;
-}
-
-/* Scrollbars */
-:is(html.dracula, html.dracula-laser) ::-webkit-scrollbar-thumb { background: var(--primary) !important; border-radius: 2px; }
-:is(html.dracula, html.dracula-laser) ::-webkit-scrollbar-thumb:hover { background: var(--primary-light) !important; }
-:is(html.dracula, html.dracula-laser) ::-webkit-scrollbar-track { background: var(--background) !important; }
-
-/* Buttons */
-:is(html.dracula, html.dracula-laser) button,
-:is(html.dracula, html.dracula-laser) a[class*="border"] {
-    background: transparent !important;
-    border-color: var(--border) !important;
-    color: var(--text-secondary) !important;
-    transition: all 0.2s ease !important;
-}
-:is(html.dracula, html.dracula-laser) button:active {
-    border-color: var(--pink) !important;
-    box-shadow: 0 0 0 2px rgba(246, 148, 255, 0.30), 0 0 12px rgba(246, 148, 255, 0.40) !important;
-}
-:is(html.dracula, html.dracula-laser) a[id*="btn"],
-:is(html.dracula, html.dracula-laser) button:not(.text-xs):not([title="Suchen"]):not([title*="Favorit"]):not([title*="Navigation"]):not(#clearSearchBtn):not([onclick^="close"]):not([class~="w-6"]):not([class~="w-7"]):not([class~="w-8"]):not(#helpBtn):not(#settingsBtn):not(#appSettingsBtn):not([title="Fehler melden"]):not([onclick="shareTour()"]):not([onclick="clearPlannerQueue()"]):not(.nav-share-btn) {
-    background: transparent !important;
-    border: 1px solid var(--border) !important;
-    color: var(--text-secondary) !important;
-    padding: 0.75rem !important;
-    border-radius: 0.375rem !important;
-    text-align: center !important;
-    font-size: 0.875rem !important;
-    font-weight: 500 !important;
-}
-:is(html.dracula, html.dracula-laser) button svg,
-:is(html.dracula, html.dracula-laser) a svg { color: inherit !important; }
-:is(html.dracula, html.dracula-laser) .group:hover { background-color: var(--highlight) !important; }
-:is(html.dracula, html.dracula-laser) .rounded-md { border-radius: 0.375rem !important; }
-:is(html.dracula, html.dracula-laser) button,
-:is(html.dracula, html.dracula-laser) input { border-radius: 0.375rem !important; }
-
-/* Links */
-:is(html.dracula, html.dracula-laser) .hover\:text-blue-700:hover { color: var(--accent-light) !important; }
-
-/* Favorites */
-:is(html.dracula, html.dracula-laser) .opacity-100.text-amber-500                   { color: var(--pink) !important; opacity: 1 !important; }
-:is(html.dracula, html.dracula-laser) button[title="Favorit umschalten"].text-amber-500 { color: var(--pink) !important; }
-:is(html.dracula, html.dracula-laser) #dashFavoriteBtn                               { color: inherit !important; }
-:is(html.dracula, html.dracula-laser) #dashFavoriteBtn.text-amber-500                { color: var(--pink) !important; }
-:is(html.dracula, html.dracula-laser) #dashFavoriteBtn:hover                         { color: var(--pink) !important; }
-
-/* Dashboard */
-:is(html.dracula, html.dracula-laser) #weatherTemp,
-:is(html.dracula, html.dracula-laser) #driveTimeValue { color: var(--pink) !important; }
-:is(html.dracula, html.dracula-laser) #weatherDesc    { color: var(--text-muted) !important; }
-:is(html.dracula, html.dracula-laser) .text-sm.font-medium { color: var(--text-secondary) !important; }
-:is(html.dracula, html.dracula-laser) button[onclick="editWayInstructions()"],
-:is(html.dracula, html.dracula-laser) .bg-slate-200.dark\:bg-zinc-800 {
-    background-color: var(--surface) !important;
-    border: 1px solid var(--border) !important;
-    color: var(--text-secondary) !important;
-    transition: all 0.2s ease !important;
-}
-
-/* Shadows */
-:is(html.dracula, html.dracula-laser) .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important; }
-:is(html.dracula, html.dracula-laser) .shadow-xl   { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3) !important; }
-:is(html.dracula, html.dracula-laser) .shadow-sm   { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2) !important; }
-
-/* Focus */
-:is(html.dracula, html.dracula-laser) *:focus,
-:is(html.dracula, html.dracula-laser) input:focus,
-:is(html.dracula, html.dracula-laser) button:focus,
-:is(html.dracula, html.dracula-laser) input:focus-visible {
-    outline: none !important;
-    border-color: var(--primary) !important;
-    box-shadow: 0 0 0 3px var(--theme-focus-ring) !important;
-}
-
-/* Modals */
-:is(html.dracula, html.dracula-laser) [class*="modal"] {
-    background: var(--surface) !important;
-    border-color: var(--border) !important;
-    color: var(--text-primary) !important;
-}
-:is(html.dracula, html.dracula-laser) button#clearSearchBtn,
-:is(html.dracula, html.dracula-laser) button[onclick^="close"] {
-    background: transparent !important; border: none !important;
-    padding: 0.25rem !important; box-shadow: none !important;
-}
-:is(html.dracula, html.dracula-laser) button#clearSearchBtn:hover,
-:is(html.dracula, html.dracula-laser) button[onclick^="close"]:hover {
-    background: transparent !important; border: none !important; box-shadow: none !important;
-}
-
-/* Code */
-:is(html.dracula, html.dracula-laser) code,
-:is(html.dracula, html.dracula-laser) [class*="font-mono"] {
-    background: var(--background-alt) !important;
-    color: var(--accent) !important;
-    padding: 0.25rem 0.5rem !important;
-    border-radius: 0.25rem !important;
-}
-
-/* Tooltips */
-:is(html.dracula, html.dracula-laser) [role="tooltip"],
-:is(html.dracula, html.dracula-laser) [class*="tooltip"] {
-    background: var(--background-alt) !important;
-    color: var(--text-primary) !important;
-    border: 1px solid var(--border) !important;
-}
-
-/* List item selection */
-:is(html.dracula, html.dracula-laser) .list-item-selected {
-    background-color: var(--highlight) !important;
     border-left: 2px solid var(--pink) !important;
     box-shadow: inset 2px 0 0 var(--pink) !important;
     padding-left: calc(0.75rem - 2px) !important;
@@ -1200,14 +890,23 @@ html.dark:not(.dracula):not(.dracula-laser) .leaflet-control-attribution {
 /* ── Element List ── */
 .ov-element-list { display: flex; flex-direction: column; gap: 4px; }
 .ov-element-row {
-	display: flex; align-items: center; gap: 5px;
+    display: flex; align-items: flex-start; gap: 5px;
 	padding: 5px 7px; border-radius: 0.5rem;
 	font-size: 10px; color: #334155;
 	background: #f8fafc; transition: background 0.12s;
 }
 .ov-element-row:hover { background: #f1f5f9; }
 .ov-element-icon { font-size: 12px; flex-shrink: 0; }
-.ov-element-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ov-element-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.ov-element-label { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ov-element-meta {
+    font-size: 9px;
+    line-height: 1.25;
+    color: #64748b;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 .ov-rename {
 	cursor: text;
 	border-radius: 0.25rem;
@@ -1302,6 +1001,7 @@ html.dark:not(.dracula):not(.dracula-laser) .leaflet-control-attribution {
 .ov-panel.dark .ov-body { background: #18181b; }
 .ov-panel.dark .ov-element-row { background: #1f1f23; color: #d4d4d8; }
 .ov-panel.dark .ov-element-row:hover { background: #27272a; }
+.ov-panel.dark .ov-element-meta { color: #71717a; }
 .ov-panel.dark .ov-element-delete { color: #52525b; }
 .ov-panel.dark .ov-element-delete:hover { background: #450a0a; color: #fca5a5; }
 .ov-panel.dark .ov-empty { color: #52525b; }
@@ -2378,6 +2078,12 @@ body.planner-mode .planner-add-btn.is-queued .planner-add-icon {
     opacity: .85;
 }
 
+.overlay-eisabfall-hatch {
+    stroke-dasharray: none !important;
+    fill: url(#ovEisabfallHatch) !important;
+    fill-opacity: 1 !important;
+}
+
 
 /* ─── Print: Anfahrt PDF ─────────────────────────────────────────────────── */
 
@@ -2434,7 +2140,7 @@ body.planner-mode .planner-add-btn.is-queued .planner-add-icon {
     border: 1px solid #cbd5e1;
     border-radius: 4px;
     overflow: hidden;
-    margin-bottom: 0.5cm;
+    margin-bottom: 0.4cm;
     background: #f1f5f9;
 }
 
@@ -2452,13 +2158,48 @@ html.dark #printAnfahrt .leaflet-tile-container {
     filter: none !important;
 }
 
-/* Print map: force all overlay markers / tooltips / labels to light-mode appearance */
-html.dark #printAnfahrt .overlay-poi-marker {
-    background: rgba(255, 255, 255, 0.95) !important;
-    border-color: #cbd5e1 !important;
+/* Print map: marker icons only (no chip background), smaller and theme-contrast */
+html.dark #printAnfahrt .overlay-poi-marker,
+html.dark #printAnfahrt .overlay-poi-marker-hinweis,
+#printAnfahrt .overlay-poi-marker,
+#printAnfahrt .overlay-poi-marker-hinweis {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    width: 16px !important;
+    height: 16px !important;
+    border-radius: 0 !important;
 }
-html.dark #printAnfahrt .overlay-poi-marker-hinweis {
-    background: rgba(254, 252, 232, 0.97) !important;
+
+#printAnfahrt .overlay-poi-marker .mdi,
+#printAnfahrt .overlay-poi-marker-hinweis .mdi {
+    font-size: 13px !important;
+    line-height: 1 !important;
+    color: #0f172a !important;
+}
+
+html.dark #printAnfahrt .overlay-poi-marker .mdi,
+html.dark #printAnfahrt .overlay-poi-marker-hinweis .mdi {
+    color: #f8fafc !important;
+}
+
+#printOverlayLegendSection {
+    border-top: 1px solid #dbeafe;
+    background: #f8fafc;
+    padding: 0.14cm 0.25cm;
+    display: flex;
+    align-items: center;
+    gap: 0.2cm;
+    min-height: 0.66cm;
+    font-size: 8.5pt;
+}
+
+.print-legend-title {
+    font-weight: 700;
+    color: #1e3a8a;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    flex: 0 0 auto;
 }
 html.dark #printAnfahrt .overlay-hinweis-permanent {
     background: #fefce8 !important;
@@ -2502,6 +2243,36 @@ html.dark #printAnfahrt .leaflet-control-attribution {
     border: 1px solid #e2e8f0;
     border-radius: 4px;
     padding: 0.3cm 0.4cm;
+}
+
+#printOverlayLegend {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.16cm;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+
+.print-legend-inline-item {
+    display: flex;
+    align-items: center;
+    gap: 0.12cm;
+    font-size: 8.5pt;
+    color: #1e293b;
+    line-height: 1;
+    flex: 0 0 auto;
+}
+
+.print-legend-swatch {
+    width: 0.24cm;
+    height: 0.24cm;
+    border-radius: 2px;
+    border: 1px solid rgba(15, 23, 42, 0.2);
+    flex: 0 0 auto;
 }
 
 #printFooter {
@@ -2576,13 +2347,21 @@ html.dark #printAnfahrt .leaflet-control-attribution {
         filter: none !important;
     }
 
-    /* Print map: force overlay markers / labels to light-mode appearance */
-    #printAnfahrt .overlay-poi-marker {
-        background: rgba(255, 255, 255, 0.95) !important;
-        border-color: #cbd5e1 !important;
-    }
+    /* Print map: marker icons only */
+    #printAnfahrt .overlay-poi-marker,
     #printAnfahrt .overlay-poi-marker-hinweis {
-        background: rgba(254, 252, 232, 0.97) !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        width: 16px !important;
+        height: 16px !important;
+        border-radius: 0 !important;
+    }
+    #printAnfahrt .overlay-poi-marker .mdi,
+    #printAnfahrt .overlay-poi-marker-hinweis .mdi {
+        font-size: 13px !important;
+        line-height: 1 !important;
+        color: #0f172a !important;
     }
     #printAnfahrt .overlay-hinweis-permanent {
         background: #fefce8 !important;

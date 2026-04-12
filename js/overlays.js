@@ -248,6 +248,134 @@ function formatDistance(meters) {
     return Math.round(meters) + '\u00a0m';
 }
 
+function getZoneLayerStyle(color, zoneType) {
+    const isEisabfall = zoneType === 'eisabfall';
+    return {
+        color,
+        fillColor: color,
+        fillOpacity: isEisabfall ? 0.95 : 0.18,
+        weight: 2,
+        dashArray: isEisabfall ? null : '6, 4',
+        opacity: 0.9,
+        className: isEisabfall ? 'overlay-eisabfall-hatch' : ''
+    };
+}
+
+function ensureEisabfallPatternForMap(map) {
+    if (!map) return;
+    const pane = map.getPane?.('overlayPane');
+    const svg = pane?.querySelector?.('svg');
+    if (!svg) return;
+
+    let defs = svg.querySelector('defs');
+    if (!defs) {
+        defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        svg.insertBefore(defs, svg.firstChild);
+    }
+
+    if (defs.querySelector('#ovEisabfallHatch')) return;
+
+    const pattern = document.createElementNS('http://www.w3.org/2000/svg', 'pattern');
+    pattern.setAttribute('id', 'ovEisabfallHatch');
+    pattern.setAttribute('patternUnits', 'userSpaceOnUse');
+    pattern.setAttribute('width', '10');
+    pattern.setAttribute('height', '10');
+    pattern.setAttribute('patternTransform', 'rotate(45)');
+
+    const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    bg.setAttribute('x', '0');
+    bg.setAttribute('y', '0');
+    bg.setAttribute('width', '10');
+    bg.setAttribute('height', '10');
+    bg.setAttribute('fill', 'rgba(234,179,8,0.14)');
+
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', '0');
+    line.setAttribute('y1', '0');
+    line.setAttribute('x2', '0');
+    line.setAttribute('y2', '10');
+    line.setAttribute('stroke', 'rgba(234,179,8,0.72)');
+    line.setAttribute('stroke-width', '2');
+    line.setAttribute('stroke-dasharray', '4 3');
+
+    pattern.appendChild(bg);
+    pattern.appendChild(line);
+    defs.appendChild(pattern);
+}
+
+function applyZoneVisualStyle(layer, color, zoneType) {
+    if (!layer || !(layer instanceof L.Circle || layer instanceof L.Polygon)) return;
+    const style = getZoneLayerStyle(color, zoneType);
+    if (typeof layer.setStyle === 'function') layer.setStyle(style);
+    const mapRef = layer._map || leafletMap;
+    if (zoneType === 'eisabfall') {
+        const applyPattern = () => ensureEisabfallPatternForMap(layer._map || mapRef || leafletMap);
+        if (layer._map) applyPattern();
+        layer.off('add', applyPattern);
+        layer.on('add', applyPattern);
+    }
+}
+
+function formatOverlayUpdatedAt(ts) {
+    if (!ts) return '';
+    const d = new Date(ts);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleString('de-DE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function getOverlayFeatureName(feature) {
+    const explicit = feature?.properties?.label;
+    if (explicit && String(explicit).trim()) return String(explicit).trim();
+    return describeFeature(feature)?.label || 'Element';
+}
+
+function getOverlayFeatureSizeText(feature, layer) {
+    if (layer instanceof L.Circle) {
+        return `\u00d8\u00a0${Math.round(layer.getRadius() * 2)}\u00a0m`;
+    }
+
+    if (layer instanceof L.Polyline && !(layer instanceof L.Polygon)) {
+        return formatDistance(calcPolylineLength(layer.getLatLngs()));
+    }
+
+    if (feature?.geometry?.type === 'LineString' && Array.isArray(feature.geometry.coordinates)) {
+        const latlngs = feature.geometry.coordinates
+            .filter(c => Array.isArray(c) && c.length >= 2)
+            .map(c => [c[1], c[0]]);
+        if (latlngs.length >= 2) {
+            return formatDistance(calcPolylineLength(latlngs));
+        }
+    }
+
+    if (feature?.properties?.overlayType === 'kreis' && typeof feature?.properties?.radius === 'number') {
+        return `\u00d8\u00a0${Math.round(feature.properties.radius * 2)}\u00a0m`;
+    }
+
+    return '';
+}
+
+function getOverlayPrintLabel(feature, layer) {
+    const name = getOverlayFeatureName(feature);
+    const size = getOverlayFeatureSizeText(feature, layer);
+    return size ? `${name} \u00b7 ${size}` : name;
+}
+
+function buildOverlayHoverTooltipContent(feature, layer, editedBy) {
+    const name = escapeHTML(getOverlayFeatureName(feature));
+    const size = getOverlayFeatureSizeText(feature, layer);
+    const meta = [];
+    if (size) meta.push(size);
+    if (editedBy) meta.push(`von: ${escapeHTML(editedBy)}`);
+    const metaHtml = meta.length ? `<div class="overlay-zone-meta">${meta.join(' \u00b7 ')}</div>` : '';
+    return `<div class="overlay-zone-tip"><strong>${name}</strong>${metaHtml}</div>`;
+}
+
 // ─── TOOLTIP COLOR HELPERS ─────────────────────────────
 
 /** Convert #rrggbb / #rgb to rgba() string */
@@ -468,9 +596,11 @@ function createLayerFromFeature(feature) {
             const note = p.note || '';
             const zoneType = p.zoneType || 'custom';
             const circle = L.circle([lat, lon], {
-                radius, color, fillColor: color, fillOpacity: 0.18, weight: 2, dashArray: '6, 4', opacity: 0.9
+                radius,
+                ...getZoneLayerStyle(color, zoneType)
             });
             circle.feature = { ...feature, properties: { ...p, overlayType: 'kreis', zoneType } };
+            applyZoneVisualStyle(circle, color, zoneType);
             bindColoredTooltip(circle, () => {
                 const r = circle.getRadius();
                 const diam = `\u00d8\u00a0${Math.round(r * 2)}\u00a0m`;
@@ -538,8 +668,9 @@ function createLayerFromFeature(feature) {
         const note = p.note || '';
         const ot = p.overlayType || 'zone';
         const zoneType = p.zoneType || 'custom';
-        const polygon = L.polygon(latlngs, { color, fillColor: color, fillOpacity: 0.18, weight: 2, dashArray: '6, 4', opacity: 0.9 });
+        const polygon = L.polygon(latlngs, getZoneLayerStyle(color, zoneType));
         polygon.feature = { ...feature, properties: { ...p, overlayType: ot === 'gefahrenzone' ? 'zone' : ot, zoneType } };
+        applyZoneVisualStyle(polygon, color, zoneType);
         const label = zoneType === 'eisabfall' ? 'Eisabfallzone' : (note || 'Zone');
         bindColoredTooltip(polygon, label, { direction: 'center', sticky: true, className: 'overlay-zone-tooltip' });
         return polygon;
@@ -578,7 +709,7 @@ function updateFeatureFromLayer(layer) {
             geometry: { type: 'Point', coordinates: [ll.lng, ll.lat] },
             properties: { overlayType: 'kreis', zoneType, radius: layer.getRadius(), color, ...(note ? { note } : {}), ...(existingLabel ? { label: existingLabel } : {}) }
         };
-        if (typeof layer.setStyle === 'function') layer.setStyle({ color, fillColor: color });
+        applyZoneVisualStyle(layer, color, zoneType);
         return layer.feature;
     }
 
@@ -593,7 +724,7 @@ function updateFeatureFromLayer(layer) {
             geometry: { type: 'Polygon', coordinates: [coords] },
             properties: { overlayType: ot === 'gefahrenzone' ? 'zone' : ot, zoneType, color, ...(note ? { note } : {}), ...(existingLabel ? { label: existingLabel } : {}) }
         };
-        if (typeof layer.setStyle === 'function') layer.setStyle({ color, fillColor: color });
+        applyZoneVisualStyle(layer, color, zoneType);
         return layer.feature;
     }
 
@@ -649,36 +780,26 @@ function renderDisplayOverlaysForStandort(nummer) {
         const layer = createLayerFromFeature(feature);
         if (!layer) return;
 
-        // Hinweis: permanent compact label, click to edit
-        const p = feature.properties || {};
-        if (layer instanceof L.Marker && p.iconType === 'hinweis') {
-            const note = p.note || 'Hinweis';
-            layer.unbindTooltip();
-            layer.unbindPopup();
-            layer.bindTooltip(note, {
-                permanent: true, direction: 'right', offset: [16, 0],
-                className: 'overlay-hinweis-permanent'
+        layer.unbindTooltip();
+        const tooltipContent = () => buildOverlayHoverTooltipContent(feature, layer, editedBy);
+        if (layer instanceof L.Marker) {
+            bindColoredTooltip(layer, tooltipContent, {
+                direction: 'top',
+                offset: [0, -12],
+                sticky: true,
+                className: 'overlay-zone-tooltip'
             });
-            layer.on('click', () => beginEditExistingHinweis(layer, nummer));
-        } else if (p.zoneType === 'eisabfall') {
-            // Eisabfall zones: prominent label + creator and diameter (if circle)
-            layer.unbindTooltip();
-            const creator = editedBy || '';
-            if (layer instanceof L.Circle) {
-                const r = layer.getRadius();
-                const diam = `\u00d8\u00a0${Math.round(r * 2)}\u00a0m`;
-                const content = `<div class="overlay-zone-tip"><strong>Eisabfallzone</strong><div class="overlay-zone-meta">${diam}${creator ? ` \u00b7 <span class="overlay-edited-by-tip">von: ${creator}</span>` : ''}</div></div>`;
-                layer.bindTooltip(content, { direction: 'center', sticky: true, className: 'overlay-zone-tooltip' });
-            } else {
-                const content = `<div class="overlay-zone-tip"><strong>Eisabfallzone</strong>${creator ? `<div class="overlay-zone-meta"><span class="overlay-edited-by-tip">von: ${creator}</span></div>` : ''}</div>`;
-                layer.bindTooltip(content, { direction: 'center', sticky: true, className: 'overlay-zone-tooltip' });
-            }
-        } else if (editedBy) {
-            // All other overlay elements: show editor attribution on hover
-            layer.bindTooltip(
-                `<span class="overlay-edited-by-tip">von: ${editedBy}</span>`,
-                { sticky: true, className: 'overlay-edited-by-tooltip' }
-            );
+        } else if (layer instanceof L.Circle || layer instanceof L.Polygon) {
+            bindColoredTooltip(layer, tooltipContent, {
+                direction: 'center',
+                sticky: true,
+                className: 'overlay-zone-tooltip'
+            });
+        } else {
+            bindColoredTooltip(layer, tooltipContent, {
+                sticky: true,
+                className: 'overlay-route-tooltip'
+            });
         }
 
         overlayDisplayGroup.addLayer(layer);
@@ -2298,12 +2419,22 @@ function renderElementList() {
         return;
     }
 
-    container.innerHTML = features.map(({ feature }, idx) => {
+    const payload = getOverlayPayloadForStandort(overlayEditingStandortNummer);
+    const editedBy = payload?.updatedBy || '';
+    const editedAt = formatOverlayUpdatedAt(payload?.updatedAt);
+
+    container.innerHTML = features.map(({ feature, layer }, idx) => {
         const d = describeFeature(feature);
         const canRename = feature.properties?.iconType !== 'hinweis';
         const labelHtml = canRename
             ? `<span class="ov-element-label ov-rename" contenteditable="true" data-idx="${idx}" title="Klicken zum Umbenennen">${escapeHTML(d.label)}</span>`
             : `<span class="ov-element-label">${escapeHTML(d.label)}</span>`;
+        const size = getOverlayFeatureSizeText(feature, layer);
+        const metaParts = [];
+        if (size) metaParts.push(size);
+        if (editedBy) metaParts.push(`von: ${escapeHTML(editedBy)}`);
+        if (editedAt) metaParts.push(`bearbeitet: ${escapeHTML(editedAt)}`);
+        const metaHtml = metaParts.length ? `<div class="ov-element-meta" title="${metaParts.join(' · ')}">${metaParts.join(' · ')}</div>` : '';
         // Color text/unicode icons with the element color; HTML icons (<svg>, <i>) already carry their color
         const iconIsHtml = d.icon.startsWith('<');
         const iconStyle = (!iconIsHtml && d.color) ? ` style="color:${d.color}"` : '';
@@ -2316,7 +2447,10 @@ function renderElementList() {
             : '';
         return `<div class="ov-element-row">
             <span class="ov-element-icon"${iconStyle}>${d.icon}</span>
-            ${labelHtml}
+            <div class="ov-element-main">
+                ${labelHtml}
+                ${metaHtml}
+            </div>
             ${editBtn}
             <button type="button" class="ov-element-delete" data-idx="${idx}" title="Löschen">
                 <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
@@ -2383,6 +2517,8 @@ function renderElementList() {
         });
     });
 }
+
+window.getOverlayPrintLabel = getOverlayPrintLabel;
 
 function setBadge(id, count) {
     const el = document.getElementById(id);
@@ -2481,7 +2617,7 @@ function attachDrawListeners() {
         // ─── POLYGON (Zone) ───
         else if (layer instanceof L.Polygon) {
             const zoneType = getZoneTypeForTool(tool);
-            layer.setStyle({ color, fillColor: color, fillOpacity: 0.18, weight: 2, dashArray: '6, 4' });
+            applyZoneVisualStyle(layer, color, zoneType);
 
             if (zoneType === 'eisabfall') {
                 const latlngs = (layer.getLatLngs()[0] || []).map(p => [p.lng, p.lat]);
@@ -2509,7 +2645,7 @@ function attachDrawListeners() {
         // ─── CIRCLE (Zone) ───
         else if (layer instanceof L.Circle) {
             const zoneType = getZoneTypeForTool(tool);
-            layer.setStyle({ color, fillColor: color, fillOpacity: 0.18, weight: 2, dashArray: '6, 4' });
+            applyZoneVisualStyle(layer, color, zoneType);
             const ll = layer.getLatLng();
 
             if (zoneType === 'eisabfall') {
@@ -2679,6 +2815,7 @@ async function confirmOverlayInput() {
         if (presetSel && presetSel.value === 'eisabfall') {
             layer.feature.properties.zoneType = 'eisabfall';
             layer.feature.properties.note = text || 'Eisabfallzone';
+            applyZoneVisualStyle(layer, color, 'eisabfall');
         }
         if (layer instanceof L.Circle) {
             const zt = layer.feature.properties.zoneType || 'custom';

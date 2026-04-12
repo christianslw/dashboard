@@ -613,6 +613,7 @@ function printAnfahrt() {
         }
         // Ansprechpartner (if available)
         const aspDiv = document.getElementById('printAnsprechpartner');
+        const pateDiv = document.getElementById('printPaten');
         if (aspDiv) {
             let asp = [];
             if (standort.ansprechpartner1) asp.push(standort.ansprechpartner1);
@@ -624,10 +625,19 @@ function printAnfahrt() {
                 aspDiv.innerHTML = '';
             }
         }
-    document.getElementById('printDate').textContent =
-        new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        if (pateDiv) {
+            const paten = [];
+            if (standort.pv_pate) paten.push(`<span style="display:inline-block;margin-right:1.5em;"><b>PV-Pate:</b> ${standort.pv_pate}</span>`);
+            if (standort.pv_vertretung) paten.push(`<span style="display:inline-block;margin-right:1.5em;"><b>PV-Vertretung:</b> ${standort.pv_vertretung}</span>`);
+            if (standort.ifs_pate) paten.push(`<span style="display:inline-block;margin-right:1.5em;"><b>IFS-Pate:</b> ${standort.ifs_pate}</span>`);
+            pateDiv.innerHTML = paten.length ? paten.join('') : '';
+        }
     document.getElementById('printCoords').textContent =
         `${standort.lat.toFixed(5)}\u00b0 N, ${standort.lon.toFixed(5)}\u00b0 E`;
+
+    const printLegendSection = document.getElementById('printOverlayLegendSection');
+    const printLegend = document.getElementById('printOverlayLegend');
+    if (printLegend) printLegend.innerHTML = '';
 
     // —— Populate Fahrtanweisung text ——
     const text        = getWayInstructions(standort.nummer);
@@ -661,6 +671,98 @@ function printAnfahrt() {
     if (_printMapOverlays) _printMap.removeLayer(_printMapOverlays);
     _printMapOverlays = L.layerGroup().addTo(_printMap);
 
+    function ensurePrintEisabfallPattern() {
+        const pane = _printMap?.getPane?.('overlayPane');
+        const svg = pane?.querySelector?.('svg');
+        if (!svg) return;
+        let defs = svg.querySelector('defs');
+        if (!defs) {
+            defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            svg.insertBefore(defs, svg.firstChild);
+        }
+        if (defs.querySelector('#ovEisabfallHatchPrint') && defs.querySelector('#ovEisabfallHatch')) return;
+
+        const pattern = document.createElementNS('http://www.w3.org/2000/svg', 'pattern');
+        pattern.setAttribute('id', 'ovEisabfallHatchPrint');
+        pattern.setAttribute('patternUnits', 'userSpaceOnUse');
+        pattern.setAttribute('width', '10');
+        pattern.setAttribute('height', '10');
+        pattern.setAttribute('patternTransform', 'rotate(45)');
+
+        const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        bg.setAttribute('x', '0');
+        bg.setAttribute('y', '0');
+        bg.setAttribute('width', '10');
+        bg.setAttribute('height', '10');
+        bg.setAttribute('fill', '#fef3c7');
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', '0');
+        line.setAttribute('y1', '0');
+        line.setAttribute('x2', '0');
+        line.setAttribute('y2', '10');
+        line.setAttribute('stroke', '#d97706');
+        line.setAttribute('stroke-width', '2');
+        line.setAttribute('stroke-dasharray', '4 3');
+
+        pattern.appendChild(bg);
+        pattern.appendChild(line);
+        defs.appendChild(pattern);
+
+        const patternCompat = pattern.cloneNode(true);
+        patternCompat.setAttribute('id', 'ovEisabfallHatch');
+        defs.appendChild(patternCompat);
+    }
+
+    function enforcePrintEisabfallHatch(layer) {
+        const isEisabfall = layer?.feature?.properties?.zoneType === 'eisabfall';
+        if (!isEisabfall) return;
+        const apply = () => {
+            ensurePrintEisabfallPattern();
+            const path = layer?._path;
+            if (!path) return;
+            path.classList.add('overlay-eisabfall-hatch');
+            path.setAttribute('fill', 'rgba(234, 179, 8, 0.28)');
+            path.setAttribute('fill-opacity', '1');
+            path.style.fillOpacity = '1';
+            path.style.strokeDasharray = 'none';
+            if (!path.style.stroke) path.style.stroke = layer.feature?.properties?.color || '#eab308';
+        };
+        layer._ovEnforceHatch = apply;
+        layer.on('add', apply);
+        setTimeout(apply, 0);
+    }
+
+    function enforcePrintHatchesForAllLayers() {
+        if (!_printMapOverlays) return;
+        _printMapOverlays.eachLayer(layer => {
+            if (typeof layer._ovEnforceHatch === 'function') layer._ovEnforceHatch();
+        });
+    }
+
+    function getPrintOverlayLegendName(feature) {
+        if (typeof getOverlayFeatureName === 'function') return getOverlayFeatureName(feature);
+        const p = feature?.properties || {};
+        if (p.label && String(p.label).trim()) return String(p.label).trim();
+        if (p.overlayType === 'anfahrt') {
+            if (p.routeType === 'hauptzufahrt') return 'Hauptzufahrt';
+            if (p.routeType === 'alternativ') return 'Alternative Zufahrt';
+            return 'Freie Route';
+        }
+        if (p.overlayType === 'pfad') return 'Pfad';
+        if (p.overlayType === 'zone' || p.overlayType === 'kreis') {
+            if (p.zoneType === 'eisabfall') return 'Eisabfallzone';
+            return p.note || 'Zone';
+        }
+        if (p.overlayType === 'icon') {
+            if (p.iconType === 'schranke') return 'Schranke';
+            if (p.iconType === 'tresor') return 'Schlüsseltresor';
+            if (p.iconType === 'tor') return 'Tor';
+            return p.note || 'Hinweis';
+        }
+        return 'Element';
+    }
+
     // Station marker (same colour scheme as the main map)
     const markerColors = {
         1: '#8b5cf6', 2: '#10b981', 3: '#f59e0b', 4: '#ef4444',
@@ -679,11 +781,35 @@ function printAnfahrt() {
     // Overlay features (routes, markers, zones)
     if (typeof getOverlayPayloadForStandort === 'function' && typeof createLayerFromFeature === 'function') {
         const payload = getOverlayPayloadForStandort(standort.nummer);
+        const legendEntries = [];
         if (payload?.features) {
             payload.features.forEach(f => {
                 const lyr = createLayerFromFeature(f);
-                if (lyr) _printMapOverlays.addLayer(lyr);
+                if (!lyr) return;
+                _printMapOverlays.addLayer(lyr);
+                enforcePrintEisabfallHatch(lyr);
+
+                const label = getPrintOverlayLegendName(f);
+                const color = f?.properties?.color || '#64748b';
+                if (label) legendEntries.push({ label, color });
             });
+        }
+
+        if (printLegendSection && printLegend) {
+            if (legendEntries.length === 0) {
+                printLegendSection.style.display = 'none';
+            } else {
+                const esc = (value) => String(value)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+                printLegend.innerHTML = legendEntries.map(entry =>
+                    `<span class="print-legend-inline-item"><span class="print-legend-swatch" style="background:${esc(entry.color)}"></span><span>${esc(entry.label)}</span></span>`
+                ).join('');
+                printLegendSection.style.display = '';
+            }
         }
     }
 
@@ -715,6 +841,8 @@ function printAnfahrt() {
 
     // Let tiles load (≈900 ms) then trigger print
     setTimeout(() => {
+        ensurePrintEisabfallPattern();
+        enforcePrintHatchesForAllLayers();
         // Reset inline styles — @media print rules take over from here
         container.style.cssText = '';
         window.print();
