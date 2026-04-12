@@ -209,6 +209,32 @@ window.onload = async () => {
 function handleGlobalKeydown(e) {
     const inInput = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable;
 
+    // Ctrl+P / Cmd+P → print Anfahrt PDF for current station or exclusively filtered station
+    if ((e.key === 'p' || e.key === 'P') && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+
+        let targetStandort = null;
+
+        if (typeof getFilteredStandorte === 'function') {
+            const filtered = getFilteredStandorte();
+            if (Array.isArray(filtered) && filtered.length === 1) {
+                targetStandort = filtered[0]?.nummer ?? null;
+            }
+        }
+
+        if (!targetStandort) {
+            const dashModal = document.getElementById('dashboardModal');
+            if (dashModal && !dashModal.classList.contains('hidden') && currentStandort) {
+                targetStandort = currentStandort.nummer;
+            }
+        }
+
+        if (targetStandort && typeof printAnfahrt === 'function') {
+            printAnfahrt(targetStandort);
+        }
+        return;
+    }
+
     // / → focus search
     if (e.key === '/' && !inInput) {
         e.preventDefault();

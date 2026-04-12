@@ -566,6 +566,8 @@ function getHauptzufahrtEntryPoint(nummer) {
 
 let _printMap = null;
 let _printMapOverlays = null;
+let _printDetailMap = null;
+let _printDetailMapOverlays = null;
 
 /**
  * Show/hide the “Anfahrt drucken” button depending on whether the current
@@ -591,9 +593,11 @@ function updateDashboardPrintButton() {
  * An extra Leaflet instance (#printMap) is used so print zoom/bounds are
  * independent of the dashboard map.
  */
-function printAnfahrt() {
-    if (!currentStandort) return;
-    const standort  = currentStandort;
+function printAnfahrt(nummer) {
+    const standort = nummer
+        ? standorte.find(s => String(s.nummer) === String(nummer))
+        : currentStandort;
+    if (!standort) return;
     const container = document.getElementById('printAnfahrt');
 
     // —— Populate header ——
@@ -667,12 +671,32 @@ function printAnfahrt() {
         }).addTo(_printMap);
     }
 
+    if (!_printDetailMap) {
+        _printDetailMap = L.map('printMapDetail', {
+            zoomControl: false,
+            attributionControl: false,
+            dragging: false,
+            scrollWheelZoom: false,
+            doubleClickZoom: false,
+            boxZoom: false,
+            keyboard: false,
+            tap: false
+        });
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 19,
+            crossOrigin: true,
+            subdomains: []
+        }).addTo(_printDetailMap);
+    }
+
     // Clear overlays from previous call
     if (_printMapOverlays) _printMap.removeLayer(_printMapOverlays);
     _printMapOverlays = L.layerGroup().addTo(_printMap);
+    if (_printDetailMapOverlays) _printDetailMap.removeLayer(_printDetailMapOverlays);
+    _printDetailMapOverlays = L.layerGroup().addTo(_printDetailMap);
 
-    function ensurePrintEisabfallPattern() {
-        const pane = _printMap?.getPane?.('overlayPane');
+    function ensurePrintEisabfallPattern(targetMap = _printMap) {
+        const pane = targetMap?.getPane?.('overlayPane');
         const svg = pane?.querySelector?.('svg');
         if (!svg) return;
         let defs = svg.querySelector('defs');
@@ -714,11 +738,11 @@ function printAnfahrt() {
         defs.appendChild(patternCompat);
     }
 
-    function enforcePrintEisabfallHatch(layer) {
+    function enforcePrintEisabfallHatch(layer, targetMap = _printMap) {
         const isEisabfall = layer?.feature?.properties?.zoneType === 'eisabfall';
         if (!isEisabfall) return;
         const apply = () => {
-            ensurePrintEisabfallPattern();
+            ensurePrintEisabfallPattern(targetMap);
             const path = layer?._path;
             if (!path) return;
             path.classList.add('overlay-eisabfall-hatch');
@@ -734,8 +758,10 @@ function printAnfahrt() {
     }
 
     function enforcePrintHatchesForAllLayers() {
-        if (!_printMapOverlays) return;
-        _printMapOverlays.eachLayer(layer => {
+        if (_printMapOverlays) _printMapOverlays.eachLayer(layer => {
+            if (typeof layer._ovEnforceHatch === 'function') layer._ovEnforceHatch();
+        });
+        if (_printDetailMapOverlays) _printDetailMapOverlays.eachLayer(layer => {
             if (typeof layer._ovEnforceHatch === 'function') layer._ovEnforceHatch();
         });
     }
@@ -777,6 +803,10 @@ function printAnfahrt() {
         iconAnchor: [7, 7]
     });
     L.marker([standort.lat, standort.lon], { icon }).addTo(_printMapOverlays);
+    L.marker([standort.lat, standort.lon], { icon }).addTo(_printDetailMapOverlays);
+
+    // Main map overview bounds (station + full route/overlay extent)
+    let overviewBounds = L.latLngBounds([[standort.lat, standort.lon]]);
 
     // Overlay features (routes, markers, zones)
     if (typeof getOverlayPayloadForStandort === 'function' && typeof createLayerFromFeature === 'function') {
@@ -788,6 +818,23 @@ function printAnfahrt() {
                 if (!lyr) return;
                 _printMapOverlays.addLayer(lyr);
                 enforcePrintEisabfallHatch(lyr);
+
+                const detailLyr = createLayerFromFeature(f);
+                if (detailLyr) {
+                    _printDetailMapOverlays.addLayer(detailLyr);
+                    enforcePrintEisabfallHatch(detailLyr, _printDetailMap);
+                }
+
+                const geom = f.geometry;
+                if (geom?.coordinates) {
+                    if (geom.type === 'Point') {
+                        overviewBounds.extend([geom.coordinates[1], geom.coordinates[0]]);
+                    } else if (geom.type === 'LineString') {
+                        geom.coordinates.forEach(c => overviewBounds.extend([c[1], c[0]]));
+                    } else if (geom.type === 'Polygon' && geom.coordinates[0]) {
+                        geom.coordinates[0].forEach(c => overviewBounds.extend([c[1], c[0]]));
+                    }
+                }
 
                 const label = getPrintOverlayLegendName(f);
                 const color = f?.properties?.color || '#64748b';
@@ -813,31 +860,53 @@ function printAnfahrt() {
         }
     }
 
-    // Compute bounds from station + overlay geometries
-    let bounds = L.latLngBounds([[standort.lat, standort.lon]]);
+    // Compute a station-near detail extent for inset map
+    const stationLatLng = L.latLng(standort.lat, standort.lon);
+    const detailRadiusMeters = 180;
+    const detailPoints = [stationLatLng];
+
     if (typeof getOverlayPayloadForStandort === 'function') {
         const payload = getOverlayPayloadForStandort(standort.nummer);
         if (payload?.features) {
             payload.features.forEach(f => {
                 const geom = f.geometry;
                 if (!geom?.coordinates) return;
+
+                const maybeAdd = (lat, lon) => {
+                    if (typeof lat !== 'number' || typeof lon !== 'number') return;
+                    const p = L.latLng(lat, lon);
+                    if (stationLatLng.distanceTo(p) <= detailRadiusMeters) detailPoints.push(p);
+                };
+
                 if (geom.type === 'Point') {
-                    bounds.extend([geom.coordinates[1], geom.coordinates[0]]);
+                    maybeAdd(geom.coordinates[1], geom.coordinates[0]);
                 } else if (geom.type === 'LineString') {
-                    geom.coordinates.forEach(c => bounds.extend([c[1], c[0]]));
+                    geom.coordinates.forEach(c => maybeAdd(c[1], c[0]));
                 } else if (geom.type === 'Polygon' && geom.coordinates[0]) {
-                    geom.coordinates[0].forEach(c => bounds.extend([c[1], c[0]]));
+                    geom.coordinates[0].forEach(c => maybeAdd(c[1], c[0]));
                 }
             });
         }
     }
 
+    let detailBounds = L.latLngBounds(detailPoints);
+    if (detailPoints.length <= 1 || !detailBounds.isValid() || detailBounds.getNorthEast().equals(detailBounds.getSouthWest())) {
+        const pad = 0.0012;
+        detailBounds = L.latLngBounds(
+            [standort.lat - pad, standort.lon - pad],
+            [standort.lat + pad, standort.lon + pad]
+        );
+    }
+
     _printMap.invalidateSize({ animate: false });
-    if (bounds.isValid() && !bounds.getNorthEast().equals(bounds.getSouthWest())) {
-        _printMap.fitBounds(bounds, { padding: [28, 28], maxZoom: 16, animate: false });
+    if (overviewBounds.isValid() && !overviewBounds.getNorthEast().equals(overviewBounds.getSouthWest())) {
+        _printMap.fitBounds(overviewBounds, { padding: [28, 28], maxZoom: 16, animate: false });
     } else {
         _printMap.setView([standort.lat, standort.lon], 14, { animate: false });
     }
+
+    _printDetailMap.invalidateSize({ animate: false });
+    _printDetailMap.fitBounds(detailBounds, { padding: [8, 8], maxZoom: 19, animate: false });
 
     // Let tiles load (≈900 ms) then trigger print
     setTimeout(() => {
