@@ -62,6 +62,9 @@
         }
     </script>
     <link rel="stylesheet" href="styles.css" />
+    <!-- QRious (QR code generator) -->
+    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+    <script src="js/qrcode.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-900 dark:bg-oled dark:text-zinc-100 antialiased h-screen flex flex-col transition-colors duration-200">
 
@@ -1244,8 +1247,12 @@
                 <p id="printText"></p>
             </div>
             <div id="printFooter">
-                <span>Erstellt: <span id="printDate"></span></span>
-                <span>Koordinaten: <span id="printCoords"></span></span>
+                <div id="printAnsprechpartner" style="flex:1 1 100%;margin-bottom:0.2cm;"></div>
+                <div id="printFooterMeta">
+                    <span>Erstellt: <span id="printDate"></span></span>
+                    <span>Koordinaten: <span id="printCoords"></span></span>
+                </div>
+                <div id="printQRWrap"></div>
             </div>
         </div>
     </div>

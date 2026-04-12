@@ -597,8 +597,33 @@ function printAnfahrt() {
     const container = document.getElementById('printAnfahrt');
 
     // —— Populate header ——
-    document.getElementById('printTitle').textContent =
-        `${standort.nummer} – ${standort.name}`;
+    // Remove dash between number and name, render both parts in normal weight
+    const printTitle = document.getElementById('printTitle');
+    printTitle.innerHTML = `<span style="font-weight:400;">${standort.nummer}</span> <span style="font-weight:300;">${standort.name}</span>`;
+        // Add QR code for this Standort (link or dashboard URL)
+        const qrWrap = document.getElementById('printQRWrap');
+        if (qrWrap) {
+            let qrData = window.location.origin + '/?standort=' + encodeURIComponent(standort.nummer);
+            try {
+                const qrUrl = generateQRCode(qrData, 80);
+                qrWrap.innerHTML = `<img src="${qrUrl}" alt="QR Code" style="margin-top:0.2em;max-width:80px;max-height:80px;" />`;
+            } catch (e) {
+                qrWrap.innerHTML = '';
+            }
+        }
+        // Ansprechpartner (if available)
+        const aspDiv = document.getElementById('printAnsprechpartner');
+        if (aspDiv) {
+            let asp = [];
+            if (standort.ansprechpartner1) asp.push(standort.ansprechpartner1);
+            if (standort.ansprechpartner2) asp.push(standort.ansprechpartner2);
+            if (standort.ansprechpartner3) asp.push(standort.ansprechpartner3);
+            if (asp.length) {
+                aspDiv.innerHTML = `<b>Ansprechpartner:</b><br>` + asp.map(a => `<span style="display:inline-block;margin-right:1.5em;">${a}</span>`).join('');
+            } else {
+                aspDiv.innerHTML = '';
+            }
+        }
     document.getElementById('printDate').textContent =
         new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
     document.getElementById('printCoords').textContent =

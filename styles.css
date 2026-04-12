@@ -2383,7 +2383,7 @@ body.planner-mode .planner-add-btn.is-queued .planner-add-icon {
 
 #printAnfahrt {
     display: none;
-    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-family: 'Segoe UI', system-ui, sans-serif;
     color: #0f172a;
     background: #ffffff;
     -webkit-print-color-adjust: exact;
@@ -2507,11 +2507,33 @@ html.dark #printAnfahrt .leaflet-control-attribution {
 #printFooter {
     display: flex;
     justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 0.5cm;
     margin-top: 0.6cm;
     padding-top: 0.3cm;
     border-top: 1px solid #e2e8f0;
     font-size: 8pt;
     color: #94a3b8;
+}
+
+#printFooterMeta {
+    display: inline-flex;
+    gap: 1cm;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    align-items: center;
+}
+
+#printQRWrap {
+    flex: 0 0 auto;
+    align-self: center;
+}
+
+#printQRWrap img {
+    display: block;
+    max-width: 80px;
+    max-height: 80px;
 }
 
 @media print {

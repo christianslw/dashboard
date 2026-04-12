@@ -398,6 +398,19 @@ function updateMapMarkers(liste) {
 
     window._markersByNummer = new Map();
 
+    window.updateStationMarkersInteractivity = function(interactive) {
+        if (!window._markersByNummer) return;
+        window._markersByNummer.forEach(marker => {
+            if (!marker || !marker.options) return;
+            marker.options.interactive = Boolean(interactive);
+            if (marker._icon) marker._icon.style.pointerEvents = interactive ? '' : 'none';
+            if (marker._shadow) marker._shadow.style.pointerEvents = interactive ? '' : 'none';
+        });
+        if (markerClusterGroup && typeof markerClusterGroup.refreshClusters === 'function') {
+            try { markerClusterGroup.refreshClusters(); } catch (err) { /* ignore */ }
+        }
+    };
+
     liste.forEach(s => {
         if (!s.lat || !s.lon) return;
         const prefix = Math.floor(s.nummer / 1000);
@@ -426,9 +439,10 @@ function updateMapMarkers(liste) {
                 iconAnchor: [anchorOffset, anchorOffset]
             });
 
-        const marker = L.marker([s.lat, s.lon], { icon: smallMarker, prefix: prefix });
+        const marker = L.marker([s.lat, s.lon], { icon: smallMarker, prefix: prefix, interactive: !window.overlayEditMode });
         marker.bindTooltip(`<b>${s.nummer}</b> ${s.name}${isFav ? ' ★' : ''}`, { direction: 'top', offset: [0, -10] });
         marker.on('click', (e) => {
+            if (window.overlayEditMode) return;
             if (e.originalEvent.shiftKey) {
                 openTagebuch(s.nummer);
             } else if (e.originalEvent.ctrlKey || e.originalEvent.metaKey) {

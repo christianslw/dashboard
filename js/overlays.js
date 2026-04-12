@@ -650,8 +650,9 @@ function renderDisplayOverlaysForStandort(nummer) {
         if (!layer) return;
 
         // Hinweis: permanent compact label, click to edit
-        if (layer instanceof L.Marker && feature.properties?.iconType === 'hinweis') {
-            const note = feature.properties?.note || 'Hinweis';
+        const p = feature.properties || {};
+        if (layer instanceof L.Marker && p.iconType === 'hinweis') {
+            const note = p.note || 'Hinweis';
             layer.unbindTooltip();
             layer.unbindPopup();
             layer.bindTooltip(note, {
@@ -659,6 +660,19 @@ function renderDisplayOverlaysForStandort(nummer) {
                 className: 'overlay-hinweis-permanent'
             });
             layer.on('click', () => beginEditExistingHinweis(layer, nummer));
+        } else if (p.zoneType === 'eisabfall') {
+            // Eisabfall zones: prominent label + creator and diameter (if circle)
+            layer.unbindTooltip();
+            const creator = editedBy || '';
+            if (layer instanceof L.Circle) {
+                const r = layer.getRadius();
+                const diam = `\u00d8\u00a0${Math.round(r * 2)}\u00a0m`;
+                const content = `<div class="overlay-zone-tip"><strong>Eisabfallzone</strong><div class="overlay-zone-meta">${diam}${creator ? ` \u00b7 <span class="overlay-edited-by-tip">von: ${creator}</span>` : ''}</div></div>`;
+                layer.bindTooltip(content, { direction: 'center', sticky: true, className: 'overlay-zone-tooltip' });
+            } else {
+                const content = `<div class="overlay-zone-tip"><strong>Eisabfallzone</strong>${creator ? `<div class="overlay-zone-meta"><span class="overlay-edited-by-tip">von: ${creator}</span></div>` : ''}</div>`;
+                layer.bindTooltip(content, { direction: 'center', sticky: true, className: 'overlay-zone-tooltip' });
+            }
         } else if (editedBy) {
             // All other overlay elements: show editor attribution on hover
             layer.bindTooltip(
@@ -1387,6 +1401,9 @@ function updateUndoBtn() {
 
 function setOverlayEditMode(enabled) {
     overlayEditMode = enabled;
+    if (typeof window.updateStationMarkersInteractivity === 'function') {
+        window.updateStationMarkersInteractivity(!overlayEditMode);
+    }
     if (!enabled) {
         stopCurrentDrawHandler();
         if (ovVertexEditCleanup) ovVertexEditCleanup();
