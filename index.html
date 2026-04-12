@@ -30,6 +30,9 @@
     <!-- Material Design Icons (local) -->
     <link rel="stylesheet" href="res/mdi/css/materialdesignicons.min.css" />
 
+    <!-- Dockview Layout Manager -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/dockview-core@2.14.0/dist/styles/dockview.css" />
+
     <!-- Cloudflare backend sync (settings, standorte, overlays) -->
 
     <script>
@@ -178,20 +181,20 @@
             </div>
         </div>
 
-        <!-- Split view -->
-        <div class="flex-1 flex overflow-hidden" id="splitPane">
-            <!-- Result list -->
-            <div id="resultList" class="w-full flex-shrink-0 divide-y divide-slate-100 dark:divide-zinc-800 overflow-y-auto p-2">
-                <!-- Rendered by JS -->
+        <!-- Dockview Layout Manager Container -->
+        <div class="flex-1 overflow-hidden relative" id="dockviewContainer"></div>
+        
+        <!-- Dockable Panel Content Elements (hidden initially) -->
+        <div id="hiddenDockviewTemplates" class="hidden">
+            <!-- Result list wrapper -->
+            <div id="listWrapper" class="flex flex-col">
+                <div id="resultList" class="w-full flex-shrink-0 divide-y divide-slate-100 dark:divide-zinc-800 overflow-y-auto p-2 min-h-0 flex-1">
+                    <!-- Rendered by JS -->
+                </div>
             </div>
 
-            <!-- Drag divider -->
-            <div id="splitDivider" class="hidden md:flex shrink-0 select-none touch-none w-[5px] cursor-col-resize items-stretch relative z-10">
-                <div id="splitDividerBar" class="w-px bg-transparent mx-auto self-stretch" style="transition:background 0.15s,width 0.15s"></div>
-            </div>
-
-            <!-- Main map -->
-            <div class="hidden md:flex flex-1 flex-col overflow-hidden">
+            <!-- Main map wrapper -->
+            <div id="mainMapWrapper" class="flex-1 flex flex-col overflow-hidden">
                 <div id="mainMap" class="flex-1 bg-slate-100 dark:bg-zinc-900 relative z-0">
                     <!-- Leaflet renders here -->
                 </div>
@@ -301,6 +304,14 @@
                         <button id="btn-theme-kirschbluete" onclick="changeColorTheme('kirschbluete')" class="py-2 px-3 text-sm font-medium rounded border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors">Kirschblüte</button>
                         <button id="btn-theme-carbon" onclick="changeColorTheme('carbon')" class="py-2 px-3 text-sm font-medium rounded border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors">Carbon</button>
                     </div>
+                </div>
+
+                <!-- Window Manager -->
+                <div class="border-t border-slate-200 dark:border-zinc-700 pt-5 mt-5">
+                    <label class="block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-zinc-400 mb-3">Layout (Fenster-Ansicht)</label>
+                    <button onclick="window.resetLayoutManager?.()" class="w-full py-2 px-3 text-sm font-medium rounded border border-red-300 dark:border-red-700 bg-white dark:bg-zinc-900 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center justify-center gap-2">
+                        <i class="mdi mdi-refresh"></i> Fenster-Layout auf Standard zurücksetzen
+                    </button>
                 </div>
             </div>
             <div class="p-4 border-t border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/50 flex justify-end">
@@ -1140,6 +1151,7 @@
     <script defer src="js/tutorial.js"></script>
     <script defer src="js/bugreport.js"></script>
     <script defer src="js/changelog.js"></script>
+    <script type="module" src="js/layout.js"></script>
     <!-- theme-effects.js is lazy-loaded by app.js only when the kirschbluete theme is active -->
     <script defer src="js/init.js"></script>
 

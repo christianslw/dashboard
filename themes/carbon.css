@@ -594,7 +594,7 @@ html.carbon body.planner-mode .planner-add-btn {
 
 /* ─── Planner badge — pin to 16×16px circle ─────────────────────────────────────────
    Carbon's global button sizing and .rounded-full reset can inflate / square it. */
-html.carbon #plannerBadge {
+html.carbon #plannerBadge:not(.hidden) {
     position:      absolute !important;
     width:         16px !important;
     height:        16px !important;

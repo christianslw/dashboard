@@ -321,31 +321,26 @@ function togglePlannerForCurrent() {
 // ─── DRAWER TOGGLE ───────────────────────────────────────────────────────────
 
 function togglePlannerDrawer() {
-    plannerOpen = !plannerOpen;
-    const drawer = document.getElementById('plannerDrawer');
-    if (!drawer) return;
-    if (plannerOpen) {
-        // First open: center horizontally at bottom of viewport
-        if (!drawer._positioned) {
-            drawer._positioned = true;
-            const w = parseInt(drawer.style.width) || 420;
-            drawer.style.left   = Math.max(0, Math.round((window.innerWidth  - w) / 2)) + 'px';
-            drawer.style.bottom = '0px';
-            drawer.style.top    = '';
-        }
-        drawer.classList.remove('hidden');
-        _initDrawerResize();
-        // Re-apply dim + redraw route if one was computed
-        if (plannerQueue.length > 0) _applyRouteDimming(true);
-        if (_lastOptRouteGeom || _stdRouteGeom) selectPlannerRoute(_activeRouteType);
-    } else {
-        drawer.classList.add('hidden');
-        _clearSuggestionPulse();
-        clearRoutePreview();
-        _clearRouteLayerOnly();      // remove route from map
-        _applyRouteDimming(false);   // restore all markers
+    if (typeof window.openPlannerPanel === 'function') {
+        window.openPlannerPanel();
     }
-    document.body.classList.toggle('planner-mode', plannerOpen);
+}
+
+function handlePlannerShown() {
+    plannerOpen = true;
+    if (plannerQueue.length > 0) _applyRouteDimming(true);
+    if (_lastOptRouteGeom || _stdRouteGeom) selectPlannerRoute(_activeRouteType);
+    document.body.classList.add('planner-mode');
+    _syncPlannerBadge();
+}
+
+function handlePlannerHidden() {
+    plannerOpen = false;
+    document.body.classList.remove('planner-mode');
+    _clearSuggestionPulse();
+    if (typeof clearRoutePreview === 'function') clearRoutePreview();
+    _clearRouteLayerOnly();
+    _applyRouteDimming(false);
     _syncPlannerBadge();
 }
 
@@ -440,15 +435,11 @@ function _initDrawerResize() {
 }
 
 function closePlannerDrawer() {
-    plannerOpen = false;
-    const drawer = document.getElementById('plannerDrawer');
-    if (drawer) drawer.classList.add('hidden');
-    document.body.classList.remove('planner-mode');
-    _clearSuggestionPulse();
-    clearRoutePreview();
-    _clearRouteLayerOnly();
-    _applyRouteDimming(false);
-    _syncPlannerBadge();
+    if (typeof window.closePlannerPanel === 'function') {
+        window.closePlannerPanel();
+    } else {
+        handlePlannerHidden();
+    }
 }
 
 function _syncPlannerBadge() {
