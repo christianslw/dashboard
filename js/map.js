@@ -46,6 +46,36 @@ function mixHexColors(colorA, colorB) {
     return `#${toHex((a.r + b.r) / 2)}${toHex((a.g + b.g) / 2)}${toHex((a.b + b.b) / 2)}`;
 }
 
+/** Return an rgba() string for a hex color. Uses global hexToRgba if available. */
+function mapHexToRgba(hex, alpha) {
+    if (typeof hexToRgba === 'function') return hexToRgba(hex, alpha);
+    let h = String(hex || '').replace('#', '');
+    if (h.length === 3) h = h.split('').map(c => c + c).join('');
+    h = h.padEnd(6, '0').slice(0, 6);
+    const r = parseInt(h.slice(0, 2), 16);
+    const g = parseInt(h.slice(2, 4), 16);
+    const b = parseInt(h.slice(4, 6), 16);
+    return `rgba(${r},${g},${b},${alpha})`;
+}
+
+/** Find a Richtfunk partner for a station and return a mixed hex color. */
+function getRichtfunkPartnerMixedColor(nummer) {
+    const selfColor = getStationPrefixColor(nummer);
+    if (!Array.isArray(standorte) || standorte.length === 0) return selfColor;
+    const s = standorte.find(st => String(st.nummer) === String(nummer));
+    if (s && Array.isArray(s.richtfunk) && s.richtfunk.length) {
+        const targetId = s.richtfunk.find(tid => {
+            const t = standorte.find(st => String(st.nummer) === String(tid));
+            return t && t.lat && t.lon;
+        });
+        if (targetId) return mixHexColors(selfColor, getStationPrefixColor(targetId));
+    }
+    // Fallback: find any other station that links to this one
+    const other = standorte.find(st => Array.isArray(st.richtfunk) && st.richtfunk.some(t => String(t) === String(nummer)));
+    if (other) return mixHexColors(selfColor, getStationPrefixColor(other.nummer));
+    return selfColor;
+}
+
 function loadActiveOverlayLayerNames() {
     try {
         const raw = localStorage.getItem(ACTIVE_OVERLAYS_STORAGE_KEY);
@@ -494,7 +524,13 @@ function updateMapMarkers(liste) {
         const anchorOffset = Math.max(3, Math.round((isMainStation ? 12 : 7) * sizeMultiplier));
         const starSize = Math.max(8, Math.round((isMainStation ? 28 : 20) * sizeMultiplier));
 
-        const ringStyle = 'box-shadow:0 2px 4px rgba(0,0,0,0.3);';
+        // Compute a colored glow that matches the Richtfunk link color when applicable
+        let glowHex = markerColor;
+        if (isRichtfunkLayerActive && isLinked) {
+            glowHex = getRichtfunkPartnerMixedColor(s.nummer);
+        }
+        const glowRgba = mapHexToRgba(glowHex, 0.45);
+        const ringStyle = `box-shadow: 0 0 8px ${glowRgba}, 0 2px 4px rgba(0,0,0,0.25)`;
 
         const smallMarker = isFav
             ? L.divIcon({
