@@ -38,17 +38,6 @@
     margin: 0;
 }
 
-#printHeaderRight {
-    font-size: 9pt;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    color: #1e3a8a;
-    align-self: flex-end;
-    text-align: right;
-    margin-bottom: 3px;
-}
-
 #printMapWrap {
     width: 100%;
     border: 1px solid #cbd5e1;

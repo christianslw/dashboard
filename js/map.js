@@ -5,6 +5,8 @@ const RADAR_MAX_NATIVE_ZOOM = 10;
 const RAINVIEWER_COLOR_SCHEME = 8;
 const ACTIVE_OVERLAYS_STORAGE_KEY = 'activeOverlayLayers';
 const RAINVIEWER_LAYER_NAME = 'Regenradar';
+let isRichtfunkLayerActive = false;
+let markerPlainGroup = null;
 
 const STATION_PREFIX_COLORS = {
     1: '#8b5cf6',
@@ -245,6 +247,22 @@ function drawRichtfunkLines(layerGroup) {
     });
 }
 
+function getRichtfunkLinkedStationNummern() {
+    const linked = new Set();
+    if (!Array.isArray(standorte) || standorte.length === 0) return linked;
+    standorte.forEach(function(s) {
+        if (!s || !s.lat || !s.lon || !Array.isArray(s.richtfunk) || s.richtfunk.length === 0) return;
+        const sourceNummer = String(s.nummer);
+        s.richtfunk.forEach(function(targetId) {
+            const target = standorte.find(function(st) { return String(st.nummer) === String(targetId); });
+            if (!target || !target.lat || !target.lon) return;
+            linked.add(sourceNummer);
+            linked.add(String(targetId));
+        });
+    });
+    return linked;
+}
+
 function initLeafletMap() {
     leafletMap = L.map('mainMap').setView([48.6, 9.2], 7);
 
@@ -372,7 +390,11 @@ function initLeafletMap() {
             showRadarTimeline();
         }
         if (e.name === 'Richtfunkstrecken') {
+            isRichtfunkLayerActive = true;
             drawRichtfunkLines(richtfunkLayer);
+            if (typeof getFilteredStandorte === 'function') {
+                updateMapMarkers(getFilteredStandorte());
+            }
         }
     });
     leafletMap.on('overlayremove', function(e) {
@@ -381,7 +403,11 @@ function initLeafletMap() {
             hideRadarTimeline();
         }
         if (e.name === 'Richtfunkstrecken') {
+            isRichtfunkLayerActive = false;
             richtfunkLayer.clearLayers();
+            if (typeof getFilteredStandorte === 'function') {
+                updateMapMarkers(getFilteredStandorte());
+            }
         }
     });
 
@@ -400,6 +426,9 @@ function updateLeafletMapTheme() {
 function updateMapMarkers(liste) {
     if (markerClusterGroup) {
         leafletMap.removeLayer(markerClusterGroup);
+    }
+    if (markerPlainGroup) {
+        leafletMap.removeLayer(markerPlainGroup);
     }
 
     const colors = STATION_PREFIX_COLORS;
@@ -429,8 +458,10 @@ function updateMapMarkers(liste) {
             });
         }
     });
+    markerPlainGroup = L.featureGroup();
 
     window._markersByNummer = new Map();
+    const linkedNummern = isRichtfunkLayerActive ? getRichtfunkLinkedStationNummern() : new Set();
 
     window.updateStationMarkersInteractivity = function(interactive) {
         if (!window._markersByNummer) return;
@@ -452,10 +483,16 @@ function updateMapMarkers(liste) {
         const isFav = isFavorite(s.nummer);
 
         const isMainStation = parseInt(s.nummer) % 1000 === 0;
-        const markerSize = isMainStation ? 24 : 14;
-        const iconSize = isMainStation ? [24, 24] : [14, 14];
-        const anchorOffset = isMainStation ? 12 : 7;
-        const starSize = isMainStation ? 28 : 20;
+
+        // Determine if this station is linked in any Richtfunk pair (when the overlay is active)
+        const isLinked = isRichtfunkLayerActive ? linkedNummern.has(String(s.nummer)) : true;
+        const sizeMultiplier = (isRichtfunkLayerActive && !isLinked) ? 0.6 : 1;
+
+        const baseMarkerSize = isMainStation ? 24 : 14;
+        const markerSize = Math.max(6, Math.round(baseMarkerSize * sizeMultiplier));
+        const iconSize = isMainStation ? [Math.max(6, Math.round(24 * sizeMultiplier)), Math.max(6, Math.round(24 * sizeMultiplier))] : [Math.max(6, Math.round(14 * sizeMultiplier)), Math.max(6, Math.round(14 * sizeMultiplier))];
+        const anchorOffset = Math.max(3, Math.round((isMainStation ? 12 : 7) * sizeMultiplier));
+        const starSize = Math.max(8, Math.round((isMainStation ? 28 : 20) * sizeMultiplier));
 
         const ringStyle = 'box-shadow:0 2px 4px rgba(0,0,0,0.3);';
 
@@ -485,11 +522,21 @@ function updateMapMarkers(liste) {
                 selectFromList(s.nummer);
             }
         });
-        markerClusterGroup.addLayer(marker);
+        if (isRichtfunkLayerActive) {
+            const isLinked = linkedNummern.has(String(s.nummer));
+            marker.setOpacity(isLinked ? 1 : 0.5);
+            markerPlainGroup.addLayer(marker);
+        } else {
+            markerClusterGroup.addLayer(marker);
+        }
         window._markersByNummer.set(String(s.nummer), marker);
     });
 
-    leafletMap.addLayer(markerClusterGroup);
+    if (isRichtfunkLayerActive) {
+        leafletMap.addLayer(markerPlainGroup);
+    } else {
+        leafletMap.addLayer(markerClusterGroup);
+    }
 
     if (liste.length > 0) {
         if (liste.length === 1) {
@@ -529,7 +576,8 @@ function updateMapMarkers(liste) {
             }
         } else {
             leafletMap.invalidateSize({ animate: false });
-            leafletMap.fitBounds(markerClusterGroup.getBounds(), { padding: [30, 30], maxZoom: 12, animate: true });
+            const boundsSource = isRichtfunkLayerActive ? markerPlainGroup : markerClusterGroup;
+            leafletMap.fitBounds(boundsSource.getBounds(), { padding: [30, 30], maxZoom: 12, animate: true });
         }
     }
 
