@@ -1,5 +1,6 @@
 /.ignore
 node_modules/
+dist/
 
 # Cloudflare local dev secrets - never commit
 .dev.vars

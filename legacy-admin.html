@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="de" class="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin — SWR Standort Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Material Design Icons -->
+<link rel="stylesheet" href="res/mdi/css/materialdesignicons.min.css" />
+<script>
+    tailwind.config = {
+        darkMode: 'class',
+        theme: {
+            extend: {
+                fontFamily: { sans: ['Segoe UI', 'system-ui', 'sans-serif'] },
+                colors: { oled: '#000000', zinc: { 900: '#18181b', 950: '#09090b' } }
+            }
+        }
+    };
+    // Full theme loading — mirrors index.html
+    const cTheme = localStorage.getItem('colorTheme') || 'carbon';
+    const cAppm  = localStorage.getItem('appearance') || 'system';
+    const _tm    = { 'dracula': 'themes/dracula.css', 'dracula-laser': 'themes/dracula-laser.css', 'kirschbluete': 'themes/kirschbluete.css', 'swr-ms': 'themes/swr-ms.css', 'carbon': 'themes/carbon.css' };
+    let isD = false;
+    if (cAppm === 'dark' || (cAppm === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) isD = true;
+    if (isD) document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
+    if (_tm[cTheme]) {
+        document.documentElement.classList.add(cTheme);
+        const l = document.createElement('link');
+        l.rel = 'stylesheet'; l.id = 'custom-theme-css'; l.href = _tm[cTheme];
+        document.head.appendChild(l);
+    }
+</script>
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/leaflet.css" />
+    <link rel="stylesheet" href="css/overlays.css" />
+    <link rel="stylesheet" href="css/components.css" />
+    <link rel="stylesheet" href="css/animations.css" />
+    <link rel="stylesheet" href="css/modals.css" />
+<style>
+    [x-cloak] { display: none; }
+    /* .cell mirrors Tailwind px-3 py-2 text-sm */
+    .cell { padding: 0.5rem 0.75rem; font-size: 0.875rem; }
+    details > summary { list-style: none; cursor: pointer; }
+    details > summary::-webkit-details-marker { display: none; }
+
+    .form-input {
+        width: 100%;
+        border: 1px solid #e0e0e0;
+        border-radius: 0.375rem;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+        background: white;
+        outline: none;
+        transition: border-color 150ms ease, box-shadow 150ms ease;
+    }
+    .dark .form-input { border-color: #393939; background: #161616; color: #f4f4f4; }
+    .form-input:focus { border-color: #4589ff; box-shadow: 0 0 0 2px rgba(69,137,255,0.25); }
+    .dark .form-input:focus { border-color: #4589ff; box-shadow: 0 0 0 2px rgba(69,137,255,0.2); }
+    .form-input::placeholder { color: #a8a8a8; }
+</style>
+</head>
+<body class="bg-slate-100 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 min-h-screen font-sans">
+
+<!-- ───────────────────────────── AUTH GATE ───────────────────────────────── -->
+<div id="authGate" class="fixed inset-0 bg-black/60 backdrop-blur flex items-center justify-center z-50">
+    <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-2xl p-8 w-full max-w-sm">
+        <h2 class="text-lg font-bold mb-1">Admin-Zugang</h2>
+        <p class="text-xs text-slate-500 dark:text-zinc-400 mb-5">Gib den Admin-Token ein (entspricht <code class="font-mono bg-slate-100 dark:bg-zinc-800 px-1 rounded">ADMIN_SECRET</code>).</p>
+        <input id="tokenInput" type="password" placeholder="Admin-Token" autocomplete="current-password"
+            class="w-full border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <button onclick="submitToken()"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 text-sm font-medium transition-colors">
+            Anmelden
+        </button>
+        <p id="authError" class="text-xs text-red-500 mt-2 hidden">Token ungültig oder Backend nicht erreichbar.</p>
+    </div>
+</div>
+
+<!-- ───────────────────────────── MAIN ────────────────────────────────────── -->
+<div id="adminMain" class="hidden max-w-7xl mx-auto px-4 py-6">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6 gap-4 flex-wrap">
+        <div>
+            <h1 class="text-xl font-bold">Standort-Verwaltung</h1>
+            <p class="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">Cloudflare KV</p>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+            <button onclick="openAddForm()"
+                class="px-3 py-1.5 text-sm bg-green-600 hover:bg-green-700 text-white rounded-md font-medium transition-colors flex items-center gap-1.5">
+                <i class="mdi mdi-plus text-base leading-none"></i> Neuer Standort
+            </button>
+            <button onclick="seedFromStandorteJs()"
+                class="px-3 py-1.5 text-sm border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 rounded-md font-medium transition-colors flex items-center gap-1.5">
+                <i class="mdi mdi-database-import-outline text-base leading-none"></i> Seed von standorte.js
+            </button>
+            <button onclick="exportStandorteJs()"
+                class="px-3 py-1.5 text-sm border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 rounded-md font-medium transition-colors flex items-center gap-1.5">
+                <i class="mdi mdi-database-export-outline text-base leading-none"></i> Export standorte.js
+            </button>
+            <button onclick="loadAll()"
+                class="px-3 py-1.5 text-sm border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 rounded-md font-medium transition-colors flex items-center gap-1.5">
+                <i class="mdi mdi-refresh text-base leading-none"></i> Neu laden
+            </button>
+            <button onclick="logout()"
+                class="px-3 py-1.5 text-sm text-slate-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 rounded-md transition-colors flex items-center gap-1.5">
+                <i class="mdi mdi-logout text-base leading-none"></i> Abmelden
+            </button>
+        </div>
+    </div>
+
+    <!-- Status bar -->
+    <div id="statusBar" class="text-xs text-slate-500 dark:text-zinc-400 mb-4"></div>
+
+    <!-- Seed progress -->
+    <div id="seedProgress" class="hidden mb-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-sm text-blue-700 dark:text-blue-300"></div>
+
+    <!-- Tabs -->
+    <div class="flex gap-1 mb-4 border-b border-slate-200 dark:border-zinc-800">
+        <button onclick="switchTab('standorte')" id="tab-standorte" class="tab-btn px-4 py-2 text-sm font-medium border-b-2 border-blue-500 text-blue-600 dark:text-blue-400">Standorte</button>
+        <button onclick="switchTab('fahrtanweisungen')" id="tab-fahrtanweisungen" class="tab-btn px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100">Fahrtanweisungen</button>
+    </div>
+
+    <!-- ─── TAB: Standorte ─────────────────────────────────────────────────── -->
+    <div id="pane-standorte">
+        <!-- Search -->
+        <div class="mb-3">
+            <input id="searchInput" type="text" placeholder="Suchen (Nummer, Name)…"
+                oninput="filterTable()" class="w-full max-w-md border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
+            <table class="w-full text-sm" id="standorteTable">
+                <thead>
+                    <tr class="border-b border-slate-200 dark:border-zinc-800 text-left text-xs text-slate-500 dark:text-zinc-400 uppercase tracking-wide">
+                        <th class="cell w-24 cursor-pointer select-none hover:text-slate-700 dark:hover:text-zinc-200 transition-colors whitespace-nowrap" onclick="setSortStandorte('nummer')">Nr. <i id="sort-icon-nummer" class="mdi mdi-sort-ascending text-blue-500 dark:text-blue-400"></i></th>
+                        <th class="cell cursor-pointer select-none hover:text-slate-700 dark:hover:text-zinc-200 transition-colors whitespace-nowrap" onclick="setSortStandorte('name')">Name <i id="sort-icon-name" class="mdi mdi-sort opacity-40"></i></th>
+                        <th class="cell w-28">Lat</th>
+                        <th class="cell w-28">Lon</th>
+                        <th class="cell w-24 text-center">Fahrtanw.</th>
+                        <th class="cell w-20 text-center">Overlays</th>
+                        <th class="cell w-44 cursor-pointer select-none hover:text-slate-700 dark:hover:text-zinc-200 transition-colors whitespace-nowrap" onclick="setSortStandorte('updatedAt')">Letzte Änderung <i id="sort-icon-updatedAt" class="mdi mdi-sort opacity-40"></i></th>
+                        <th class="cell w-36">Geändert von</th>
+                        <th class="cell w-28 text-right">Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody id="standorteBody">
+                    <tr><td colspan="9" class="cell text-center text-slate-400 py-8">Lädt…</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <p id="tableCount" class="text-xs text-slate-400 dark:text-zinc-500 mt-2"></p>
+    </div>
+
+
+
+    <!-- ─── TAB: Fahrtanweisungen ──────────────────────────────────────────── -->
+    <div id="pane-fahrtanweisungen" class="hidden">
+        <div class="flex items-center justify-between mb-3">
+            <p class="text-xs text-slate-500 dark:text-zinc-400">Alle von Nutzern gespeicherten Fahrtanweisungen. Änderungen gelten sofort für alle Nutzer.</p>
+            <button onclick="loadFahrtanweisungen()"
+                class="px-3 py-1.5 text-sm border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 rounded-md font-medium transition-colors flex items-center gap-1.5">
+                <i class="mdi mdi-refresh text-base leading-none"></i> Aktualisieren
+            </button>
+        </div>
+        <div id="fahrtListEmpty" class="hidden text-sm text-slate-400 dark:text-zinc-500 text-center py-12">Keine Fahrtanweisungen vorhanden.</div>
+        <div id="fahrtList" class="space-y-3"></div>
+    </div>
+
+</div>
+
+<!-- ───────────────────────────── OVERLAY DETAIL MODAL ──────────────────────── -->
+<div id="overlayDetailModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 hidden flex items-start justify-center pt-10 px-4">
+    <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-2xl w-full max-w-2xl max-h-[82vh] flex flex-col">
+        <!-- Header -->
+        <div class="p-5 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between flex-shrink-0 sticky top-0">
+            <div>
+                <h2 id="overlayDetailTitle" class="text-base font-bold">Overlays</h2>
+                <p id="overlayDetailMeta" class="text-xs text-slate-500 dark:text-zinc-400 mt-0.5"></p>
+            </div>
+            <button onclick="closeOverlayDetail()" class="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
+                <i class="mdi mdi-close text-xl leading-none"></i>
+            </button>
+        </div>
+        <!-- Body (scrollable list) -->
+        <div id="overlayDetailBody" class="flex-1 overflow-y-auto p-4 space-y-1.5"></div>
+        <!-- Footer -->
+        <div class="p-4 border-t border-slate-200 dark:border-zinc-800 flex justify-between items-center flex-shrink-0">
+            <button id="overlayDetailClearBtn" onclick="clearAllOverlaysDetail()"
+                class="hidden px-3 py-1.5 text-sm border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                Alle Overlays löschen
+            </button>
+            <span></span>
+            <button onclick="closeOverlayDetail()" class="px-4 py-1.5 text-sm border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors">
+                Schließen
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ───────────────────────────── FAHRTANWEISUNG MODAL ──────────────────────── -->
+<div id="fahrtModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 hidden flex items-start justify-center pt-16 px-4">
+    <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-2xl w-full max-w-lg">
+        <div class="p-5 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between">
+            <div>
+                <h2 id="fahrtModalTitle" class="text-base font-bold">Fahrtanweisung</h2>
+                <p id="fahrtModalMeta" class="text-xs text-slate-500 dark:text-zinc-400 mt-0.5"></p>
+            </div>
+            <button onclick="closeFahrtModal()" class="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
+                <i class="mdi mdi-close text-xl leading-none"></i>
+            </button>
+        </div>
+        <div class="p-5">
+            <textarea id="fahrtModalText" rows="6"
+                class="w-full border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 rounded-lg px-3 py-2 text-sm font-sans resize-y focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-zinc-100"
+                placeholder="Fahrtanweisung eingeben…"></textarea>
+        </div>
+        <div class="p-4 border-t border-slate-200 dark:border-zinc-800 flex justify-end gap-2">
+            <button onclick="closeFahrtModal()"
+                class="px-4 py-2 text-sm border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors">
+                Abbrechen
+            </button>
+            <button onclick="saveFahrtFromModal()"
+                class="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center gap-1.5">
+                <i class="mdi mdi-content-save-outline text-base leading-none"></i> Speichern
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ───────────────────────────── EDIT MODAL ──────────────────────────────── -->
+<div id="editModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 hidden flex items-start justify-center pt-16 px-4">
+    <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+        <div class="p-5 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between sticky top-0 bg-white dark:bg-zinc-900 z-10">
+            <h2 id="editModalTitle" class="text-base font-bold">Standort bearbeiten</h2>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
+                <i class="mdi mdi-close text-xl leading-none"></i>
+            </button>
+        </div>
+        <form id="editForm" onsubmit="submitForm(event)" class="p-5 space-y-4">
+            <input type="hidden" id="fOriginalNummer" />
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">Nummer *</label>
+                    <input id="fNummer" type="text" required class="form-input" />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">Name</label>
+                    <input id="fName" type="text" class="form-input" />
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">Latitude *</label>
+                    <input id="fLat" type="number" step="any" required class="form-input" />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">Longitude *</label>
+                    <input id="fLon" type="number" step="any" required class="form-input" />
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">Tagebuch-Link</label>
+                <input id="fLink" type="url" class="form-input" placeholder="https://…" />
+            </div>
+
+            <!-- ── Section: Standort-Kurzdaten ──────────────────────────────── -->
+            <div class="pt-2">
+                <p class="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-3">Standort-Details</p>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide" title="max. 3 Zeichen">Kürzel <span class="font-normal normal-case tracking-normal">(max. 3 Z.)</span></label>
+                        <input id="fKuerzel" type="text" maxlength="3" class="form-input" placeholder="z.B. STR" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">DFMG-ID</label>
+                        <input id="fDfmgId" type="text" class="form-input" placeholder="z.B. DE-001" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Section: Richtfunk ─────────────────────────────────────── -->
+            <div>
+                <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">Richtfunk-Verbindungen</label>
+                <input id="fRichtfunk" type="text" class="form-input" placeholder="Kommagetrennte Nummern, z.B. 8100, 8317" />
+                <p class="text-[11px] text-slate-400 dark:text-zinc-500 mt-1">Gegenrichtung (B→A) wird automatisch synchronisiert.</p>
+            </div>
+
+            <!-- ── Section: Paten ─────────────────────────────────────────── -->
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">PV-Pate</label>
+                    <input id="fPvPate" type="text" class="form-input" />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">PV-Vertretung</label>
+                    <input id="fPvVertretung" type="text" class="form-input" />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">IFS-Pate</label>
+                    <input id="fIfsPate" type="text" class="form-input" />
+                </div>
+            </div>
+
+            <!-- ── Section: Betreiber ─────────────────────────────────────── -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">Betreiber Standort</label>
+                    <select id="fBetreiberStandortSelect" class="form-input" onchange="toggleBetreiberCustom('StandortSelect','StandortCustom')">
+                        <option value="SWR">SWR</option>
+                        <option value="SMS">SMS</option>
+                        <option value="DFMG">DFMG</option>
+                        <option value="BR">BR</option>
+                        <option value="SR">SR</option>
+                        <option value="ORF">ORF</option>
+                        <option value="MB">MB</option>
+                        <option value="Swisscom">Swisscom</option>
+                        <option value="__custom__">Sonstige…</option>
+                    </select>
+                    <input id="fBetreiberStandortCustom" type="text" class="form-input mt-1 hidden" placeholder="Betreiber eingeben…" />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-zinc-400 uppercase tracking-wide">Betreiber Sender</label>
+                    <select id="fBetreiberSenderSelect" class="form-input" onchange="toggleBetreiberCustom('SenderSelect','SenderCustom')">
+                        <option value="SWR">SWR</option>
+                        <option value="SMS">SMS</option>
+                        <option value="DFMG">DFMG</option>
+                        <option value="BR">BR</option>
+                        <option value="SR">SR</option>
+                        <option value="ORF">ORF</option>
+                        <option value="MB">MB</option>
+                        <option value="Swisscom">Swisscom</option>
+                        <option value="__custom__">Sonstige…</option>
+                    </select>
+                    <input id="fBetreiberSenderCustom" type="text" class="form-input mt-1 hidden" placeholder="Betreiber eingeben…" />
+                </div>
+            </div>
+
+            <div id="formError" class="hidden text-sm text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2"></div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" onclick="closeModal()"
+                    class="px-4 py-2 text-sm border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors">
+                    Abbrechen
+                </button>
+                <button type="submit" id="submitBtn"
+                    class="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
+                    Speichern
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────────
+
+let adminToken   = sessionStorage.getItem('adminToken') || '';
+let standorte    = [];
+let overlayData  = {};
+let editMode     = 'add'; // 'add' | 'edit'
+let currentTab   = 'standorte';
+let standortSort = { col: 'nummer', dir: 'asc' };
+
+function sortedStandorte(data) {
+    return [...data].sort((a, b) => {
+        const { col, dir } = standortSort;
+        if (col === 'nummer') {
+            const cmp = String(a.nummer).localeCompare(String(b.nummer), undefined, { numeric: true, sensitivity: 'base' });
+            return dir === 'asc' ? cmp : -cmp;
+        }
+        if (col === 'name') {
+            const cmp = (a.name || '').localeCompare(b.name || '', 'de', { sensitivity: 'base' });
+            return dir === 'asc' ? cmp : -cmp;
+        }
+        if (col === 'updatedAt') {
+            const ta = overlayData[String(a.nummer)]?.updatedAt ? new Date(overlayData[String(a.nummer)].updatedAt).getTime() : 0;
+            const tb = overlayData[String(b.nummer)]?.updatedAt ? new Date(overlayData[String(b.nummer)].updatedAt).getTime() : 0;
+            if (!ta && !tb) return 0;
+            if (!ta) return 1;
+            if (!tb) return -1;
+            return dir === 'asc' ? ta - tb : tb - ta;
+        }
+        return 0;
+    });
+}
+
+function setSortStandorte(col) {
+    if (standortSort.col === col) {
+        standortSort.dir = standortSort.dir === 'asc' ? 'desc' : 'asc';
+    } else {
+        standortSort.col = col;
+        standortSort.dir = 'asc';
+    }
+    updateSortIcons();
+    renderStandorteTable(standorte);
+    filterTable();
+}
+
+function updateSortIcons() {
+    ['nummer', 'name', 'updatedAt'].forEach(col => {
+        const el = document.getElementById(`sort-icon-${col}`);
+        if (!el) return;
+        if (standortSort.col === col) {
+            el.className = 'mdi ' + (standortSort.dir === 'asc' ? 'mdi-sort-ascending' : 'mdi-sort-descending') + ' text-blue-500 dark:text-blue-400';
+        } else {
+            el.className = 'mdi mdi-sort opacity-40';
+        }
+    });
+}
+
+// ─── AUTH ─────────────────────────────────────────────────────────────────────
+
+async function submitToken() {
+    const token = document.getElementById('tokenInput').value.trim();
+    if (!token) return;
+    // Verify via the dedicated admin status endpoint
+    const res = await fetch('/api/admin/status', {
+        headers: { 'Authorization': `Bearer ${token}` }
+    }).catch(() => null);
+    if (!res || res.status === 401) {
+        document.getElementById('authError').classList.remove('hidden');
+        return;
+    }
+    adminToken = token;
+    sessionStorage.setItem('adminToken', token);
+    document.getElementById('authGate').classList.add('hidden');
+    document.getElementById('adminMain').classList.remove('hidden');
+    loadAll();
+}
+
+document.getElementById('tokenInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitToken();
+});
+
+// Auto-login if token already in session
+if (adminToken) {
+    submitToken();
+} else {
+    // Activate auth gate
+    setTimeout(() => document.getElementById('tokenInput').focus(), 100);
+}
+
+function logout() {
+    sessionStorage.removeItem('adminToken');
+    adminToken = '';
+    document.getElementById('authGate').classList.remove('hidden');
+    document.getElementById('adminMain').classList.add('hidden');
+}
+
+// ─── TABS ─────────────────────────────────────────────────────────────────────
+
+function switchTab(tab) {
+    currentTab = tab;
+    ['standorte', 'fahrtanweisungen'].forEach(t => {
+        document.getElementById(`tab-${t}`).className =
+            t === tab
+            ? 'tab-btn px-4 py-2 text-sm font-medium border-b-2 border-blue-500 text-blue-600 dark:text-blue-400'
+            : 'tab-btn px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100';
+        document.getElementById(`pane-${t}`).classList.toggle('hidden', t !== tab);
+    });
+    if (tab === 'fahrtanweisungen') loadFahrtanweisungen();
+}
+
+// ─── DATA LOADING ─────────────────────────────────────────────────────────────
+
+async function loadAll() {
+    setStatus('Lade…');
+    await Promise.all([loadStandorte(), loadOverlays()]);
+    setStatus(`${standorte.length} Standorte · ${Object.keys(overlayData).length} Overlay-Einträge — ${new Date().toLocaleTimeString()}`);
+}
+
+// ─── FAHRTANWEISUNGEN ─────────────────────────────────────────────────────────
+
+let fahrtanweisungenData = [];
+
+async function loadFahrtanweisungen() {
+    const list  = document.getElementById('fahrtList');
+    const empty = document.getElementById('fahrtListEmpty');
+    if (!list) return;
+    list.innerHTML = '<div class="text-sm text-slate-400 dark:text-zinc-500 py-8 text-center">Lade…</div>';
+    empty.classList.add('hidden');
+    try {
+        const res = await fetch('/api/admin/fahrtanweisungen', {
+            headers: { 'Authorization': `Bearer ${adminToken}` }
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        fahrtanweisungenData = await res.json();
+        if (!fahrtanweisungenData.length) {
+            list.innerHTML = '';
+            empty.classList.remove('hidden');
+            return;
+        }
+        list.innerHTML = fahrtanweisungenData.map(renderFahrtCard).join('');
+    } catch (err) {
+        list.innerHTML = `<div class="text-sm text-red-500 py-4 text-center">Fehler: ${esc(err.message)}</div>`;
+    }
+}
+
+function renderFahrtCard(entry) {
+    const updatedAt = entry.fahrtanweisungUpdatedAt
+        ? new Date(entry.fahrtanweisungUpdatedAt).toLocaleString('de-DE')
+        : '—';
+    const updatedBy = entry.fahrtanweisungUpdatedBy ?? '—';
+
+    const historyItems = (entry.fahrtanweisungHistory ?? []).map((h, i) => {
+        const ts = h.savedAt ? new Date(h.savedAt).toLocaleString('de-DE') : '—';
+        return `<div class="flex items-start gap-2 border-l-2 border-slate-200 dark:border-zinc-700 pl-3 py-1.5 group/h">
+            <div class="flex-1 min-w-0">
+                <div class="text-xs text-slate-400 dark:text-zinc-500 mb-0.5">${esc(ts)} · ${esc(h.savedBy ?? '—')}</div>
+                <div class="text-xs text-slate-600 dark:text-zinc-300 whitespace-pre-wrap break-words">${esc(h.text)}</div>
+            </div>
+            <button onclick="revertFahrtanweisung('${esc(String(entry.nummer))}', ${i})"
+                class="flex-shrink-0 opacity-0 group-hover/h:opacity-100 focus:opacity-100 text-xs px-2 py-1 rounded border border-slate-300 dark:border-zinc-600 text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-700 transition-all">
+                <i class="mdi mdi-restore"></i> Wiederherstellen
+            </button>
+        </div>`;
+    }).join('');
+
+    const historySection = (entry.fahrtanweisungHistory ?? []).length
+        ? `<details class="mt-2">
+               <summary class="text-xs text-slate-400 dark:text-zinc-500 cursor-pointer select-none hover:text-slate-600 dark:hover:text-zinc-300 transition-colors">${entry.fahrtanweisungHistory.length} frühere Version(en)</summary>
+               <div class="mt-2 space-y-2">${historyItems}</div>
+           </details>`
+        : '';
+
+    return `<div class="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4" id="fahrtCard-${esc(String(entry.nummer))}">
+        <div class="flex items-center gap-2 mb-3">
+            <span class="font-mono font-bold text-sm text-blue-600 dark:text-blue-400">${esc(String(entry.nummer))}</span>
+            <span class="text-sm text-slate-700 dark:text-zinc-200 flex-1">${esc(entry.name)}</span>
+            <span class="text-xs text-slate-400 dark:text-zinc-500">${esc(updatedAt)} · ${esc(updatedBy)}</span>
+            <button onclick="deleteFahrtanweisung('${esc(String(entry.nummer))}')"
+                class="inline-flex items-center justify-center w-7 h-7 rounded text-slate-400 dark:text-zinc-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors" title="Löschen">
+                <i class="mdi mdi-delete-outline text-base leading-none"></i>
+            </button>
+        </div>
+        <textarea id="fahrtText-${esc(String(entry.nummer))}" rows="3"
+            class="w-full border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 rounded-lg px-3 py-2 text-sm font-sans resize-y focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-zinc-100">${esc(entry.fahrtanweisung)}</textarea>
+        <div class="flex items-center justify-between mt-2">
+            <button onclick="saveFahrtanweisung('${esc(String(entry.nummer))}')"
+                class="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center gap-1.5">
+                <i class="mdi mdi-content-save-outline text-base leading-none"></i> Speichern
+            </button>
+            ${historySection}
+        </div>
+    </div>`;
+}
+
+async function saveFahrtanweisung(nummer) {
+    const textarea = document.getElementById(`fahrtText-${nummer}`);
+    if (!textarea) return;
+    try {
+        const res = await fetch(`/api/admin/fahrtanweisungen/${encodeURIComponent(nummer)}`, {
+            method:  'PUT',
+            headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ text: textarea.value }),
+        });
+        if (!res.ok) throw new Error(await res.text());
+        setStatus(`Fahrtanweisung ${nummer} gespeichert — ${new Date().toLocaleTimeString()}`);
+        await loadFahrtanweisungen();
+    } catch (err) {
+        alert(`Fehler: ${err.message}`);
+    }
+}
+
+async function deleteFahrtanweisung(nummer) {
+    if (!confirm(`Fahrtanweisung für Standort ${nummer} wirklich löschen?`)) return;
+    try {
+        const res = await fetch(`/api/admin/fahrtanweisungen/${encodeURIComponent(nummer)}`, {
+            method:  'DELETE',
+            headers: { 'Authorization': `Bearer ${adminToken}` },
+        });
+        if (!res.ok) throw new Error(await res.text());
+        setStatus(`Fahrtanweisung ${nummer} gelöscht — ${new Date().toLocaleTimeString()}`);
+        await loadFahrtanweisungen();
+    } catch (err) {
+        alert(`Fehler: ${err.message}`);
+    }
+}
+
+async function revertFahrtanweisung(nummer, historyIndex) {
+    const entry = fahrtanweisungenData.find(e => String(e.nummer) === String(nummer));
+    if (!entry) return;
+    const histEntry = (entry.fahrtanweisungHistory ?? [])[historyIndex];
+    if (!histEntry) return;
+    if (!confirm(`Version vom ${histEntry.savedAt ? new Date(histEntry.savedAt).toLocaleString('de-DE') : '?'} wiederherstellen?`)) return;
+    try {
+        const res = await fetch(`/api/admin/fahrtanweisungen/${encodeURIComponent(nummer)}`, {
+            method:  'PUT',
+            headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ text: histEntry.text }),
+        });
+        if (!res.ok) throw new Error(await res.text());
+        setStatus(`Fahrtanweisung ${nummer} wiederhergestellt — ${new Date().toLocaleTimeString()}`);
+        await loadFahrtanweisungen();
+    } catch (err) {
+        alert(`Fehler: ${err.message}`);
+    }
+}
+
+async function loadStandorte() {
+    try {
+        const res = await fetch('/api/standorte');
+        const raw = await res.json();
+        standorte = Array.isArray(raw) ? raw : [];
+        renderStandorteTable(standorte);
+    } catch (err) {
+        setStatus('Fehler beim Laden der Standorte: ' + err.message);
+    }
+}
+
+async function loadOverlays() {
+    try {
+        const res = await fetch('/api/overlays');
+        overlayData = await res.json();
+        renderStandorteTable(standorte);
+    } catch { overlayData = {}; }
+}
+
+// ─── TABLE RENDERING ──────────────────────────────────────────────────────────
+
+function renderStandorteTable(data) {
+    const tbody = document.getElementById('standorteBody');
+    if (!data.length) {
+        tbody.innerHTML = `<tr><td colspan="9" class="cell text-center text-slate-400 py-10">
+            Keine Standorte im Backend. Klicke "Seed von standorte.js" um die statischen Daten zu importieren.
+        </td></tr>`;
+        document.getElementById('tableCount').textContent = '';
+        return;
+    }
+    const sorted = sortedStandorte(data);
+    tbody.innerHTML = sorted.map(s => {
+        const ovEntry  = overlayData[String(s.nummer)];
+        const ovCount  = ovEntry?.features?.length ?? 0;
+        const updatedAt = ovEntry?.updatedAt ? new Date(ovEntry.updatedAt).toLocaleString('de-DE') : '—';
+        const updatedBy = ovEntry?.updatedBy || '—';
+        return `<tr class="border-b border-slate-100 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors" data-nummer="${s.nummer}" data-name="${(s.name||'').toLowerCase()}">
+            <td class="cell font-mono font-semibold">${esc(s.nummer)}</td>
+            <td class="cell">${esc(s.name || '—')}</td>
+            <td class="cell font-mono text-xs text-slate-500 dark:text-zinc-400">${s.lat?.toFixed(6) ?? '—'}</td>
+            <td class="cell font-mono text-xs text-slate-500 dark:text-zinc-400">${s.lon?.toFixed(6) ?? '—'}</td>
+            <td class="cell text-center text-xs">
+                <button onclick="openFahrtModal('${esc(s.nummer)}')" title="Fahrtanweisung bearbeiten"
+                    class="inline-flex items-center justify-center px-1.5 py-0.5 rounded transition-colors ${s.fahrtanweisung ? 'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/40' : 'text-slate-300 dark:text-zinc-600 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-zinc-700'}">
+                    ${s.fahrtanweisung ? '<i class="mdi mdi-check"></i>' : '<i class="mdi mdi-plus"></i>'}
+                </button>
+            </td>
+            <td class="cell text-center text-xs">${ovCount > 0 ? `<button onclick="openOverlayDetail('${esc(s.nummer)}')" class="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800/40 transition-colors font-medium">${ovCount}</button>` : `<button onclick="openOverlayDetail('${esc(s.nummer)}')" class="text-slate-300 dark:text-zinc-600 hover:text-blue-400 transition-colors px-1">+</button>`}</td>
+            <td class="cell text-xs text-slate-500 dark:text-zinc-400 whitespace-nowrap">${updatedAt}</td>
+            <td class="cell text-xs text-slate-500 dark:text-zinc-400">${esc(updatedBy)}</td>
+            <td class="cell text-right">
+                <div class="inline-flex items-center gap-0.5">
+                    <button onclick="openStationskennblatt('${esc(s.nummer)}')" title="Stationskennblatt öffnen"
+                        class="inline-flex items-center justify-center w-7 h-7 rounded text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-700 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors ${s.link ? '' : 'opacity-40 cursor-not-allowed'}" ${s.link ? '' : 'disabled'}>
+                        <i class="mdi mdi-file-document-outline text-base leading-none"></i>
+                    </button>
+                    <button onclick="editStandort('${esc(s.nummer)}')" title="Bearbeiten"
+                        class="inline-flex items-center justify-center w-7 h-7 rounded text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-700 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                        <i class="mdi mdi-pencil-outline text-base leading-none"></i>
+                    </button>
+                    <button onclick="deleteStandort('${esc(s.nummer)}')" title="Löschen"
+                        class="inline-flex items-center justify-center w-7 h-7 rounded text-slate-400 dark:text-zinc-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors">
+                        <i class="mdi mdi-delete-outline text-base leading-none"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+    document.getElementById('tableCount').textContent = `${data.length} Standorte`;
+}
+
+
+// ─── SEARCH FILTER ────────────────────────────────────────────────────────────
+
+function filterTable() {
+    const q = document.getElementById('searchInput').value.toLowerCase().trim();
+    const rows = document.querySelectorAll('#standorteBody tr[data-nummer]');
+    let visible = 0;
+    rows.forEach(row => {
+        const match = !q || row.dataset.nummer.toLowerCase().includes(q) || row.dataset.name.includes(q);
+        row.classList.toggle('hidden', !match);
+        if (match) visible++;
+    });
+    document.getElementById('tableCount').textContent = `${visible} von ${standorte.length} Standorten`;
+}
+
+// ─── CRUD ─────────────────────────────────────────────────────────────────────
+
+// ─── Betreiber helpers ───────────────────────────────────────────────────────
+
+const BETREIBER_KNOWN = ['SWR','SMS','DFMG','BR','SR','ORF','MB','Swisscom'];
+
+function toggleBetreiberCustom(selectSuffix, customSuffix) {
+    const sel = document.getElementById('fBetreiber' + selectSuffix);
+    const inp = document.getElementById('fBetreiber' + customSuffix);
+    if (sel.value === '__custom__') {
+        inp.classList.remove('hidden');
+        inp.focus();
+    } else {
+        inp.classList.add('hidden');
+        inp.value = '';
+    }
+}
+
+function getBetreiberValue(selectSuffix, customSuffix) {
+    const sel = document.getElementById('fBetreiber' + selectSuffix);
+    const inp = document.getElementById('fBetreiber' + customSuffix);
+    return sel.value === '__custom__' ? (inp.value.trim() || 'SWR') : sel.value;
+}
+
+function setBetreiberValue(selectSuffix, customSuffix, value) {
+    const sel = document.getElementById('fBetreiber' + selectSuffix);
+    const inp = document.getElementById('fBetreiber' + customSuffix);
+    if (!value || BETREIBER_KNOWN.includes(value)) {
+        sel.value = value || 'SWR';
+        inp.classList.add('hidden');
+        inp.value = '';
+    } else {
+        sel.value = '__custom__';
+        inp.value = value;
+        inp.classList.remove('hidden');
+    }
+}
+
+function clearNewFields() {
+    document.getElementById('fKuerzel').value = '';
+    document.getElementById('fDfmgId').value = '';
+    document.getElementById('fRichtfunk').value = '';
+    document.getElementById('fPvPate').value = '';
+    document.getElementById('fPvVertretung').value = '';
+    document.getElementById('fIfsPate').value = '';
+    setBetreiberValue('StandortSelect', 'StandortCustom', 'SWR');
+    setBetreiberValue('SenderSelect', 'SenderCustom', 'SWR');
+}
+
+// ─── CRUD ─────────────────────────────────────────────────────────────────────
+
+function openAddForm() {
+    editMode = 'add';
+    document.getElementById('editModalTitle').textContent = 'Neuer Standort';
+    document.getElementById('fOriginalNummer').value = '';
+    document.getElementById('fNummer').value = '';
+    document.getElementById('fName').value = '';
+    document.getElementById('fLat').value = '';
+    document.getElementById('fLon').value = '';
+    document.getElementById('fLink').value = '';
+    clearNewFields();
+
+    hideFormError();
+    document.getElementById('editModal').classList.remove('hidden');
+    setTimeout(() => document.getElementById('fNummer').focus(), 50);
+}
+
+function editStandort(nummer) {
+    const s = standorte.find(x => String(x.nummer) === String(nummer));
+    if (!s) return;
+    editMode = 'edit';
+    document.getElementById('editModalTitle').textContent = `Standort ${s.nummer} bearbeiten`;
+    document.getElementById('fOriginalNummer').value = s.nummer;
+    document.getElementById('fNummer').value = s.nummer;
+    document.getElementById('fName').value = s.name || '';
+    document.getElementById('fLat').value = s.lat ?? '';
+    document.getElementById('fLon').value = s.lon ?? '';
+    document.getElementById('fLink').value = s.link || '';
+    // Extended fields
+    document.getElementById('fKuerzel').value = s.standortkuerzel || '';
+    document.getElementById('fDfmgId').value = s.dfmg_id || '';
+    document.getElementById('fRichtfunk').value = Array.isArray(s.richtfunk) ? s.richtfunk.join(', ') : '';
+    document.getElementById('fPvPate').value = s.pv_pate || '';
+    document.getElementById('fPvVertretung').value = s.pv_vertretung || '';
+    document.getElementById('fIfsPate').value = s.ifs_pate || '';
+    setBetreiberValue('StandortSelect', 'StandortCustom', s.betreiber_standort || 'SWR');
+    setBetreiberValue('SenderSelect', 'SenderCustom', s.betreiber_sender || 'SWR');
+
+    hideFormError();
+    document.getElementById('editModal').classList.remove('hidden');
+    setTimeout(() => document.getElementById('fNummer').focus(), 50);
+}
+
+async function submitForm(event) {
+    event.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Speichere…';
+    hideFormError();
+
+    const nummer = document.getElementById('fNummer').value.trim();
+    const originalNummer = document.getElementById('fOriginalNummer').value.trim();
+
+    // Parse richtfunk: comma- or space-separated list of station numbers
+    const richtfunkRaw = document.getElementById('fRichtfunk').value;
+    const richtfunk = richtfunkRaw
+        .split(/[,\s]+/)
+        .map(v => v.trim())
+        .filter(Boolean);
+
+    const body = {
+        nummer,
+        name:               document.getElementById('fName').value.trim(),
+        lat:                parseFloat(document.getElementById('fLat').value),
+        lon:                parseFloat(document.getElementById('fLon').value),
+        link:               document.getElementById('fLink').value.trim(),
+        // Extended fields
+        standortkuerzel:    document.getElementById('fKuerzel').value.trim().slice(0, 3),
+        dfmg_id:            document.getElementById('fDfmgId').value.trim(),
+        richtfunk,
+        pv_pate:            document.getElementById('fPvPate').value.trim(),
+        pv_vertretung:      document.getElementById('fPvVertretung').value.trim(),
+        ifs_pate:           document.getElementById('fIfsPate').value.trim(),
+        betreiber_standort: getBetreiberValue('StandortSelect', 'StandortCustom'),
+        betreiber_sender:   getBetreiberValue('SenderSelect', 'SenderCustom'),
+    };
+
+    // If nummer changed in edit mode, delete the old record first
+    if (editMode === 'edit' && originalNummer && originalNummer !== nummer) {
+        await fetch(`/api/standorte/${encodeURIComponent(originalNummer)}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${adminToken}` }
+        });
+    }
+
+    const res = await fetch(`/api/standorte/${encodeURIComponent(nummer)}`, {
+        method:  'PUT',
+        headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body:    JSON.stringify(body),
+    });
+
+    btn.disabled = false;
+    btn.textContent = 'Speichern';
+
+    if (res.status === 401) { showFormError('Nicht autorisiert — Token falsch?'); return; }
+    if (!res.ok) { const err = await res.json().catch(() => ({})); showFormError(err.error || 'Fehler beim Speichern.'); return; }
+
+    closeModal();
+    await loadStandorte();
+    setStatus(`Standort ${nummer} gespeichert — ${new Date().toLocaleTimeString()}`);
+}
+
+async function deleteStandort(nummer) {
+    if (!confirm(`Standort "${nummer}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`)) return;
+    const res = await fetch(`/api/standorte/${encodeURIComponent(nummer)}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+    });
+    if (!res.ok) { alert('Fehler beim Löschen.'); return; }
+    await loadStandorte();
+    setStatus(`Standort ${nummer} gelöscht — ${new Date().toLocaleTimeString()}`);
+}
+
+async function deleteOverlay(nummer) {
+    if (!confirm(`Alle Overlays für Standort "${nummer}" wirklich löschen?`)) return;
+    const res = await fetch(`/api/overlays/${encodeURIComponent(nummer)}`, {
+        method: 'DELETE',
+    });
+    if (!res.ok) { alert('Fehler beim Löschen.'); return; }
+    await loadOverlays();
+    setStatus(`Overlays für ${nummer} gelöscht — ${new Date().toLocaleTimeString()}`);
+}
+
+// ─── SEED FROM standorte.js ───────────────────────────────────────────────────
+
+async function seedFromStandorteJs() {
+    if (!confirm('Alle Standorte aus standorte.js ins Backend laden und vorhandene Einträge ersetzen?')) return;
+
+    showSeedProgress('Lade standorte.js…');
+
+    let data;
+    try {
+        const text = await fetch('standorte.js').then(r => r.text());
+        // Evaluate the file in isolation to extract standorteDaten
+        const fn = new Function(text + '\n; return standorteDaten;');
+        data = fn();
+        if (!Array.isArray(data) || data.length === 0) throw new Error('standorteDaten ist leer oder kein Array.');
+    } catch (err) {
+        hideSeedProgress();
+        alert('Fehler beim Laden von standorte.js: ' + err.message);
+        return;
+    }
+
+    showSeedProgress(`${data.length} Standorte gefunden. Sende an Backend…`);
+
+    const res = await fetch('/api/admin/seed', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${adminToken}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ standorte: data, replace: true }),
+    });
+
+    hideSeedProgress();
+
+    if (res.status === 401) { alert('Admin-Token ungültig.'); return; }
+    if (!res.ok) { const err = await res.json().catch(() => ({})); alert('Seed-Fehler: ' + (err.error || 'Unbekannt')); return; }
+
+    const result = await res.json();
+    await loadStandorte();
+    setStatus(`Seed abgeschlossen: ${result.seeded} Standorte importiert. Gesamt: ${result.total}`);
+}
+
+// ─── EXPORT standorte.js ──────────────────────────────────────────────────────
+
+async function exportStandorteJs() {
+    if (!standorte.length) {
+        alert('Keine Standorte geladen. Bitte zuerst neu laden.');
+        return;
+    }
+
+    // Build array containing only the fields kept in standorte.js
+    const records = standorte.map(s => {
+        const r = {
+            nummer: s.nummer,
+            name:   s.name ?? '',
+            lat:    (s.lat !== null && s.lat !== undefined && !isNaN(s.lat)) ? s.lat : null,
+            lon:    (s.lon !== null && s.lon !== undefined && !isNaN(s.lon)) ? s.lon : null,
+        };
+        if (s.link) r.link = s.link;
+        return r;
+    });
+
+    // Serialise each record as compact single-line JSON then indent with 2 spaces
+    const lines = records.map(r => '  ' + JSON.stringify(r));
+    const content = 'const standorteDaten = [\n' + lines.join(',\n') + '\n];\n';
+
+    const blob = new Blob([content], { type: 'text/javascript; charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = 'standorte.js';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+
+    setStatus(`standorte.js exportiert: ${records.length} Standorte — ${new Date().toLocaleTimeString()}`);
+}
+
+// ─── MODAL HELPERS ────────────────────────────────────────────────────────────
+
+function closeModal() {
+    document.getElementById('editModal').classList.add('hidden');
+}
+
+function showFormError(msg) {
+    const el = document.getElementById('formError');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+}
+
+function hideFormError() {
+    document.getElementById('formError').classList.add('hidden');
+}
+
+// ─── STATUS HELPERS ───────────────────────────────────────────────────────────
+
+function setStatus(msg) {
+    document.getElementById('statusBar').textContent = msg;
+}
+
+function showSeedProgress(msg) {
+    const el = document.getElementById('seedProgress');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+}
+
+function hideSeedProgress() {
+    document.getElementById('seedProgress').classList.add('hidden');
+}
+
+function esc(str) {
+    const d = document.createElement('div');
+    d.textContent = String(str ?? '');
+    return d.innerHTML;
+}
+
+// Close modal on backdrop click
+document.getElementById('editModal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeModal();
+});
+
+// ─── OVERLAY DETAIL ───────────────────────────────────────────────────────────
+
+let overlayDetailNummer = null;
+let overlayDetailPayload = null;
+
+function mdiIconAdmin(name, color, sizePx = 15) {
+    return `<i class="mdi mdi-${name}" style="color:${color || '#94a3b8'};font-size:${sizePx}px" aria-hidden="true"></i>`;
+}
+
+function describeFeatureAdmin(f) {
+    const p = f?.properties || {};
+    if (p.overlayType === 'anfahrt') {
+        const color = p.color || '#dc2626';
+        const label = p.routeType === 'hauptzufahrt' ? 'Hauptzufahrt'
+                    : p.routeType === 'alternativ'   ? 'Alternative Zufahrt'
+                    : (p.label || 'Freie Route');
+        return { icon: mdiIconAdmin('road-variant', color), label, type: 'Anfahrt', color };
+    }
+    if (p.overlayType === 'icon') {
+        const color = p.color || '#ef4444';
+        if (p.iconType === 'schranke') return { icon: mdiIconAdmin('boom-gate',    color), label: p.label || 'Schranke',            type: 'Marker', color };
+        if (p.iconType === 'tresor')   return { icon: mdiIconAdmin('lock',         color), label: p.label || 'Schlüsseltresor',      type: 'Marker', color };
+        if (p.iconType === 'hinweis')  return { icon: mdiIconAdmin('comment-text', color), label: (p.note || p.label || 'Hinweis').substring(0, 60), type: 'Hinweis', color };
+    }
+    if (p.overlayType === 'zone' || p.overlayType === 'gefahrenzone') {
+        const color = p.color || '#8b5cf6';
+        if (p.zoneType === 'eisabfall') return { icon: mdiIconAdmin('snowflake-alert', '#eab308'), label: p.label || 'Eisabfallzone',        type: 'Zone', color };
+        return { icon: mdiIconAdmin('vector-polygon', color), label: p.label || p.note || 'Zone', type: 'Zone', color };
+    }
+    if (p.overlayType === 'kreis') {
+        const color = p.color || '#8b5cf6';
+        if (p.zoneType === 'eisabfall') return { icon: mdiIconAdmin('snowflake-alert', '#eab308'), label: p.label || 'Eisabfallzone (Kreis)', type: 'Kreis-Zone', color };
+        return { icon: mdiIconAdmin('circle-outline', color), label: p.label || p.note || 'Kreis-Zone', type: 'Kreis-Zone', color };
+    }
+    if (p.overlayType === 'pfad') {
+        const ss = p.strokeStyle || 'solid';
+        const color = p.color || '#0ea5e9';
+        const styleNames = { solid: 'Solide Linie', dash: 'Gestrichelt', dot: 'Gepunktet', arrow: 'Pfeil', arrow_many: 'Richtungspfeile' };
+        return { icon: mdiIconAdmin('vector-polyline', color), label: p.label || styleNames[ss] || 'Pfad', type: 'Pfad', color };
+    }
+    return { icon: mdiIconAdmin('map-marker', p.color || '#94a3b8'), label: p.label || 'Element', type: 'Unbekannt', color: p.color || '#94a3b8' };
+}
+
+async function openOverlayDetail(nummer) {
+    overlayDetailNummer = String(nummer);
+    const s = standorte.find(x => String(x.nummer) === overlayDetailNummer);
+    document.getElementById('overlayDetailTitle').textContent =
+        `Overlays — ${s ? (s.name ? `${s.name} (${overlayDetailNummer})` : overlayDetailNummer) : overlayDetailNummer}`;
+    document.getElementById('overlayDetailMeta').textContent = 'Lade…';
+    document.getElementById('overlayDetailBody').innerHTML =
+        '<p class="text-sm text-slate-400 dark:text-zinc-500 py-6 text-center">Lade Overlay-Daten…</p>';
+    document.getElementById('overlayDetailClearBtn').classList.add('hidden');
+    document.getElementById('overlayDetailModal').classList.remove('hidden');
+
+    try {
+        const res = await fetch(`/api/overlays/${encodeURIComponent(overlayDetailNummer)}`);
+        overlayDetailPayload = await res.json();
+    } catch {
+        overlayDetailPayload = { features: [], updatedAt: null, updatedBy: null };
+    }
+    renderOverlayDetail();
+}
+
+function renderOverlayDetail() {
+    const payload = overlayDetailPayload;
+    const features = Array.isArray(payload?.features) ? payload.features : [];
+    const updAt = payload?.updatedAt ? new Date(payload.updatedAt).toLocaleString('de-DE') : null;
+    const updBy = payload?.updatedBy;
+
+    const metaParts = [];
+    if (features.length) metaParts.push(`${features.length} Element${features.length !== 1 ? 'e' : ''}`);
+    if (updAt) metaParts.push(`Letzte Änderung: ${updAt}`);
+    if (updBy) metaParts.push(`von ${updBy}`);
+    document.getElementById('overlayDetailMeta').textContent = metaParts.join(' · ') || 'Keine Overlays vorhanden';
+
+    const body = document.getElementById('overlayDetailBody');
+    const clearBtn = document.getElementById('overlayDetailClearBtn');
+
+    if (!features.length) {
+        body.innerHTML = `<div class="text-center py-10">
+            <i class="mdi mdi-map-marker-off text-4xl text-slate-300 dark:text-zinc-600"></i>
+            <p class="text-sm text-slate-400 dark:text-zinc-500 mt-3">Keine Overlay-Elemente vorhanden.</p>
+        </div>`;
+        clearBtn.classList.add('hidden');
+        return;
+    }
+
+    clearBtn.classList.remove('hidden');
+
+    body.innerHTML = features.map((f, idx) => {
+        const d = describeFeatureAdmin(f);
+        return `<div class="flex items-center gap-3 py-2.5 px-3 rounded-lg border border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/30 hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors group" data-idx="${idx}">
+            <span class="flex-shrink-0 w-5 text-center">${d.icon}</span>
+            <div class="flex-1 min-w-0">
+                <div class="text-sm font-medium text-slate-900 dark:text-zinc-100 truncate">${esc(d.label)}</div>
+                <div class="flex items-center gap-2 mt-0.5">
+                    <span class="text-xs text-slate-500 dark:text-zinc-400">${esc(d.type)}</span>
+                    <span class="inline-block w-3 h-3 rounded-full flex-shrink-0 border border-black/10" style="background:${d.color}"></span>
+                    <span class="text-xs font-mono text-slate-400 dark:text-zinc-500">${d.color}</span>
+                </div>
+            </div>
+            <button onclick="deleteOverlayFeature(${idx})"
+                class="flex-shrink-0 opacity-0 group-hover:opacity-100 focus:opacity-100 text-xs px-2 py-1 rounded border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all" title="Element entfernen">
+                <i class="mdi mdi-undo"></i> Entfernen
+            </button>
+        </div>`;
+    }).join('');
+}
+
+async function deleteOverlayFeature(idx) {
+    if (!overlayDetailPayload) return;
+    const features = [...(overlayDetailPayload.features || [])];
+    if (idx < 0 || idx >= features.length) return;
+    const removed = features[idx];
+    const d = describeFeatureAdmin(removed);
+    if (!confirm(`Element "${d.label}" wirklich entfernen?`)) return;
+
+    features.splice(idx, 1);
+    const newPayload = {
+        ...overlayDetailPayload,
+        features,
+        updatedAt: new Date().toISOString(),
+        updatedBy: 'admin'
+    };
+
+    const res = await fetch(`/api/overlays/${encodeURIComponent(overlayDetailNummer)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newPayload)
+    });
+    if (!res.ok) { alert('Fehler beim Speichern.'); return; }
+
+    overlayDetailPayload = newPayload;
+    overlayData[overlayDetailNummer] = newPayload;
+    renderOverlayDetail();
+    renderStandorteTable(standorte);
+    setStatus(`Element entfernt (Standort ${overlayDetailNummer}) — ${new Date().toLocaleTimeString()}`);
+}
+
+async function clearAllOverlaysDetail() {
+    const s = standorte.find(x => String(x.nummer) === overlayDetailNummer);
+    const name = s ? (s.name || overlayDetailNummer) : overlayDetailNummer;
+    if (!confirm(`Alle Overlays für "${name}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`)) return;
+
+    const res = await fetch(`/api/overlays/${encodeURIComponent(overlayDetailNummer)}`, {
+        method: 'DELETE'
+    });
+    if (!res.ok) { alert('Fehler beim Löschen.'); return; }
+
+    delete overlayData[overlayDetailNummer];
+    overlayDetailPayload = { features: [], updatedAt: null, updatedBy: null };
+    renderOverlayDetail();
+    renderStandorteTable(standorte);
+    setStatus(`Overlays für ${overlayDetailNummer} gelöscht — ${new Date().toLocaleTimeString()}`);
+}
+
+function closeOverlayDetail() {
+    document.getElementById('overlayDetailModal').classList.add('hidden');
+    overlayDetailNummer = null;
+    overlayDetailPayload = null;
+}
+
+// Close overlay detail modal on backdrop click
+document.getElementById('overlayDetailModal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeOverlayDetail();
+});
+
+// ─── FAHRTANWEISUNG MODAL ─────────────────────────────────────────────────────
+
+let fahrtModalNummer = null;
+
+function openFahrtModal(nummer) {
+    fahrtModalNummer = String(nummer);
+    const s = standorte.find(x => String(x.nummer) === fahrtModalNummer);
+    document.getElementById('fahrtModalTitle').textContent = 'Fahrtanweisung — ' + fahrtModalNummer;
+    document.getElementById('fahrtModalMeta').textContent = s?.name || '';
+    document.getElementById('fahrtModalText').value = s?.fahrtanweisung || '';
+    document.getElementById('fahrtModal').classList.remove('hidden');
+    setTimeout(() => document.getElementById('fahrtModalText').focus(), 50);
+}
+
+function closeFahrtModal() {
+    document.getElementById('fahrtModal').classList.add('hidden');
+    fahrtModalNummer = null;
+}
+
+async function saveFahrtFromModal() {
+    if (!fahrtModalNummer) return;
+    const text = document.getElementById('fahrtModalText').value;
+    try {
+        const res = await fetch(`/api/admin/fahrtanweisungen/${encodeURIComponent(fahrtModalNummer)}`, {
+            method:  'PUT',
+            headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ text }),
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const s = standorte.find(x => String(x.nummer) === fahrtModalNummer);
+        if (s) s.fahrtanweisung = text;
+        renderStandorteTable(standorte);
+        filterTable();
+        setStatus(`Fahrtanweisung ${fahrtModalNummer} gespeichert — ${new Date().toLocaleTimeString()}`);
+        closeFahrtModal();
+    } catch (err) {
+        alert(`Fehler: ${err.message}`);
+    }
+}
+
+function openStationskennblatt(nummer) {
+    const s = standorte.find(x => String(x.nummer) === String(nummer));
+    if (!s?.link) return;
+    const url = s.link.replace(/tagebuch/gi, 'stationskennblatt');
+    window.location.href = 'ms-excel:ofe|u|' + url;
+}
+
+document.getElementById('fahrtModal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeFahrtModal();
+});
+</script>
+</body>
+</html>
