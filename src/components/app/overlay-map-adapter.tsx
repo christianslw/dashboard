@@ -7,9 +7,11 @@ import { Standort } from "@/lib/api";
 
 interface OverlayMapAdapterProps {
   standort: Standort | null;
+  standorte: Standort[];
   features: OverlayFeatureDraft[];
   selectedFeatureId: string | null;
   onSelectFeature: (featureId: string | null) => void;
+  onSelectStandort: (standort: Standort) => void;
 }
 
 type FeatureCoords = [number, number][];
@@ -58,9 +60,11 @@ function getFeatureColor(feature: OverlayFeatureDraft): string {
 
 export function OverlayMapAdapter({
   standort,
+  standorte,
   features,
   selectedFeatureId,
   onSelectFeature,
+  onSelectStandort,
 }: OverlayMapAdapterProps) {
   const mapHostRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -105,25 +109,53 @@ export function OverlayMapAdapter({
 
     standortLayer.clearLayers();
 
-    if (!standort || standort.lat == null || standort.lon == null) return;
+    const bounds = L.latLngBounds([]);
 
-    const marker = L.circleMarker([standort.lat, standort.lon], {
-      radius: 8,
-      color: "#0f172a",
-      weight: 2,
-      fillColor: "#f8fafc",
-      fillOpacity: 0.95,
+    const markerColors: Record<number, string> = {
+      1: "#8b5cf6",
+      2: "#10b981",
+      3: "#f59e0b",
+      4: "#ef4444",
+      5: "#ec4899",
+      6: "#06b6d4",
+      8: "#6366f1",
+      9: "#eab308",
+    };
+
+    standorte.forEach((entry) => {
+      if (entry.lat == null || entry.lon == null) return;
+
+      const prefix = Math.floor(Number(entry.nummer) / 1000);
+      const markerColor = markerColors[prefix] ?? "#3b82f6";
+      const isActive = standort && String(standort.nummer) === String(entry.nummer);
+
+      const marker = L.circleMarker([entry.lat, entry.lon], {
+        radius: isActive ? 8 : 5,
+        color: "#ffffff",
+        weight: isActive ? 3 : 2,
+        fillColor: markerColor,
+        fillOpacity: isActive ? 0.95 : 0.8,
+      });
+
+      marker.bindTooltip(`${entry.nummer} - ${entry.name}`, {
+        direction: "top",
+        offset: [0, -6],
+        opacity: 0.95,
+      });
+      marker.on("click", () => onSelectStandort(entry));
+      marker.addTo(standortLayer);
+      bounds.extend([entry.lat, entry.lon]);
     });
 
-    marker.bindTooltip(`${standort.nummer} - ${standort.name}`, {
-      direction: "top",
-      offset: [0, -6],
-      opacity: 0.95,
-    });
+    if (standort && standort.lat != null && standort.lon != null) {
+      map.setView([standort.lat, standort.lon], 11, { animate: true });
+      return;
+    }
 
-    marker.addTo(standortLayer);
-    map.setView([standort.lat, standort.lon], 13, { animate: true });
-  }, [standort]);
+    if (bounds.isValid()) {
+      map.fitBounds(bounds.pad(0.12), { animate: true, maxZoom: 10 });
+    }
+  }, [onSelectStandort, standort, standorte]);
 
   useEffect(() => {
     const overlayLayer = overlayLayerRef.current;

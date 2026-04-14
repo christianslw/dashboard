@@ -6,11 +6,13 @@ import { OverlayMapAdapter } from "@/components/app/overlay-map-adapter";
 
 interface OverlayStageProps {
   standort: Standort | null;
+  standorte: Standort[];
   features: OverlayFeatureDraft[];
   featureCount: number;
   selectedFeature: OverlayFeatureDraft | null;
   selectedFeatureId: string | null;
   onSelectFeature: (featureId: string | null) => void;
+  onSelectStandort: (standort: Standort) => void;
 }
 
 function getFeatureTypeLabel(feature: OverlayFeatureDraft | null): string {
@@ -24,11 +26,13 @@ function getFeatureTypeLabel(feature: OverlayFeatureDraft | null): string {
 
 export function OverlayStage({
   standort,
+  standorte,
   features,
   featureCount,
   selectedFeature,
   selectedFeatureId,
   onSelectFeature,
+  onSelectStandort,
 }: OverlayStageProps) {
   return (
     <Card className="overflow-hidden border-border/70">
@@ -47,9 +51,11 @@ export function OverlayStage({
         <div className="relative">
           <OverlayMapAdapter
             standort={standort}
+            standorte={standorte}
             features={features}
             selectedFeatureId={selectedFeatureId}
             onSelectFeature={onSelectFeature}
+            onSelectStandort={onSelectStandort}
           />
 
           <div className="pointer-events-none absolute left-4 top-4 rounded-lg border border-border/80 bg-background/90 px-3 py-2 backdrop-blur">

@@ -1,33 +1,16 @@
 import { useState } from "react";
-import { Layers3, MapPinned, Compass, ChevronRight } from "lucide-react";
+import { Crosshair, Filter, SlidersHorizontal, Sparkles, X } from "lucide-react";
 
 import { AppFrame } from "@/components/app/app-frame";
 import { ListControls } from "@/components/app/list-controls";
 import { OverlayCommandCenter } from "@/components/app/overlay-command-center";
 import { OverlayStage } from "@/components/app/overlay-stage";
 import { StandortList } from "@/components/app/standort-list";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useOverlayCommandCenter } from "@/hooks/useOverlayCommandCenter";
 import { useStandorte } from "@/hooks/useStandorte";
 import { Standort } from "@/lib/api";
-
-const featureCards = [
-  {
-    icon: MapPinned,
-    title: "Dashboard shell",
-    description: "Shared layout, theming, and responsive navigation are now centralized in React instead of duplicated across HTML entry points.",
-  },
-  {
-    icon: Layers3,
-    title: "Theme engine",
-    description: "Brand themes and appearance preferences are stored under the existing localStorage keys so the migration stays compatible with current user settings.",
-  },
-  {
-    icon: Compass,
-    title: "Search & filters",
-    description: "Full-featured list with real-time search, area code filtering, sorting by name, distance, or number—all persisted to localStorage.",
-  },
-];
 
 export function DashboardPage() {
   const {
@@ -44,6 +27,7 @@ export function DashboardPage() {
   } = useStandorte();
 
   const [selectedStandort, setSelectedStandort] = useState<Standort | null>(null);
+  const [commandCenterOpen, setCommandCenterOpen] = useState(true);
   const overlay = useOverlayCommandCenter(selectedStandort?.nummer);
 
   const activeFilterCount = filters.includedAreaCodes.size + filters.excludedAreaCodes.size;
@@ -51,21 +35,13 @@ export function DashboardPage() {
   return (
     <AppFrame
       current="dashboard"
-      eyebrow="Slice 3: Overlay Command Center"
-      title="Map-first overlays are back with a fresh editing surface."
-      summary="The new right-rail Command Center introduces a clearer overlay workflow with typed API persistence, local undo/redo, color-driven layer management, and a dedicated map stage prepared for the Leaflet adapter."
+      eyebrow="Dashboard Workspace"
+      title="Legacy rhythm, modern command center."
+      summary="Dense list browsing, map-first navigation, and a focused overlay editor rail. This layout restores the operational flow from the old dashboard while keeping a cleaner interaction model."
     >
-      <section className="space-y-6">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle>Standorte</CardTitle>
-            <CardDescription>
-              {standorte.length} result{standorte.length !== 1 ? "s" : ""} found
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {error && <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
-
+      <section className="space-y-3">
+        <div className="rounded-xl border border-border/70 bg-card/80 p-3">
+          <div className="mb-3 grid gap-2 lg:grid-cols-[1fr_auto_auto]">
             <ListControls
               searchQuery={filters.searchQuery}
               onSearchChange={setSearchQuery}
@@ -77,103 +53,68 @@ export function DashboardPage() {
               onSortChange={setSortKey}
             />
 
-            <div className="grid gap-6 xl:grid-cols-[340px_1fr_360px]">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-10"
+              onClick={() => setCommandCenterOpen((prev) => !prev)}
+            >
+              {commandCenterOpen ? <X className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+              {commandCenterOpen ? "Hide Editor" : "Open Editor"}
+            </Button>
+
+            <div className="flex h-10 items-center justify-end gap-2 rounded-md border border-border/70 bg-background/70 px-3 text-xs text-muted-foreground">
+              <Crosshair className="h-3.5 w-3.5" />
+              {selectedStandort ? `${selectedStandort.nummer} ${selectedStandort.name}` : "No standort selected"}
+            </div>
+          </div>
+
+          {error && <div className="mb-3 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</div>}
+
+          <div className="mb-3 flex items-center justify-between text-xs text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary">{standorte.length} Standorte</Badge>
+              <span>Start: {selectedStandort ? String(selectedStandort.nummer) : "not selected"}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1"><Filter className="h-3.5 w-3.5" />{activeFilterCount} active filters</span>
+              <span className="flex items-center gap-1"><SlidersHorizontal className="h-3.5 w-3.5" />Sort: {sortKey}</span>
+            </div>
+          </div>
+
+          <div className={`grid gap-3 ${commandCenterOpen ? "xl:grid-cols-[420px_1fr_370px]" : "xl:grid-cols-[420px_1fr]"}`}>
+            <div>
               <StandortList
                 standorte={standorte}
                 onSelect={setSelectedStandort}
                 activeStandort={selectedStandort}
                 isLoading={loading}
               />
+            </div>
 
+            <div>
               <OverlayStage
                 standort={selectedStandort}
+                standorte={standorte}
                 features={overlay.features}
                 featureCount={overlay.features.length}
                 selectedFeature={overlay.selectedFeature}
                 selectedFeatureId={overlay.selectedFeatureId}
                 onSelectFeature={overlay.selectFeature}
+                onSelectStandort={setSelectedStandort}
               />
+            </div>
 
+            {commandCenterOpen && (
               <OverlayCommandCenter
                 standortLabel={selectedStandort?.name ?? "No standort selected"}
                 standortNummer={selectedStandort?.nummer}
                 overlay={overlay}
               />
-            </div>
-          </CardContent>
-        </Card>
-
-        <section className="grid gap-6 lg:grid-cols-[1fr_320px]">
-          {selectedStandort ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">{selectedStandort.name}</CardTitle>
-                <CardDescription className="font-mono text-sm">{selectedStandort.nummer}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {selectedStandort.lat && selectedStandort.lon && (
-                  <>
-                    <div>
-                      <p className="mb-1 text-xs font-medium text-muted-foreground">Coordinates</p>
-                      <p className="text-sm font-mono">
-                        {selectedStandort.lat.toFixed(4)}, {selectedStandort.lon.toFixed(4)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="mb-1 text-xs font-medium text-muted-foreground">Location</p>
-                      <a
-                        href={`https://maps.google.com/?q=${selectedStandort.lat},${selectedStandort.lon}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-sm text-primary hover:underline"
-                      >
-                        Open in Google Maps
-                        <ChevronRight className="h-3 w-3" />
-                      </a>
-                    </div>
-                  </>
-                )}
-                {selectedStandort.link && (
-                  <div>
-                    <p className="mb-1 text-xs font-medium text-muted-foreground">SharePoint</p>
-                    <a
-                      href={selectedStandort.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 break-all text-sm text-primary hover:underline"
-                    >
-                      Open folder
-                      <ChevronRight className="h-3 w-3 flex-shrink-0" />
-                    </a>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="border-dashed">
-              <CardContent className="flex h-32 items-center justify-center text-muted-foreground">
-                <p className="text-sm">Select a standort to open Command Center editing</p>
-              </CardContent>
-            </Card>
-          )}
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Overlay UX upgrades</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              {featureCards.map(({ icon: Icon, title, description }) => (
-                <div key={title} className="rounded-lg border border-border/70 px-3 py-2">
-                  <div className="mb-1 flex items-center gap-2">
-                    <Icon className="h-4 w-4 text-primary" />
-                    <span className="font-medium">{title}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">{description}</p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </section>
+            )}
+          </div>
+        </div>
       </section>
     </AppFrame>
   );

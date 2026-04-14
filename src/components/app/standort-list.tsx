@@ -16,7 +16,7 @@ export function StandortList({
 }: StandortListProps) {
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex h-64 items-center justify-center rounded-xl border border-border/70 bg-card/80">
         <div className="text-muted-foreground">Loading standorte...</div>
       </div>
     );
@@ -24,14 +24,14 @@ export function StandortList({
 
   if (standorte.length === 0) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex h-64 items-center justify-center rounded-xl border border-border/70 bg-card/80">
         <div className="text-muted-foreground">No standorte found</div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-2 overflow-y-auto max-h-[calc(100vh-300px)]">
+    <div className="h-[620px] overflow-y-auto rounded-xl border border-border/70 bg-card/70">
       {standorte.map((standort) => (
         <StandortCard
           key={String(standort.nummer)}

@@ -1,8 +1,6 @@
 import { Standort } from '@/lib/api';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, FileText, Folder } from 'lucide-react';
+import { Navigation, Folder } from 'lucide-react';
 
 interface StandortCardProps {
   standort: Standort;
@@ -27,52 +25,72 @@ export function StandortCard({ standort, onClick, isActive }: StandortCardProps)
   };
   const markerColor = markerColors[prefix] || '#3b82f6';
 
-  return (
-    <Card
-      className={`cursor-pointer transition-colors ${isActive ? 'ring-2 ring-primary' : 'hover:bg-accent'}`}
-      onClick={handleClick}
-    >
-      <CardContent className="p-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2">
-              <div
-                className="w-3 h-3 rounded-full flex-shrink-0"
-                style={{ backgroundColor: markerColor }}
-              />
-              <span className="font-mono text-sm font-bold text-muted-foreground">
-                {standort.nummer}
-              </span>
-              {standort.distance && (
-                <Badge variant="secondary" className="text-xs">
-                  {standort.distance.toFixed(1)} km
-                </Badge>
-              )}
-            </div>
-            <h3 className="font-semibold text-sm truncate">{standort.name}</h3>
-            {standort.lat && standort.lon && (
-              <p className="text-xs text-muted-foreground mt-1">
-                {standort.lat.toFixed(4)}, {standort.lon.toFixed(4)}
-              </p>
-            )}
-          </div>
+  const fallbackDistance = standort.distance ?? 0;
+  const fallbackMinutes = Math.max(4, Math.round((fallbackDistance || 28) * 1.2));
+  const hours = Math.floor(fallbackMinutes / 60);
+  const minutes = fallbackMinutes % 60;
+  const etaLabel = hours > 0 ? `~${hours}h ${minutes}m` : `~${minutes}m`;
 
-          <div className="flex gap-1 flex-shrink-0">
-            <Button
-              variant="ghost"
-              size="sm"
-              title="Open in SharePoint"
-              onClick={(e) => {
-                e.stopPropagation();
-                window.open(standort.link, '_blank');
-              }}
-              className="h-8 w-8 p-0"
-            >
-              <Folder className="h-4 w-4" />
-            </Button>
+  return (
+    <article
+      className={`group border-b border-border/70 px-3 py-3 transition-colors ${isActive ? 'bg-primary/10' : 'bg-background/80 hover:bg-muted/45'}`}
+      onClick={handleClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          handleClick();
+        }
+      }}
+    >
+      <div className="flex items-start gap-3">
+        <div
+          className="mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full ring-2 ring-background"
+          style={{ backgroundColor: markerColor }}
+        />
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <p className="font-mono text-[24px] leading-none font-semibold text-foreground">{standort.nummer}</p>
+            <p className="truncate text-[21px] leading-none text-muted-foreground">{standort.name}</p>
+          </div>
+          <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="font-medium">{fallbackDistance.toFixed(1)} km</span>
+            <span>{etaLabel}</span>
           </div>
         </div>
-      </CardContent>
-    </Card>
+
+        <div className="flex items-center gap-1 opacity-70 transition-opacity group-hover:opacity-100">
+          <Button
+            variant="ghost"
+            size="sm"
+            title="Navigate"
+            onClick={(event) => {
+              event.stopPropagation();
+              if (standort.lat && standort.lon) {
+                window.open(`https://maps.google.com/?q=${standort.lat},${standort.lon}`, '_blank');
+              }
+            }}
+            className="h-7 w-7 p-0"
+          >
+            <Navigation className="h-3.5 w-3.5" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            title="Open SharePoint"
+            onClick={(event) => {
+              event.stopPropagation();
+              window.open(standort.link, '_blank');
+            }}
+            className="h-7 w-7 p-0"
+          >
+            <Folder className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+    </article>
   );
 }
