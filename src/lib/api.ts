@@ -1,3 +1,12 @@
+export interface Standort {
+  nummer: string | number;
+  name: string;
+  lat: number | null;
+  lon: number | null;
+  link: string;
+  distance?: number;
+}
+
 export type StandorteSummary = {
   count: number;
   ok: boolean;
@@ -38,6 +47,18 @@ export async function fetchStandorteSummary(signal?: AbortSignal): Promise<Stand
       latencyMs: Math.round(performance.now() - startedAt),
       error: error instanceof Error ? error.message : "Unknown error",
     };
+  }
+}
+
+export async function fetchAllStandorte(signal?: AbortSignal): Promise<Standort[]> {
+  try {
+    const response = await fetch("/api/standorte", { signal });
+    if (!response.ok) return [];
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
+  } catch (err) {
+    console.error("Failed to fetch standorte:", err);
+    return [];
   }
 }
 
