@@ -144,7 +144,7 @@
                         <th class="cell w-20 text-center">Overlays</th>
                         <th class="cell w-44 cursor-pointer select-none hover:text-slate-700 dark:hover:text-zinc-200 transition-colors whitespace-nowrap" onclick="setSortStandorte('updatedAt')">Letzte Änderung <i id="sort-icon-updatedAt" class="mdi mdi-sort opacity-40"></i></th>
                         <th class="cell w-36">Geändert von</th>
-                        <th class="cell w-16 text-right">Aktionen</th>
+                        <th class="cell w-28 text-right">Aktionen</th>
                     </tr>
                 </thead>
                 <tbody id="standorteBody">
@@ -196,6 +196,36 @@
             <span></span>
             <button onclick="closeOverlayDetail()" class="px-4 py-1.5 text-sm border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors">
                 Schließen
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ───────────────────────────── FAHRTANWEISUNG MODAL ──────────────────────── -->
+<div id="fahrtModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 hidden flex items-start justify-center pt-16 px-4">
+    <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-2xl w-full max-w-lg">
+        <div class="p-5 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between">
+            <div>
+                <h2 id="fahrtModalTitle" class="text-base font-bold">Fahrtanweisung</h2>
+                <p id="fahrtModalMeta" class="text-xs text-slate-500 dark:text-zinc-400 mt-0.5"></p>
+            </div>
+            <button onclick="closeFahrtModal()" class="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
+                <i class="mdi mdi-close text-xl leading-none"></i>
+            </button>
+        </div>
+        <div class="p-5">
+            <textarea id="fahrtModalText" rows="6"
+                class="w-full border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 rounded-lg px-3 py-2 text-sm font-sans resize-y focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-zinc-100"
+                placeholder="Fahrtanweisung eingeben…"></textarea>
+        </div>
+        <div class="p-4 border-t border-slate-200 dark:border-zinc-800 flex justify-end gap-2">
+            <button onclick="closeFahrtModal()"
+                class="px-4 py-2 text-sm border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors">
+                Abbrechen
+            </button>
+            <button onclick="saveFahrtFromModal()"
+                class="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center gap-1.5">
+                <i class="mdi mdi-content-save-outline text-base leading-none"></i> Speichern
             </button>
         </div>
     </div>
@@ -611,12 +641,21 @@ function renderStandorteTable(data) {
             <td class="cell">${esc(s.name || '—')}</td>
             <td class="cell font-mono text-xs text-slate-500 dark:text-zinc-400">${s.lat?.toFixed(6) ?? '—'}</td>
             <td class="cell font-mono text-xs text-slate-500 dark:text-zinc-400">${s.lon?.toFixed(6) ?? '—'}</td>
-            <td class="cell text-center text-xs">${s.fahrtanweisung ? `<span class="px-1.5 py-0.5 rounded bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400"><i class="mdi mdi-check"></i></span>` : '<span class="text-slate-300 dark:text-zinc-600">—</span>'}</td>
+            <td class="cell text-center text-xs">
+                <button onclick="openFahrtModal('${esc(s.nummer)}')" title="Fahrtanweisung bearbeiten"
+                    class="inline-flex items-center justify-center px-1.5 py-0.5 rounded transition-colors ${s.fahrtanweisung ? 'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/40' : 'text-slate-300 dark:text-zinc-600 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-zinc-700'}">
+                    ${s.fahrtanweisung ? '<i class="mdi mdi-check"></i>' : '<i class="mdi mdi-plus"></i>'}
+                </button>
+            </td>
             <td class="cell text-center text-xs">${ovCount > 0 ? `<button onclick="openOverlayDetail('${esc(s.nummer)}')" class="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800/40 transition-colors font-medium">${ovCount}</button>` : `<button onclick="openOverlayDetail('${esc(s.nummer)}')" class="text-slate-300 dark:text-zinc-600 hover:text-blue-400 transition-colors px-1">+</button>`}</td>
             <td class="cell text-xs text-slate-500 dark:text-zinc-400 whitespace-nowrap">${updatedAt}</td>
             <td class="cell text-xs text-slate-500 dark:text-zinc-400">${esc(updatedBy)}</td>
             <td class="cell text-right">
                 <div class="inline-flex items-center gap-0.5">
+                    <button onclick="openStationskennblatt('${esc(s.nummer)}')" title="Stationskennblatt öffnen"
+                        class="inline-flex items-center justify-center w-7 h-7 rounded text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-700 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors ${s.link ? '' : 'opacity-40 cursor-not-allowed'}" ${s.link ? '' : 'disabled'}>
+                        <i class="mdi mdi-file-document-outline text-base leading-none"></i>
+                    </button>
                     <button onclick="editStandort('${esc(s.nummer)}')" title="Bearbeiten"
                         class="inline-flex items-center justify-center w-7 h-7 rounded text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-700 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                         <i class="mdi mdi-pencil-outline text-base leading-none"></i>
@@ -1106,6 +1145,57 @@ function closeOverlayDetail() {
 // Close overlay detail modal on backdrop click
 document.getElementById('overlayDetailModal').addEventListener('click', e => {
     if (e.target === e.currentTarget) closeOverlayDetail();
+});
+
+// ─── FAHRTANWEISUNG MODAL ─────────────────────────────────────────────────────
+
+let fahrtModalNummer = null;
+
+function openFahrtModal(nummer) {
+    fahrtModalNummer = String(nummer);
+    const s = standorte.find(x => String(x.nummer) === fahrtModalNummer);
+    document.getElementById('fahrtModalTitle').textContent = 'Fahrtanweisung — ' + fahrtModalNummer;
+    document.getElementById('fahrtModalMeta').textContent = s?.name || '';
+    document.getElementById('fahrtModalText').value = s?.fahrtanweisung || '';
+    document.getElementById('fahrtModal').classList.remove('hidden');
+    setTimeout(() => document.getElementById('fahrtModalText').focus(), 50);
+}
+
+function closeFahrtModal() {
+    document.getElementById('fahrtModal').classList.add('hidden');
+    fahrtModalNummer = null;
+}
+
+async function saveFahrtFromModal() {
+    if (!fahrtModalNummer) return;
+    const text = document.getElementById('fahrtModalText').value;
+    try {
+        const res = await fetch(`/api/admin/fahrtanweisungen/${encodeURIComponent(fahrtModalNummer)}`, {
+            method:  'PUT',
+            headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ text }),
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const s = standorte.find(x => String(x.nummer) === fahrtModalNummer);
+        if (s) s.fahrtanweisung = text;
+        renderStandorteTable(standorte);
+        filterTable();
+        setStatus(`Fahrtanweisung ${fahrtModalNummer} gespeichert — ${new Date().toLocaleTimeString()}`);
+        closeFahrtModal();
+    } catch (err) {
+        alert(`Fehler: ${err.message}`);
+    }
+}
+
+function openStationskennblatt(nummer) {
+    const s = standorte.find(x => String(x.nummer) === String(nummer));
+    if (!s?.link) return;
+    const url = s.link.replace(/tagebuch/gi, 'stationskennblatt');
+    window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+document.getElementById('fahrtModal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeFahrtModal();
 });
 </script>
 </body>
