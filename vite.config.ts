@@ -13,7 +13,7 @@ export default defineConfig({
         { src: "legacy-admin.html", dest: "." },
         { src: "manifest.json", dest: "." },
         { src: "res/icons/*", dest: "res/icons" },
-      ],
+      ], /* test */
     }),
   ],
   resolve: {

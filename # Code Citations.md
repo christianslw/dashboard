@@ -4,7 +4,7 @@
 https://github.com/Thiti-Dev/scraping-gateways/blob/7751be04cb07fee411a694657099b67c36b2258a/src/controllers/cores.ts
 
 ```
-I have all the context I need. No file editing tools are available in this session, so here are all the changes to implement:
+I have all the context I need. No file editing tools are available in this session, so here are all the changes to implement:d
 
 ---
 
