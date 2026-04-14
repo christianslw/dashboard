@@ -1191,7 +1191,7 @@ function openStationskennblatt(nummer) {
     const s = standorte.find(x => String(x.nummer) === String(nummer));
     if (!s?.link) return;
     const url = s.link.replace(/tagebuch/gi, 'stationskennblatt');
-    window.open(url, '_blank', 'noopener,noreferrer');
+    window.location.href = 'ms-excel:ofe|u|' + url;
 }
 
 document.getElementById('fahrtModal').addEventListener('click', e => {
