@@ -3,8 +3,11 @@ import { Layers3, MapPinned, Compass, ChevronRight } from "lucide-react";
 
 import { AppFrame } from "@/components/app/app-frame";
 import { ListControls } from "@/components/app/list-controls";
+import { OverlayCommandCenter } from "@/components/app/overlay-command-center";
+import { OverlayStage } from "@/components/app/overlay-stage";
 import { StandortList } from "@/components/app/standort-list";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useOverlayCommandCenter } from "@/hooks/useOverlayCommandCenter";
 import { useStandorte } from "@/hooks/useStandorte";
 import { Standort } from "@/lib/api";
 
@@ -41,84 +44,88 @@ export function DashboardPage() {
   } = useStandorte();
 
   const [selectedStandort, setSelectedStandort] = useState<Standort | null>(null);
+  const overlay = useOverlayCommandCenter(selectedStandort?.nummer);
 
   const activeFilterCount = filters.includedAreaCodes.size + filters.excludedAreaCodes.size;
 
   return (
     <AppFrame
       current="dashboard"
-      eyebrow="Slice 2: Search & List"
-      title="Standorte are now searchable and filterable in React."
-      summary="This slice adds the core data flow: fetch all standorte, search by name/number, filter by area code, sort by distance/name/number, and preserve all preferences to localStorage."
+      eyebrow="Slice 3: Overlay Command Center"
+      title="Map-first overlays are back with a fresh editing surface."
+      summary="The new right-rail Command Center introduces a clearer overlay workflow with typed API persistence, local undo/redo, color-driven layer management, and a dedicated map stage prepared for the Leaflet adapter."
     >
-      <section className="grid gap-6 lg:grid-cols-[1fr_320px]">
-        {/* Main list area */}
-        <div className="space-y-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle>Standorte</CardTitle>
-              <CardDescription>
-                {standorte.length} result{standorte.length !== 1 ? 's' : ''} found
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {error && (
-                <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-                  {error}
-                </div>
-              )}
+      <section className="space-y-6">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle>Standorte</CardTitle>
+            <CardDescription>
+              {standorte.length} result{standorte.length !== 1 ? "s" : ""} found
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {error && <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
 
-              <ListControls
-                searchQuery={filters.searchQuery}
-                onSearchChange={setSearchQuery}
-                areaCodeOptions={areaCodeOptions}
-                getAreaFilterState={getAreaCodeFilterState}
-                onAreaFilterToggle={toggleAreaCodeFilter}
-                activeFilterCount={activeFilterCount}
-                sortKey={sortKey}
-                onSortChange={setSortKey}
-              />
+            <ListControls
+              searchQuery={filters.searchQuery}
+              onSearchChange={setSearchQuery}
+              areaCodeOptions={areaCodeOptions}
+              getAreaFilterState={getAreaCodeFilterState}
+              onAreaFilterToggle={toggleAreaCodeFilter}
+              activeFilterCount={activeFilterCount}
+              sortKey={sortKey}
+              onSortChange={setSortKey}
+            />
 
+            <div className="grid gap-6 xl:grid-cols-[340px_1fr_360px]">
               <StandortList
                 standorte={standorte}
                 onSelect={setSelectedStandort}
                 activeStandort={selectedStandort}
                 isLoading={loading}
               />
-            </CardContent>
-          </Card>
-        </div>
 
-        {/* Details sidebar */}
-        <div className="space-y-4">
+              <OverlayStage
+                standort={selectedStandort}
+                features={overlay.features}
+                featureCount={overlay.features.length}
+                selectedFeature={overlay.selectedFeature}
+                selectedFeatureId={overlay.selectedFeatureId}
+                onSelectFeature={overlay.selectFeature}
+              />
+
+              <OverlayCommandCenter
+                standortLabel={selectedStandort?.name ?? "No standort selected"}
+                standortNummer={selectedStandort?.nummer}
+                overlay={overlay}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <section className="grid gap-6 lg:grid-cols-[1fr_320px]">
           {selectedStandort ? (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">{selectedStandort.name}</CardTitle>
-                <CardDescription className="font-mono text-sm">
-                  {selectedStandort.nummer}
-                </CardDescription>
+                <CardDescription className="font-mono text-sm">{selectedStandort.nummer}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 {selectedStandort.lat && selectedStandort.lon && (
                   <>
                     <div>
-                      <p className="text-xs font-medium text-muted-foreground mb-1">
-                        Coordinates
-                      </p>
+                      <p className="mb-1 text-xs font-medium text-muted-foreground">Coordinates</p>
                       <p className="text-sm font-mono">
                         {selectedStandort.lat.toFixed(4)}, {selectedStandort.lon.toFixed(4)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs font-medium text-muted-foreground mb-1">
-                        Location
-                      </p>
+                      <p className="mb-1 text-xs font-medium text-muted-foreground">Location</p>
                       <a
                         href={`https://maps.google.com/?q=${selectedStandort.lat},${selectedStandort.lon}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-primary hover:underline flex items-center gap-1"
+                        className="flex items-center gap-1 text-sm text-primary hover:underline"
                       >
                         Open in Google Maps
                         <ChevronRight className="h-3 w-3" />
@@ -128,14 +135,12 @@ export function DashboardPage() {
                 )}
                 {selectedStandort.link && (
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-1">
-                      SharePoint
-                    </p>
+                    <p className="mb-1 text-xs font-medium text-muted-foreground">SharePoint</p>
                     <a
                       href={selectedStandort.link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline flex items-center gap-1 break-all"
+                      className="flex items-center gap-1 break-all text-sm text-primary hover:underline"
                     >
                       Open folder
                       <ChevronRight className="h-3 w-3 flex-shrink-0" />
@@ -146,26 +151,29 @@ export function DashboardPage() {
             </Card>
           ) : (
             <Card className="border-dashed">
-              <CardContent className="flex items-center justify-center h-32 text-muted-foreground">
-                <p className="text-sm">Select a standort to see details</p>
+              <CardContent className="flex h-32 items-center justify-center text-muted-foreground">
+                <p className="text-sm">Select a standort to open Command Center editing</p>
               </CardContent>
             </Card>
           )}
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">Foundation status</CardTitle>
+              <CardTitle className="text-sm">Overlay UX upgrades</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
-              {featureCards.map(({ icon: Icon, title }) => (
-                <div key={title} className="flex items-center gap-2">
-                  <Icon className="h-4 w-4 text-primary flex-shrink-0" />
-                  <span className="text-muted-foreground">{title}</span>
+              {featureCards.map(({ icon: Icon, title, description }) => (
+                <div key={title} className="rounded-lg border border-border/70 px-3 py-2">
+                  <div className="mb-1 flex items-center gap-2">
+                    <Icon className="h-4 w-4 text-primary" />
+                    <span className="font-medium">{title}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{description}</p>
                 </div>
               ))}
             </CardContent>
           </Card>
-        </div>
+        </section>
       </section>
     </AppFrame>
   );

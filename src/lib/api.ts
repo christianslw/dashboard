@@ -7,6 +7,42 @@ export interface Standort {
   distance?: number;
 }
 
+export type OverlayGeometry = {
+  type: "Point" | "LineString" | "Polygon";
+  coordinates: unknown;
+};
+
+export type OverlayToolType = "route" | "path" | "marker" | "zone";
+
+export interface OverlayFeatureProperties {
+  overlayType?: string;
+  routeType?: "hauptzufahrt" | "alternativ" | "custom";
+  strokeStyle?: "solid" | "dash" | "dot" | "arrow" | "arrow_many";
+  iconType?: "schranke" | "tresor" | "hinweis" | "tor";
+  zoneType?: "eisabfall" | "custom";
+  color?: string;
+  radius?: number;
+  note?: string;
+  label?: string;
+}
+
+export interface OverlayFeature {
+  type: "Feature";
+  geometry: OverlayGeometry;
+  properties: OverlayFeatureProperties;
+}
+
+export interface OverlayPayload {
+  features: OverlayFeature[];
+  updatedAt: string | null;
+  updatedBy: string | null;
+}
+
+export interface OverlayVersionInfo {
+  updatedAt: string | null;
+  nummer?: string;
+}
+
 export type StandorteSummary = {
   count: number;
   ok: boolean;
@@ -75,4 +111,67 @@ export async function fetchAdminStatus(token: string, signal?: AbortSignal): Pro
   }
 
   return response.json() as Promise<AdminStatus>;
+}
+
+export async function fetchOverlayPayload(
+  standortNummer: string | number,
+  signal?: AbortSignal,
+): Promise<OverlayPayload> {
+  const response = await fetch(`/api/overlays/${standortNummer}`, { signal });
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+
+  const payload = (await response.json()) as Partial<OverlayPayload>;
+  return {
+    features: Array.isArray(payload.features) ? payload.features : [],
+    updatedAt: payload.updatedAt ?? null,
+    updatedBy: payload.updatedBy ?? null,
+  };
+}
+
+export async function saveOverlayPayload(
+  standortNummer: string | number,
+  payload: OverlayPayload,
+): Promise<{ ok: boolean; updatedAt: string }> {
+  const response = await fetch(`/api/overlays/${standortNummer}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+
+  return response.json() as Promise<{ ok: boolean; updatedAt: string }>;
+}
+
+export async function deleteOverlayPayload(
+  standortNummer: string | number,
+): Promise<{ ok: boolean }> {
+  const response = await fetch(`/api/overlays/${standortNummer}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+
+  return response.json() as Promise<{ ok: boolean }>;
+}
+
+export async function fetchOverlayVersion(signal?: AbortSignal): Promise<OverlayVersionInfo> {
+  const response = await fetch("/api/overlays/version", { signal });
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+
+  const payload = (await response.json()) as Partial<OverlayVersionInfo>;
+  return {
+    updatedAt: payload.updatedAt ?? null,
+    nummer: payload.nummer,
+  };
 }
