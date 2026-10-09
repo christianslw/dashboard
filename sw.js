@@ -93,7 +93,6 @@ self.addEventListener('fetch', (event) => {
         'map.blitzortung.org',
         'server.arcgisonline.com',
         'tile.opentopomap.org',
-        'basemaps.cartocdn.com',
         'tile.openstreetmap.org',
     ];
     if (skipDomains.some(d => url.hostname.includes(d))) {

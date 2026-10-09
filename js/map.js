@@ -1,6 +1,6 @@
 // ─── Leaflet Map & Clustering ────────────────────────────────────────────────────────────
 
-let osmLayer, cartoDBPositronLayer;
+let osmLayer;
 const RADAR_MAX_NATIVE_ZOOM = 10;
 const RAINVIEWER_COLOR_SCHEME = 8;
 const ACTIVE_OVERLAYS_STORAGE_KEY = 'activeOverlayLayers';
@@ -112,10 +112,6 @@ function restoreActiveOverlayLayers(overlayLayers) {
 
 function getThemeAwareOsmUrl() {
     return OSM_TILE_URL;
-}
-
-function getThemeAwareCartoUrl(isDarkMode) {
-    return `${CARTODB_TILE_BASE_URL}/${isDarkMode ? 'dark_all' : 'light_all'}/{z}/{x}/{y}{r}.png`;
 }
 
 // ─── Custom Kartenebenen Control ─────────────────────────────────────────────
@@ -296,19 +292,10 @@ function getRichtfunkLinkedStationNummern() {
 function initLeafletMap() {
     leafletMap = L.map('mainMap').setView([48.6, 9.2], 7);
 
-    const isDarkMode = document.documentElement.classList.contains('dark');
-    const useDarkMap = isDarkMode;
-
     osmLayer = L.tileLayer(getThemeAwareOsmUrl(), {
         attribution: '© OpenStreetMap contributors',
         maxZoom: 19,
         className: 'osm-tiles'
-    });
-
-    cartoDBPositronLayer = L.tileLayer(getThemeAwareCartoUrl(useDarkMap), {
-        attribution: '© CartoDB © OpenStreetMap contributors',
-        maxZoom: 19,
-        className: 'no-filter'
     });
 
     const openTopoMapLayer = L.tileLayer(OPENTOPOMAP_TILE_URL, {
@@ -343,7 +330,6 @@ function initLeafletMap() {
 
     const baseLayers = {
         'OpenStreetMap': osmLayer,
-        'CartoDB Positron': cartoDBPositronLayer,
         'OpenTopoMap': openTopoMapLayer,
         'Satellitenbild': satelliteLayer,
         'Hybrid (Satellit+Straßen)': hybridLayer
@@ -354,11 +340,7 @@ function initLeafletMap() {
     if (savedMap && baseLayers[savedMap]) {
         baseLayers[savedMap].addTo(leafletMap);
     } else {
-        if (useDarkMap) {
-            cartoDBPositronLayer.addTo(leafletMap);
-        } else {
-            osmLayer.addTo(leafletMap);
-        }
+        osmLayer.addTo(leafletMap);
     }
 
     // DWD Warning Zones (WMS)
@@ -444,12 +426,6 @@ function initLeafletMap() {
 }
 
 function updateLeafletMapTheme() {
-    const isDarkMode = document.documentElement.classList.contains('dark');
-    const newCartoUrl = getThemeAwareCartoUrl(isDarkMode);
-
-    if (leafletMap && cartoDBPositronLayer) {
-        cartoDBPositronLayer.setUrl(newCartoUrl);
-    }
     // OSM dark mode is handled via CSS inversion on .osm-tiles — no URL swap needed
 }
 

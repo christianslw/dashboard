@@ -15,7 +15,6 @@ const ESRI_IMAGERY_URL              = 'https://server.arcgisonline.com/ArcGIS/re
 const ESRI_TRANSPORT_URL            = 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}';
 const ESRI_BOUNDARIES_URL           = 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}';
 const OSM_TILE_URL                  = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-const CARTODB_TILE_BASE_URL         = 'https://{s}.basemaps.cartocdn.com';
 const OPENTOPOMAP_TILE_URL          = 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
 
 // ─── Global State & Configuration ────────────────────────────────────────────

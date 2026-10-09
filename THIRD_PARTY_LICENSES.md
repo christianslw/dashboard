@@ -55,13 +55,6 @@
 
 ## ⚠️ Verify / Monitor
 
-### CartoDB Tiles — Light/Dark Base Map
-- **URL:** `https://{s}.basemaps.cartocdn.com/dark_all/…` and `/light_all/…`
-- **Where used:** [js/map.js](js/map.js) — `initLeafletMap()` and `getThemeAwareCartoUrl()`
-- **How used:** "CartoDB Positron" is the default base layer for most users (it respects the dark/light mode setting). Rendered as `dark_all` or `light_all` tiles depending on theme.
-- **License / ToS:** Carto's free plan is for non-commercial use. Commercial / enterprise products require a paid Carto account.
-- **Risk:** Default base layer for dark-mode users — used on every page load.
-
 ### RainViewer — Radar Tiles & Nowcast
 - **URLs:** `https://api.rainviewer.com/public/weather-maps.json` and `https://tilecache.rainviewer.com`
 - **Where used:** [js/map.js](js/map.js) — `loadRadarFrames()` and `getRadarTileLayer()`
@@ -191,14 +184,6 @@
 **Option C — MapTiler Cloud** — similar to Stadia, also serves raster tiles compatible with all existing Leaflet code.
 
 ---
-
-### CartoDB Tiles (Light/Dark Base Map)
-
-**Problem:** Free tier is non-commercial.
-
-**Option A — MapTiler** offers equivalent light/dark styles commercially.
-
-**Option B — Stadia Maps** has `alidade_smooth` (light) and `alidade_smooth_dark` (dark) as direct CartoDB replacements; same URL pattern, just swap the host and add an API key.
 
 ---
 
