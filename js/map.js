@@ -95,7 +95,11 @@ function saveActiveOverlayLayerNames(overlayLayers) {
 function restoreActiveOverlayLayers(overlayLayers) {
     const names = loadActiveOverlayLayerNames();
     names.forEach(name => {
-        const normalizedName = name === 'Regenradar + Vorhersage' ? RAINVIEWER_LAYER_NAME : name;
+        let normalizedName = name === 'Regenradar + Vorhersage' ? RAINVIEWER_LAYER_NAME : name;
+        if (Object.prototype.hasOwnProperty.call(LEGACY_OVERLAY_NAMES, normalizedName)) {
+            normalizedName = LEGACY_OVERLAY_NAMES[normalizedName];
+        }
+        if (!normalizedName) return;
         const layer = overlayLayers[normalizedName];
         if (!layer || leafletMap.hasLayer(layer)) return;
         layer.addTo(leafletMap);
@@ -113,6 +117,350 @@ function restoreActiveOverlayLayers(overlayLayers) {
 function getThemeAwareOsmUrl() {
     return OSM_TILE_URL;
 }
+
+// ─── Geodaten-Overlays: ein Menüpunkt je Datentyp, Landesdienst je Kartenausschnitt ───
+// BW und RLP teilen sich die Menüpunkte; welche WMS-Kacheln geladen werden,
+// entscheidet der aktuelle Kartenausschnitt (siehe _refreshSmartGeoOverlays).
+const GEODATA_OVERLAYS = {
+    'Flurstücke (ALKIS)': { label: 'Flurstücke (ALKIS)' },
+    'Schummerung':        { label: 'Schummerung' },
+    'Luftbild (DOP20)':   { label: 'Luftbild (DOP20)' }
+};
+
+const OVERLAY_CATEGORY = {
+    'DWD Warnzonen':       'Wetter & Infrastruktur',
+    'Regenradar':          'Wetter & Infrastruktur',
+    'Richtfunkstrecken':   'Wetter & Infrastruktur',
+    'Flurstücke (ALKIS)':  'Kataster & Grenzen',
+    'Schummerung':         'Gelände & Luftbild',
+    'Luftbild (DOP20)':    'Gelände & Luftbild'
+};
+
+// Alte, getrennte BW/RLP-Menüpunkte aus localStorage auf die neuen Keys ziehen.
+const LEGACY_OVERLAY_NAMES = {
+    'Flurstücke BW (ALKIS)': 'Flurstücke (ALKIS)',
+    'Flurstücke RLP (ALKIS)': 'Flurstücke (ALKIS)',
+    'Schummerung BW': 'Schummerung',
+    'Schummerung RLP': 'Schummerung',
+    'Luftbild BW (DOP20)': 'Luftbild (DOP20)',
+    'Luftbild RLP (DOP20)': 'Luftbild (DOP20)',
+    'DOP-Aktualität BW': null
+};
+
+// Abfragbare Quellen für den Karten-Klick. BW-Flurstücke laufen über den
+// Open-Data-WFS (Punkt-BBOX, count=1), RLP über WMS GetFeatureInfo.
+// Versionen explizit: BW-WMS 1.3.0 (crs=/i/j), RLP-WMS 1.1.1 (srs=/x/y).
+const GEODATA_INFO_SOURCES = [
+    {
+        state: 'rlp', overlay: 'Flurstücke (ALKIS)', title: 'Flurstück', icon: 'mdi-vector-square',
+        wmsUrl: RLP_ALKIS_WMS, queryLayers: 'Flurstueck',
+        version: '1.1.1', infoFormat: 'text/html',
+        parse: _parseFlurstueckHtml
+    },
+    {
+        state: 'bw', overlay: 'Flurstücke (ALKIS)', title: 'Flurstück', icon: 'mdi-vector-square', wfs: true,
+        wfsUrl: LGL_BW_ALKIS_WFS, typeName: 'nora:v_al_flurstueck',
+        parse: _parseBwFlurstueckJson
+    },
+    {
+        state: 'rlp', overlay: 'Luftbild (DOP20)', title: 'Luftbild Rheinland-Pfalz', icon: 'mdi-image-outline',
+        wmsUrl: RLP_DOP_WMS, queryLayers: 'rp_dop20_info',
+        version: '1.1.1', infoFormat: 'text/plain',
+        parse: _parsePlainInfo,
+        keys: ['titel', 'erstellung', 'aktualisierung']
+    },
+    {
+        state: 'bw', overlay: 'Luftbild (DOP20)', title: 'Luftbild Baden-Württemberg', icon: 'mdi-image-outline',
+        wmsUrl: LGL_BW_DOP_AKTUALITAET_WMS, queryLayers: 'verm:v_dop_20_bildflugkacheln',
+        version: '1.3.0', infoFormat: 'text/plain',
+        parse: _parsePlainInfo,
+        keys: ['befliegungsdatum']
+    }
+];
+
+// Anzeigename für GetFeatureInfo-Felder (text/plain-Antworten)
+const GEODATA_INFO_FIELD_LABELS = {
+    befliegungsdatum: 'Befliegungsdatum',
+    bearbeitungsjahr: 'Bearbeitungsjahr',
+    kamera: 'Kamera',
+    flughoehe: 'Flughöhe',
+    farbtiefe: 'Farbtiefe',
+    titel: 'Kachel',
+    erstellung: 'Erstellung',
+    aktualisierung: 'Aktualisierung'
+};
+
+// GetFeatureInfo exakt am Klickpunkt: Viewport-BBOX, Viewport-Größe und
+// Klickpixel aus Leaflet — keine geratene 101×101-Box, kein Achsentausch.
+async function _fetchWmsFeatureInfo(source, latlng) {
+    const is13 = source.version === '1.3.0';
+    const bounds = leafletMap.getBounds();
+    const sw = leafletMap.options.crs.project(bounds.getSouthWest());
+    const ne = leafletMap.options.crs.project(bounds.getNorthEast());
+    const size = leafletMap.getSize();
+    const point = leafletMap.latLngToContainerPoint(latlng);
+    const params = new URLSearchParams({
+        service: 'WMS',
+        request: 'GetFeatureInfo',
+        version: source.version,
+        layers: source.queryLayers,
+        query_layers: source.queryLayers,
+        styles: '',
+        format: 'image/png',
+        transparent: 'true',
+        bbox: sw.x + ',' + sw.y + ',' + ne.x + ',' + ne.y,
+        width: String(size.x),
+        height: String(size.y),
+        feature_count: '1',
+        buffer: '1',
+        info_format: source.infoFormat
+    });
+    if (is13) {
+        params.set('crs', 'EPSG:3857');
+        params.set('i', String(Math.round(point.x)));
+        params.set('j', String(Math.round(point.y)));
+    } else {
+        params.set('srs', 'EPSG:3857');
+        params.set('x', String(Math.round(point.x)));
+        params.set('y', String(Math.round(point.y)));
+    }
+    try {
+        const res = await fetch(source.wmsUrl + params.toString());
+        return { source: source, text: await res.text() };
+    } catch (err) {
+        return { source: source, text: '' };
+    }
+}
+
+function _escapeGeodataHtml(value) {
+    return String(value).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+}
+
+// Zeilen als kompakte Faktenliste (Label links, Wert rechts). Nummer und
+// Kennzeichen bekommen einen Kopier-Button.
+function _geodataFacts(rows) {
+    const items = rows.filter(function (r) { return r[1]; }).map(function (r) {
+        const key = r[0];
+        const value = _escapeGeodataHtml(r[1]);
+        const copyable = key === 'Flurstücksnummer' || key === 'Flurstückskennzeichen';
+        const primary = key === 'Flurstücksnummer' ? ' geodata-fact-primary' : '';
+        const longValue = key === 'Flurstückskennzeichen' ? ' geodata-fact-long' : '';
+        const wideValue = key === 'Nutzung' ? ' geodata-fact-wide' : '';
+        const label = key === 'Flurstückskennzeichen' ? 'Kennzeichen' : key;
+        const copyBtn = copyable
+            ? '<button type="button" class="geodata-copy" data-copy="' + value + '" title="Kopieren" aria-label="' + _escapeGeodataHtml(key) + ' kopieren"><i class="mdi mdi-content-copy"></i></button>'
+            : '';
+        return '<div class="geodata-fact' + primary + longValue + wideValue + '"><dt>' + _escapeGeodataHtml(label) + '</dt>' +
+               '<dd>' + value + copyBtn + '</dd></div>';
+    }).join('');
+    return items ? '<dl class="geodata-facts">' + items + '</dl>' : '';
+}
+
+// LVermGeoRP liefert beim Flurstück ein fertiges HTML-Feature-Formular —
+// Tabellenzeilen herausfiltern und in unser Popup-HTML übersetzen.
+function _parseFlurstueckHtml(text) {
+    if (!text || text.indexOf('tableStyle') === -1) return '';
+    const doc = new DOMParser().parseFromString(text, 'text/html');
+    const rows = Array.from(doc.querySelectorAll('table.tableStyle tbody tr')).map(function (tr) {
+        const k = tr.querySelector('.firstcell');
+        const v = tr.querySelector('.whitecell');
+        if (!k || !v || tr.querySelectorAll('td').length !== 2) return ['', ''];
+        let label = k.textContent.trim();
+        const val = v.textContent.trim();
+        if (label.indexOf('Gemarkung') === 0) label = 'Gemarkung';
+        if (label.indexOf('Amtliche Fläche') === 0) label = 'Fläche m²';
+        if (label.indexOf('Tatsächliche Nutzung') === 0) label = 'Nutzung';
+        const keep = ['Flurstückskennzeichen', 'Flurstücksnummer', 'Flurnummer', 'Gemarkung', 'Gemeinde', 'Fläche m²', 'Nutzung'];
+        if (keep.indexOf(label) === -1) return ['', ''];
+        return [label, val === 'n/a' ? '' : val];
+    });
+    return _geodataFacts(rows);
+}
+
+// text/plain-Antworten: "key = value"-Zeilen — MapServer quote't den Wert
+// ('25.08.2025'), deegree nicht (2026-05-24). Beides zulassen.
+function _parsePlainInfo(text, source) {
+    if (!text) return '';
+    const wanted = source.keys || [];
+    const rows = text.split(/\r?\n/).map(function (line) {
+        const m = line.match(/^\s*([\w\-]+)\s*=\s*'?(.*?)'?\s*$/);
+        if (!m || wanted.indexOf(m[1]) === -1) return ['', ''];
+        let val = m[2];
+        if (m[1] === 'befliegungsdatum') {
+            const date = val.match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (date) val = date[3] + '.' + date[2] + '.' + date[1];
+        }
+        const label = GEODATA_INFO_FIELD_LABELS[m[1]] || m[1];
+        return [label, (val === 'n/a' || val === 'null') ? '' : val];
+    });
+    return _geodataFacts(rows);
+}
+
+// Punkt-in-Polygon (Ray-Casting) für die exakte Auswahl aus den WFS-Kandidaten.
+function _pointInRing(ring, x, y) {
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        const xi = ring[i][0], yi = ring[i][1];
+        const xj = ring[j][0], yj = ring[j][1];
+        if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
+            inside = !inside;
+        }
+    }
+    return inside;
+}
+function _pointInPolygon(polygon, x, y) {
+    if (!polygon.length || !_pointInRing(polygon[0], x, y)) return false;
+    for (let i = 1; i < polygon.length; i++) {
+        if (_pointInRing(polygon[i], x, y)) return false;
+    }
+    return true;
+}
+function _featureContainsPoint(feature, x, y) {
+    const g = feature && feature.geometry;
+    if (!g) return false;
+    if (g.type === 'Polygon') return _pointInPolygon(g.coordinates, x, y);
+    if (g.type === 'MultiPolygon') {
+        return g.coordinates.some(function(polygon) { return _pointInPolygon(polygon, x, y); });
+    }
+    return false;
+}
+
+// BW-Flurstücke: 1-m-Box liefert alle Kandidaten, danach wird clientseitig
+// das Polygon ausgewählt, das den Klickpunkt wirklich enthält. count=1 auf
+// dem Server war die Ursache für das falsche Nachbarflurstück an Grenzen.
+async function _fetchWfsFeatureAt(source, latlng) {
+    const p = leafletMap.options.crs.project(latlng);
+    const d = 0.5;
+    const params = new URLSearchParams({
+        service: 'WFS',
+        version: '2.0.0',
+        request: 'GetFeature',
+        typeNames: source.typeName,
+        outputFormat: 'application/json',
+        srsName: 'urn:ogc:def:crs:EPSG::3857',
+        count: '50',
+        bbox: (p.x - d) + ',' + (p.y - d) + ',' + (p.x + d) + ',' + (p.y + d) + ',urn:ogc:def:crs:EPSG::3857'
+    });
+    try {
+        const res = await fetch(source.wfsUrl + params.toString());
+        const text = await res.text();
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (err) {
+            return { source: source, text: '' };
+        }
+        const match = (data.features || []).find(function(feature) {
+            return _featureContainsPoint(feature, p.x, p.y);
+        });
+        return { source: source, text: match ? JSON.stringify({ features: [match] }) : '' };
+    } catch (err) {
+        return { source: source, text: '' };
+    }
+}
+
+// BW-Flurstücke (WFS nora:v_al_flurstueck, GeoJSON): count=1 liefert das
+// Flurstück unter dem Cursor — keine Nachbarflurstücke mehr.
+function _parseBwFlurstueckJson(text) {
+    if (!text) return '';
+    let feature;
+    try {
+        feature = (JSON.parse(text).features || [])[0];
+    } catch (err) {
+        return '';
+    }
+    if (!feature) return '';
+    const p = feature.properties || {};
+    const nummer = p.zaehler + (p.nenner && p.nenner !== 0 ? '/' + p.nenner : '');
+    return _geodataFacts([
+        ['Gemarkung', p.gemarkung_name],
+        ['Gemeinde', p.gemeinde_name],
+        ['Flurstücksnummer', nummer],
+        ['Flurstückskennzeichen', p.flurstueckskennzeichen],
+        ['Fläche m²', p.amtliche_flaeche]
+    ]);
+}
+
+function _bindGeodataPopupActions(popup) {
+    const el = popup.getElement();
+    if (!el) return;
+    el.querySelectorAll('[data-copy]').forEach(function(btn) {
+        btn.addEventListener('click', function(ev) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(btn.dataset.copy).catch(function() {});
+            }
+            const icon = btn.querySelector('.mdi');
+            if (!icon) return;
+            const previous = icon.className;
+            icon.className = 'mdi mdi-check';
+            setTimeout(function() { icon.className = previous; }, 1200);
+        });
+    });
+}
+
+async function _runGeodataInfoQuery(e, sources) {
+    const coords = e.latlng.lat.toFixed(5) + ', ' + e.latlng.lng.toFixed(5);
+    const header = '<div class="geodata-header"><span class="geodata-kicker">Standortinfo</span>' +
+        '<span class="geodata-coords">' + coords + '</span></div>';
+    const actions = '<div class="geodata-actions">' +
+        '<button type="button" class="geodata-action" data-copy="' + coords + '" title="Koordinaten kopieren">' +
+        '<i class="mdi mdi-content-copy"></i><span>Koordinaten</span></button>' +
+        '<a class="geodata-action" href="https://www.google.com/maps/search/?api=1&query=' +
+        e.latlng.lat + ',' + e.latlng.lng + '" target="_blank" rel="noopener">' +
+        '<i class="mdi mdi-google-maps"></i><span>Google Maps</span></a></div>';
+
+    const popup = L.popup({
+        maxWidth: 300, minWidth: 250,
+        autoPanPaddingTopLeft: L.point(56, 70),
+        autoPanPaddingBottomRight: L.point(20, 20),
+        className: 'geodata-popup'
+    })
+        .setLatLng(e.latlng)
+        .setContent('<div class="geodata-card">' + header +
+            '<div class="geodata-note"><i class="mdi mdi-loading"></i>Objektdaten werden abgefragt…</div></div>')
+        .openOn(leafletMap);
+    // Nach dem ersten Öffnen nicht mehr automatisch nachpanen: sonst zwingt
+    // eine späte Antwort die Karte zurück zum angeklickten Flurstück.
+    popup.options.autoPan = false;
+
+    const sections = new Array(sources.length).fill('');
+    let pending = sources.length;
+    function render() {
+        let body = sections.filter(Boolean).join('');
+        if (!body) {
+            body = pending
+                ? '<div class="geodata-note"><i class="mdi mdi-loading"></i>Objektdaten werden abgefragt…</div>'
+                : '<div class="geodata-empty"><i class="mdi mdi-map-search-outline"></i>' +
+                  '<p>Keine Objekte gefunden</p><span>Weiter zoomen oder innerhalb der Datenabdeckung klicken.</span></div>';
+        } else if (pending) {
+            body += '<div class="geodata-note"><i class="mdi mdi-loading"></i>Weitere Daten…</div>';
+        }
+        popup.setContent('<div class="geodata-card">' + header + body + actions + '</div>');
+        popup.update();
+        _bindGeodataPopupActions(popup);
+    }
+
+    sources.forEach(function(s, index) {
+        const request = s.wfs ? _fetchWfsFeatureAt(s, e.latlng) : _fetchWmsFeatureInfo(s, e.latlng);
+        request.then(function(r) {
+            const facts = r.source.parse(r.text, r.source);
+            if (facts) {
+                sections[index] = '<section class="geodata-section">' +
+                    '<div class="geodata-head"><span class="geodata-icon"><i class="mdi ' + (r.source.icon || 'mdi-map-marker-outline') + '"></i></span>' +
+                    '<h4>' + _escapeGeodataHtml(r.source.title) + '</h4></div>' +
+                    facts + '</section>';
+            }
+        }).catch(function() {}).then(function() {
+            pending--;
+            render();
+        });
+    });
+}
+
 
 // ─── Custom Kartenebenen Control ─────────────────────────────────────────────
 // Replaces the stock Leaflet L.control.layers with a grouped, styled panel:
@@ -140,10 +488,27 @@ function _buildCustomLayerControl(map, baseLayers, overlayLayers) {
         const panel = L.DomUtil.create('div', 'clc-panel', wrap);
         panel.style.display = 'none';
 
-        // ——— Karten ———
+        // ── Panel header ─────────────────────────────────────────
+        const pHead = document.createElement('div');
+        pHead.className = 'clc-panel-head';
+        const pTitle = document.createElement('span');
+        pTitle.className = 'clc-panel-title';
+        pTitle.innerHTML = '<i class="mdi mdi-layers-outline"></i><span>Kartenebenen</span>';
+        const pClose = document.createElement('button');
+        pClose.type = 'button';
+        pClose.className = 'clc-panel-close';
+        pClose.title = 'Schließen';
+        pClose.setAttribute('aria-label', 'Kartenebenen schließen');
+        pClose.innerHTML = '<i class="mdi mdi-close"></i>';
+        pClose.addEventListener('click', function () { panel.style.display = 'none'; });
+        pHead.appendChild(pTitle);
+        pHead.appendChild(pClose);
+        panel.appendChild(pHead);
+
+        // ——— Hintergrundkarte ———
         const kHead = document.createElement('div');
         kHead.className = 'clc-section-head';
-        kHead.textContent = 'Karten';
+        kHead.textContent = 'Hintergrundkarte';
         panel.appendChild(kHead);
 
         const kList = document.createElement('div');
@@ -175,16 +540,34 @@ function _buildCustomLayerControl(map, baseLayers, overlayLayers) {
         divider.className = 'clc-divider';
         panel.appendChild(divider);
 
-        // ——— Overlays ———
-        const oHead = document.createElement('div');
-        oHead.className = 'clc-section-head';
-        oHead.textContent = 'Overlays';
-        panel.appendChild(oHead);
-
         // .leaflet-control-layers-overlays: DiPUL injects its section here
         const oList = document.createElement('div');
         oList.className = 'clc-list leaflet-control-layers-overlays';
-        Object.entries(overlayLayers).forEach(function([name, layer]) {
+
+        const categoryLists = {};
+        function _categoryList(category) {
+            if (categoryLists[category]) return categoryLists[category];
+            const head = document.createElement('div');
+            head.className = 'clc-category-head';
+            head.textContent = category;
+            oList.appendChild(head);
+            const list = document.createElement('div');
+            list.className = 'clc-category-list';
+            oList.appendChild(list);
+            categoryLists[category] = list;
+            return list;
+        }
+
+        const categoryRank = { 'Kataster & Grenzen': 0, 'Gelände & Luftbild': 1, 'Wetter & Infrastruktur': 2 };
+        const sortedOverlays = Object.entries(overlayLayers).sort(function(a, b) {
+            const ra = categoryRank[OVERLAY_CATEGORY[a[0]]] ?? 3;
+            const rb = categoryRank[OVERLAY_CATEGORY[b[0]]] ?? 3;
+            return ra - rb;
+        });
+
+        sortedOverlays.forEach(function([name, layer]) {
+            const meta = GEODATA_OVERLAYS[name];
+            const target = _categoryList(OVERLAY_CATEGORY[name] || 'Weitere Ebenen');
             const lbl = document.createElement('label');
             lbl.className = 'clc-row';
             const cb = document.createElement('input');
@@ -201,11 +584,13 @@ function _buildCustomLayerControl(map, baseLayers, overlayLayers) {
                 }
             });
             const s = document.createElement('span');
-            s.textContent = name;
+            s.className = 'clc-row-label';
+            s.textContent = meta ? meta.label : name;
             lbl.appendChild(cb);
             lbl.appendChild(s);
-            oList.appendChild(lbl);
+            target.appendChild(lbl);
         });
+
         panel.appendChild(oList);
 
         // ── Toggle & close-on-outside-click ────────────────────────────
@@ -360,14 +745,80 @@ function initLeafletMap() {
     // Richtfunkstrecken: lazy-drawn polylines between linked stations
     const richtfunkLayer = L.layerGroup();
 
+    // ─── Amtliche Geodaten BW & RLP: ein Menüpunkt, Landesdienst nach Ausschnitt ───
+    // Beide Länderdienste liegen in einer Smart-Group; _refreshSmartGeoOverlays
+    // lädt nur die Dienste, deren Bundesland im aktuellen Kartenausschnitt liegt.
+    const geoBounds = {
+        bw: L.latLngBounds([47.4, 7.4], [49.8, 10.7]),
+        rlp: L.latLngBounds([48.8, 5.9], [51.2, 8.8])
+    };
+    const bwParcels = L.tileLayer.wms(LGL_BW_ALKIS_WMS, {
+        layers: 'nora:ALKIS_Basis_transparent,nora:ALKIS_Basis_Beschriftung_transparent',
+        version: '1.3.0', format: 'image/png', transparent: true,
+        maxNativeZoom: 20, maxZoom: 22, zIndex: 140,
+        attribution: '© LGL BW (dl-de/by-2-0)', className: 'no-filter'
+    });
+    const rlpParcels = L.tileLayer.wms(RLP_ALKIS_WMS, {
+        layers: 'Flurstueck,Lagebezeichnungen', format: 'image/png', transparent: true,
+        maxNativeZoom: 20, maxZoom: 22, zIndex: 140,
+        attribution: '© GeoBasis-DE / LVermGeoRP (dl-de/by-2-0)', className: 'rlp-alkis-tile'
+    });
+    const bwShade = L.tileLayer.wms(LGL_BW_SCHUMMERUNG_WMS, {
+        layers: 'Schummerung_DGM_025_BW', version: '1.3.0', format: 'image/png',
+        transparent: true, opacity: 0.6, maxNativeZoom: 20, maxZoom: 22, zIndex: 120,
+        attribution: '© LGL BW (dl-de/by-2-0)', className: 'no-filter'
+    });
+    const rlpShade = L.tileLayer.wms(RLP_SCHUMMERUNG_WMS, {
+        layers: 'rp_shade1m', format: 'image/png',
+        transparent: true, opacity: 0.6, maxNativeZoom: 20, maxZoom: 22, zIndex: 120,
+        attribution: '© GeoBasis-DE / LVermGeoRP (dl-de/by-2-0)', className: 'no-filter'
+    });
+    const bwDop = L.tileLayer.wms(LGL_BW_DOP_WMS, {
+        layers: 'IMAGES_DOP_20_RGB', version: '1.3.0', format: 'image/jpeg',
+        maxNativeZoom: 20, maxZoom: 22, zIndex: 110,
+        attribution: '© LGL BW (dl-de/by-2-0)', className: 'no-filter'
+    });
+    const rlpDop = L.tileLayer.wms(RLP_DOP_WMS, {
+        layers: 'rp_dop20', format: 'image/jpeg',
+        maxNativeZoom: 20, maxZoom: 22, zIndex: 110,
+        attribution: '© GeoBasis-DE / LVermGeoRP (dl-de/by-2-0)', className: 'no-filter'
+    });
+    function _smartGeoLayer(providers) {
+        const group = L.layerGroup();
+        group._geoProviders = providers;
+        return group;
+    }
+    const geodataOverlays = {
+        'Flurstücke (ALKIS)': _smartGeoLayer({ bw: bwParcels, rlp: rlpParcels }),
+        'Schummerung':        _smartGeoLayer({ bw: bwShade, rlp: rlpShade }),
+        'Luftbild (DOP20)':   _smartGeoLayer({ bw: bwDop, rlp: rlpDop })
+    };
+    function _refreshSmartGeoOverlays() {
+        const view = leafletMap.getBounds();
+        const states = [];
+        if (view.intersects(geoBounds.bw)) states.push('bw');
+        if (view.intersects(geoBounds.rlp)) states.push('rlp');
+        leafletMap._geoStates = states;
+        Object.values(geodataOverlays).forEach(function(group) {
+            Object.keys(group._geoProviders).forEach(function(state) {
+                const layer = group._geoProviders[state];
+                const wanted = states.indexOf(state) !== -1;
+                if (wanted && !group.hasLayer(layer)) group.addLayer(layer);
+                if (!wanted && group.hasLayer(layer)) group.removeLayer(layer);
+            });
+        });
+    }
+
     const overlayLayers = {
         'DWD Warnzonen':         dwdWarningsLayer,
         [RAINVIEWER_LAYER_NAME]: radarOverlayGroup,
-        'Richtfunkstrecken':     richtfunkLayer
+        'Richtfunkstrecken':     richtfunkLayer,
+        ...geodataOverlays
     };
 
-    _buildCustomLayerControl(leafletMap, baseLayers, overlayLayers);
+    _refreshSmartGeoOverlays();
     restoreActiveOverlayLayers(overlayLayers);
+    _buildCustomLayerControl(leafletMap, baseLayers, overlayLayers);
 
     // Inject MDI icons into zoom buttons; init DiPUL after DOM settles
     requestAnimationFrame(function() {
@@ -421,6 +872,22 @@ function initLeafletMap() {
                 updateMapMarkers(getFilteredStandorte());
             }
         }
+    });
+
+    // Beim Verschieben/Zoomen nur die Dienste des sichtbaren Bundeslands laden.
+    leafletMap.on('moveend', _refreshSmartGeoOverlays);
+
+    // Klick-Abfrage aktiver Geodaten-Layer (Flurstück / Luftbild-Datum) via
+    // WMS GetFeatureInfo bzw. WFS GetFeature — nicht während Zeichenmodi.
+    leafletMap.on('click', function (e) {
+        if (typeof overlayEditMode !== 'undefined' && overlayEditMode) return;
+        if (typeof snapRouteActive !== 'undefined' && snapRouteActive) return;
+        const states = leafletMap._geoStates || [];
+        const sources = GEODATA_INFO_SOURCES.filter(function (s) {
+            return states.indexOf(s.state) !== -1 && leafletMap.hasLayer(overlayLayers[s.overlay]);
+        });
+        if (!sources.length) return;
+        _runGeodataInfoQuery(e, sources);
     });
 
 }

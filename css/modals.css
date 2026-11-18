@@ -78,47 +78,12 @@
 }
 .cl-a:hover { opacity: 0.75; }
 
-/* ── DiPUL Flugzonen – master + sub-layer rows inside the layer panel ── */
-
-.dipul-master-label {
-    display: flex !important;
-    align-items: center !important;
-    gap: 6px !important;
-    cursor: pointer;
-    padding: 2px 0 2px 2px;
-    border-radius: 4px;
-    user-select: none;
-}
-
-.dipul-master-label:hover {
-    background: rgba(59,130,246,0.07);
-}
-
-.dark .dipul-master-label:hover {
-    background: rgba(96,165,250,0.09);
-}
-
+/* ── DiPUL Flugzonen – rows reuse .clc-row, only the sub-layer list is special ── */
 .dipul-sublayers {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
     overflow: hidden;
-    margin-top: 1px;
-}
-
-.dipul-sub-label {
-    display: flex !important;
-    align-items: center !important;
-    gap: 6px !important;
-    padding: 2px 2px 2px 14px !important;
-    cursor: pointer;
-    border-radius: 4px;
-    user-select: none;
-}
-
-.dipul-sub-label:hover {
-    background: rgba(59,130,246,0.07);
-}
-
-.dark .dipul-sub-label:hover {
-    background: rgba(96,165,250,0.09);
 }
 
 /* DiPUL per-layer tile tinting via CSS hue-rotate.

@@ -15,7 +15,17 @@ const ESRI_IMAGERY_URL              = 'https://server.arcgisonline.com/ArcGIS/re
 const ESRI_TRANSPORT_URL            = 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}';
 const ESRI_BOUNDARIES_URL           = 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}';
 const OSM_TILE_URL                  = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-const OPENTOPOMAP_TILE_URL          = 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
+const OPENTOPOMAP_TILE_URL           = 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
+
+// ─── Amtliche Geodaten BW & RLP (WMS, dl-de/by-2-0) ───────────────────────────
+const LGL_BW_SCHUMMERUNG_WMS        = 'https://owsproxy.lgl-bw.de/owsproxy/ows/WMS_LGL-BW_ATKIS_DGM_025_Schummerung?';
+const LGL_BW_ALKIS_WMS              = 'https://owsproxy.lgl-bw.de/owsproxy/ows/WMS_LGL-BW_ALKIS_Basis_transparent?';
+const LGL_BW_DOP_WMS                = 'https://owsproxy.lgl-bw.de/owsproxy/ows/WMS_LGL-BW_ATKIS_DOP_20_C?';
+const RLP_SCHUMMERUNG_WMS           = 'https://geo4.service24.rlp.de/wms/shade1m.fcgi?';
+const RLP_ALKIS_WMS                 = 'https://geo5.service24.rlp.de/wms/liegenschaften_rp.fcgi?';
+const RLP_DOP_WMS                   = 'https://geo4.service24.rlp.de/wms/rp_dop20.fcgi?';
+const LGL_BW_DOP_AKTUALITAET_WMS    = 'https://owsproxy.lgl-bw.de/owsproxy/ows/WMS_LGL-BW_ATKIS_DOP_20_Bildflugkacheln_Aktualitaet?';
+const LGL_BW_ALKIS_WFS              = 'https://owsproxy.lgl-bw.de/owsproxy/wfs/WFS_LGL-BW_ALKIS?';
 
 // ─── Global State & Configuration ────────────────────────────────────────────
 

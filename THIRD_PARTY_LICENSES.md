@@ -1,7 +1,25 @@
 # Third-Party Services & Licenses
 
-> Last reviewed: April 2026  
+> Last reviewed: November 2026
 > ⚠️ = requires action before commercial / internal business use
+
+---
+
+## OK for business use (attribution required)
+
+### Landesamt für Geoinformation und Landentwicklung BW (LGL-BW) — WMS/WFS Geodaten
+- **URLs:** `https://owsproxy.lgl-bw.de/owsproxy/ows/WMS_LGL-BW_ATKIS_DGM_025_Schummerung`, `…/WMS_LGL-BW_ALKIS_Basis_transparent`, `…/WMS_LGL-BW_ATKIS_DOP_20_C`, `…/WMS_LGL-BW_ATKIS_DOP_20_Bildflugkacheln_Aktualitaet`, WFS: `https://owsproxy.lgl-bw.de/owsproxy/wfs/WFS_LGL-BW_ALKIS`
+- **Where used:** [js/map.js](js/map.js) — `initLeafletMap()` (Overlays "Flurstücke (ALKIS)", "Schummerung", "Luftbild (DOP20)"); click queries: parcel attributes via WFS `nora:v_al_flurstueck` (Open Data), flight dates via GetFeatureInfo on the Aktualität service.
+- **How used:** WMS GetMap requests in EPSG:3857 when an overlay is active. BW parcels use a 1-m WFS candidate box plus client-side point-in-polygon selection; the BW DOP metadata query uses GetFeatureInfo.
+- **License / ToS:** Datenlizenz Deutschland — Namensnennung — Version 2.0 (dl-de/by-2.0), Open Data. Commercial use permitted; attribution `© LGL BW (dl-de/by-2-0)` is shown in the map attribution while a layer is active.
+- **Risk:** None beyond attribution. Public services, no key required. Parcel attributes (ohne Eigentümer) come from the official ALKIS WFS — tagesaktuell.
+
+### Landesamt für Vermessung und Geobasisinformation RLP (LVermGeoRP) — WMS Geodaten
+- **URLs:** `https://geo4.service24.rlp.de/wms/shade1m.fcgi`, `https://geo5.service24.rlp.de/wms/liegenschaften_rp.fcgi`, `https://geo4.service24.rlp.de/wms/rp_dop20.fcgi`
+- **Where used:** [js/map.js](js/map.js) — `initLeafletMap()` (Overlays "Flurstücke (ALKIS)", "Schummerung", "Luftbild (DOP20)"); click queries via GetFeatureInfo (`Flurstueck` layer → parcel report, `rp_dop20_info` → imagery date). The RLP parcel layer combines `Flurstueck,Lagebezeichnungen`.
+- **How used:** WMS GetMap requests in EPSG:3857 when the overlay is active; GetFeatureInfo per map click when Flurstücke/Luftbild RLP is on. Black cadastral lines/labels are tinted gold/orange in CSS for readability.
+- **License / ToS:** dl-de/by-2.0. Commercial use permitted; attribution `© GeoBasis-DE / LVermGeoRP (dl-de/by-2-0)` is shown in the map attribution while a layer is active.
+- **Risk:** None beyond attribution. Public WMS (CORS enabled), no key required.
 
 ---
 

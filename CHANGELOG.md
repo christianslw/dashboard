@@ -4,6 +4,13 @@ Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## v0.13 - 2026-11-18
+
+### Neu
+- Neue Kartenlayer für Baden-Württemberg und Rheinland-Pfalz: Flurstücke (ALKIS), Schummerung und Luftbild (DOP20) in einem gemeinsamen Kartenebenen-Menü.
+- Der passende Landesdienst wird automatisch anhand des sichtbaren Kartenausschnitts geladen; an Landesgrenzen werden beide Dienste eingeblendet.
+- Flurstücke mit sichtbaren Grenzen und Nummern: BW mit nativen gelben ALKIS-Grenzen, RLP mit Lagebezeichnungen und gold/orange hervorgehobener Darstellung.
+
 ## v0.12 - 2026-04-12
 
 ### Neu

@@ -75,12 +75,12 @@ function initDipulControl(map) {
 
     // Group header
     const groupHeader = document.createElement('div');
-    groupHeader.className = 'leaflet-control-layers-group-name';
-    groupHeader.style.cssText = 'margin-top:10px;margin-bottom:4px';
+    groupHeader.className = 'clc-category-head';
+    groupHeader.textContent = 'Luftfahrt & Zonen';
 
     // Master row
     const masterLabel = document.createElement('label');
-    masterLabel.className = 'dipul-master-label';
+    masterLabel.className = 'clc-row dipul-master-label';
 
     const masterCb = document.createElement('input');
     masterCb.type    = 'checkbox';
@@ -106,7 +106,7 @@ function initDipulControl(map) {
 
     DIPUL_LAYER_DEFS.forEach(function(def) {
         const row = document.createElement('label');
-        row.className = 'dipul-sub-label';
+        row.className = 'clc-row dipul-sub-label';
 
         const dot = document.createElement('span');
         dot.className = 'dipul-dot';
@@ -119,6 +119,7 @@ function initDipulControl(map) {
         cb.style.cssText = 'flex-shrink:0;margin-right:0;accent-color:' + def.color;
 
         const lbl = document.createElement('span');
+        lbl.className = 'clc-row-label';
         lbl.textContent = def.label;
 
         row.appendChild(dot);

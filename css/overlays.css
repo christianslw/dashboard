@@ -414,4 +414,10 @@
 	.ov-palette { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 
+/* Geodaten-Popup: Action-Buttons einzeilig und etwas lesbarer */
+.geodata-popup .geodata-action {
+	white-space: nowrap;
+	font-size: 12px;
+}
+
 
